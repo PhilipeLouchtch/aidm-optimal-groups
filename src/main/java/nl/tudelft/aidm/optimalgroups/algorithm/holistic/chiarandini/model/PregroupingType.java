@@ -1,12 +1,18 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model;
 
+import gurobi.GRBException;
+import gurobi.GRBModel;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.AssignmentConstraints;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.Constraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.ConditionalGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.HardGroupingConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
+import nl.tudelft.aidm.optimalgroups.model.group.Group;
+import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,6 +73,42 @@ public interface PregroupingType
 		return new NamedLambda(
 				"sizedCliques"+sizesSetNotation+"_condGrp",
 				(datasetContext) -> new Pregrouping.sizedClique(datasetContext,  groups -> new ConditionalGroupConstraint(groups, upToIncludingRank), sizes)
+		);
+	}
+	
+	/**
+	 * The no-pregrouping type. Does not do any pregrouping.
+	 * @return
+	 */
+	static PregroupingType none()
+	{
+		return new NamedLambda("no_grouping",
+				datasetContext -> new Pregrouping()
+				{
+					@Override
+					public Groups<Group.TentativeGroup> groups()
+					{
+						return Groups.of(List.of());
+					}
+					
+					@Override
+					public Constraint constraint()
+					{
+						return new Constraint()
+						{
+							@Override
+							public void apply(GRBModel model, AssignmentConstraints assignmentConstraints) throws GRBException
+							{
+							}
+							
+							@Override
+							public String simpleName()
+							{
+								return "Empty constraint";
+							}
+						};
+					}
+				}
 		);
 	}
 	
