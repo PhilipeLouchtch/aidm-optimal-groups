@@ -21,19 +21,24 @@ public class GeneratedDataExperiment
 	private static final String experimentDataLocation = "/results/thesis/";
 	
 	private final String identifier;
+	
+	private final int numToGenPerParam;
 	private final int runs;
-	private final List<DatasetContext> datasets;
+	
+	private final List<DatasetGenParams> params;
 	private final List<GroupProjectAlgorithm> algos;
 	
 	private final Lazy<List<ExperimentAlgorithmSubresult>> results;
 	
 	// TODO? give list of params for data generation, generate data here. An experiment is the dataset space...
-	public GeneratedDataExperiment(String identifier, int runs, List<DatasetGenParams> datasets, List<GroupProjectAlgorithm> algos)
+	public GeneratedDataExperiment(String identifier, List<DatasetGenParams> params, List<GroupProjectAlgorithm> algos, int numToGenPerParam, int runs)
 	{
 		this.identifier = identifier;
+		
+		this.numToGenPerParam = numToGenPerParam;
 		this.runs = runs;
 		
-		this.datasets = datasets;
+		this.params = params;
 		this.algos = algos;
 		
 		this.results = new Lazy<>(this::readOrGenerateResults);
@@ -45,7 +50,7 @@ public class GeneratedDataExperiment
 		return;
 	}
 	
-	private List<ExperimentAlgorithmSubresult> readOrGenerateResults()
+	private List<ExperimentAlgorithmSubresult> generateAndWriteResults()
 	{
 		var file = new File(experimentDataLocation + identifier + ".csv");
 		
@@ -53,18 +58,22 @@ public class GeneratedDataExperiment
 			var results = generateResults();
 			
 			// write file
+			writeToFile(file, results);
 		}
 		
+		// why read????
 		return /* readFile */;
 	}
 	
 	private List<ExperimentAlgorithmSubresult> generateResults()
 	{
-		var results = new ArrayList<ExperimentAlgorithmSubresult>(datasets.size() * algos.size() * runs);
+		var results = new ArrayList<ExperimentAlgorithmSubresult>(params.size() * algos.size() * runs);
 		
 		// TODO: Must have params to record input -> output mappings
-		for (DatasetContext dataset : datasets)
+		for (var params : params)
 		{
+			var dataset = params.generateDataset();
+			
 			for (GroupProjectAlgorithm algo : algos)
 			{
 				for (int i = 0; i < runs; i++)
