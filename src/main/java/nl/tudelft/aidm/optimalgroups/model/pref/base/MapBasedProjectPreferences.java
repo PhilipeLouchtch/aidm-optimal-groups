@@ -7,6 +7,10 @@ import nl.tudelft.aidm.optimalgroups.model.project.Project;
 import java.lang.reflect.Array;
 import java.util.*;
 
+/**
+ * A project preference implementation that supports (in)complete, total, partial etc
+ * preferences by maintaining a mapping between projects and their ranking ({@link MapBasedProjectPreferences#asMap})
+ */
 public class MapBasedProjectPreferences implements ProjectPreference
 {
 	private final Map<Project, RankInPref> asMap;

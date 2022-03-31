@@ -13,10 +13,29 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * A base implementation of ProjectPreferences where an agent has ordinal preference
- * over the projects. The preference can be incomplete, any missing projects are assumed
- * to be tied and given the ordinal rank after those present. So [A > B > C], then rank of
- * D, E, F etc would be 4.
+ * A list-backed implementation of ProjectPreferences where an agent has ordinal preferences
+ * over the projects. The position of the project in the list corresponds with the rank (index 0 -> rank 1).
+ * The preference can be incomplete, any missing projects are assumed to be "unacceptible" (the default
+ * way of handling missing projects in preferences, as defined by the default method in {@link ProjectPreference}.
+ *
+ * <p>
+ * <b>Example:</b> given the list L = [C, B, A] as an example preference of a problem instance with the set of
+ * projects P = {A, B, ..., F}, then according to the preference list L, the projects are ranked
+ * as follows:
+ * <ul>
+ *      <li>C as first,</li>
+ *      <li>B as second,</li>
+ *      <li>A as third,</lu>
+ *      <li>D, E and F are "unacceptible" ({@link UnacceptableAlternativeRank}).</li>
+ * </ul>
+ *
+ * <p>
+ * Alternative behaviour can be achieved through using the following implementation:
+ * {@link nl.tudelft.aidm.optimalgroups.model.pref.complete.ProjectPreferenceAugmentedWithMissingTiedLast} or alternatively,
+ * if a whole datasetcontext needs to be changed such that missing projects in prefs are set to ties at the end:
+ * the following are dataset-transformations: {@link nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenIndividually} and
+ * {@link nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenCommonly}.
+ * </p>
  */
 public abstract class AbstractListBasedProjectPreferences implements ProjectPreference
 {
@@ -38,8 +57,9 @@ public abstract class AbstractListBasedProjectPreferences implements ProjectPref
 	@Override
 	public RankInPref rankOf(Project project)
 	{
-		// Cache results - pessimism makes heavy use of this fn
-		return rankOfProject.computeIfAbsent(project, ProjectPreference.super::rankOf);
+		// Cache results - optimization for pessimism algorithm
+		return rankOfProject.computeIfAbsent(project,
+				ProjectPreference.super::rankOf);
 	}
 
 	@Override
@@ -71,7 +91,7 @@ public abstract class AbstractListBasedProjectPreferences implements ProjectPref
 		// If not proj-pref -> not equal
 		if (!(o instanceof ProjectPreference)) return false;
 
-		// For now only allow comparison between this base-types (to be safe)
+		// For now only allow comparison between this base-type (to be safe)
 		// if/when exception is triggered, re-evaluate use-case
 		if (!(o instanceof AbstractListBasedProjectPreferences)) throw new RuntimeException("Hmm AbsLBProjPref is being compared with some other type. Check if use-case is alright.");
 
