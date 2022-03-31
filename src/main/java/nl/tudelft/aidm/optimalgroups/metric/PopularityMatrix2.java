@@ -24,7 +24,9 @@ public class PopularityMatrix2<MATCHING extends Matching<Agent, Project>, ALGORE
 	/**
 	 * A popularity matrix of students in the given results
 	 * @param results The results to compare
-	 * @param filter Optional param: will only consider the given students - NOTE: this is a vararg parameter, but at most one!
+	 * @param filter Optional param: will only consider the given students -
+	 *               NOTE: this is a vararg parameter, but at most one value can be given!
+	 *               (Misused as an optional argument)
 	 */
 	public static <MATCHING extends Matching<Agent, Project>, ALGORES extends Algorithm.Result<? extends Algorithm, MATCHING>>
 			PopularityMatrix2<MATCHING, ALGORES> from(List<ALGORES> results, Agents... filter)

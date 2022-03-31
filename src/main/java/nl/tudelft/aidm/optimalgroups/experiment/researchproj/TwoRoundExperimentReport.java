@@ -183,7 +183,7 @@ public class TwoRoundExperimentReport
 
 		doc += Markdown.heading("Algorithm popularity", 4) + "\n" +
 			Markdown.italic("Algorithm name followed by the number of agents, in braces, that prefer it over the other") + "\n" +
-			Markdown.unorderedList((Object[]) experimentResult.popularityMatrix.asSet().toArray(Object[]::new)) + "\n";
+			Markdown.unorderedList((Object[]) experimentResult.popularityMatrix().asSet().toArray(Object[]::new)) + "\n";
 
 		return doc;
 	}

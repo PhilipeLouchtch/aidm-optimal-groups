@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
  */
 public class PopularityMatrix<MATCHING extends Matching, ALGO extends Algorithm, ALGORES extends Algorithm.Result<ALGO, MATCHING>>
 {
+	/**
+	 * Popularity Matrix from a {@link GroupToProjectMatching} type matching
+	 */
 	public static class TopicGroup extends PopularityMatrix<GroupToProjectMatching<Group.FormedGroup>, GroupProjectAlgorithm, GroupProjectAlgorithm.Result>
 	{
 		public TopicGroup(List<? extends GroupProjectAlgorithm.Result> resultingMatchings)
