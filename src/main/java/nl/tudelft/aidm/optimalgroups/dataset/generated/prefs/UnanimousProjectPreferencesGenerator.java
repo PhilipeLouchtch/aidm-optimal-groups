@@ -20,6 +20,7 @@ public class UnanimousProjectPreferencesGenerator implements ProjectPreferenceGe
 	{
 		this.theOne = theOne;
 	}
+	
 	@Override
 	public ProjectPreference generateNew()
 	{

@@ -41,17 +41,19 @@ public class GeneratedDataContext implements DatasetContext
 		var agentsAsList = new ArrayList<Agent>();
 		for (int i = 1; i < numAgents; i = agentsAsList.size())
 		{
-			var numAgentsToMake = Math.min(pregroupingGenerator.draw(), numAgents - i);
+			var groupSize = pregroupingGenerator.draw();
+			var numAgentsToMakeRemaining = numAgents - i;
+			var numAgentsToMake = Math.min(groupSize, numAgentsToMakeRemaining);
 			
 			final var projectPreference = projPrefGenerator.generateNew();
 			
-			var agentIdsToCreate = IntStream.range(i, i + numAgentsToMake).boxed().toArray(Integer[]::new);
+			var idsOfAgentsToCreate = IntStream.range(i, i + numAgentsToMake).boxed().toArray(Integer[]::new);
 			
 			var groupPref = numAgentsToMake > 1
-					? new GroupPreference.LazyGroupPreference(this, agentIdsToCreate)
+					? new GroupPreference.LazyGroupPreference(this, idsOfAgentsToCreate)
 					: GroupPreference.none();
 			
-			for (Integer newAgentSeqId : agentIdsToCreate)
+			for (Integer newAgentSeqId : idsOfAgentsToCreate)
 			{
 				var agent = new SimpleAgent.AgentInDatacontext(newAgentSeqId, projectPreference, groupPref, this);
 				agentsAsList.add(agent);

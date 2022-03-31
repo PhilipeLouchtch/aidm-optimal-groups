@@ -150,7 +150,7 @@ public class Agents implements Iterable<Agent>
 	{
 		var datasetContext = agents.stream().map(agent -> agent.datasetContext())
 			.findAny().orElseGet(() -> {
-				System.out.print("Warning: creating Agents from empty collection, datasetContext is set to null!\n");
+//				System.out.print("Warning: creating Agents from empty collection, datasetContext is set to null!\n");
 				return null;
 			});
 

@@ -59,7 +59,7 @@ public class ProjectPreferencesFromPmfGenerator implements ProjectPreferenceGene
 			var pmf = new LinkedList<>(completePmf);
 
 			// While we have projects to add to our list
-			while (pmf.isEmpty() == false) {
+			while (!pmf.isEmpty()) {
 				EnumeratedDistribution<Project> projectPrefDistrib = new EnumeratedDistribution<>(pmf);
 				var sample = projectPrefDistrib.sample();
 				pref.add(sample);

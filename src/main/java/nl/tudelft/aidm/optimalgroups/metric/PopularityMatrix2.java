@@ -1,21 +1,14 @@
 package nl.tudelft.aidm.optimalgroups.metric;
 
 import nl.tudelft.aidm.optimalgroups.Algorithm;
-import nl.tudelft.aidm.optimalgroups.algorithm.AgentProjectAlgorithm;
-import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.metric.rank.AssignedRank;
-import nl.tudelft.aidm.optimalgroups.model.HasProjectPrefs;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
-import nl.tudelft.aidm.optimalgroups.model.group.Group;
-import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
-import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.Matching;
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
 import plouchtch.assertion.Assert;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -59,8 +52,8 @@ public class PopularityMatrix2<MATCHING extends Matching<Agent, Project>, ALGORE
 			.distinct()
 			.count() == 1;
 
-		Assert.that(allMatchingsBasedOnSameDatasetContext).orThrow(RuntimeException.class,
-			"Popularity metrix can only be determined for matchings based of same dataset context.");
+		Assert.that(allMatchingsBasedOnSameDatasetContext)
+				.orThrowMessage("Popularity metrix can only be determined for matchings based of same dataset context.");
 		
 		var allAgents = (results.stream().map(result -> result.producedMatching().datasetContext()).findAny().orElseThrow()).allAgents();
 
