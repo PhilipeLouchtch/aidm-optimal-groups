@@ -192,7 +192,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
             }
 
         }
-        System.out.println(System.currentTimeMillis() + ":\t\tR- bestMatchUngrouped: done, " + this.availableStudents.size() + " students left to group");
+//        System.out.println(System.currentTimeMillis() + ":\t\tR- bestMatchUngrouped: done, " + this.availableStudents.size() + " students left to group");
     }
 
 
@@ -212,8 +212,8 @@ public class BepSysReworked implements GroupFormingAlgorithm
             }
         });
 
-        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + finalFormedGroups.asCollection().size() + " groups of max size (final)");
-        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + tentativelyFormedGroups.asCollection().size() + " groups to be merged");
+//        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + finalFormedGroups.asCollection().size() + " groups of max size (final)");
+//        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + tentativelyFormedGroups.asCollection().size() + " groups to be merged");
 
         unmerged.sort(Comparator.comparingInt((Group group) -> group.members().count()));
 
@@ -270,7 +270,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 // remove the "other" group from unmerged
                 boolean removedSomething = unmerged.remove(bestMerge.g2); // todo: proper check for no candidates & exception
                 if (!removedSomething) {
-                        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: Nothing was removed from unmerged but was expected!!!");
+//                        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: Nothing was removed from unmerged but was expected!!!");
                 }
 
                 Group.TentativeGroup tentativeGroup = bestMerge.asTentativeGroup();
