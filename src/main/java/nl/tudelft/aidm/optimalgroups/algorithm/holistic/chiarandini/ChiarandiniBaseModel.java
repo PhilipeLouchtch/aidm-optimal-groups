@@ -23,11 +23,21 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 		catch (Exception ex) {
 			throw new RuntimeException(ex);
 		}
+		catch (Error err) {
+			throw new RuntimeException("Error occurred and I was able to handle this thing (but not completely, TODO)");
+		}
 	}
 
 	private GroupToProjectMatching<Group.FormedGroup> doItDirty() throws GRBException
 	{
-		var env = new GRBEnv();
+		var env = new GRBEnv(true);
+		
+		// silent solving
+		env.set(GRB.IntParam.OutputFlag, 0);
+		
+		// NOTE: Single thread for benchmarking!
+		env.set(GRB.IntParam.Threads, 1);
+		
 		env.start();
 
 		var model = new GRBModel(env);
@@ -52,6 +62,8 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 		// extract x's and map to matching
 		var matching = new ChiarandiniGroupToProjectMatching(assignmentConstraints.xVars, datasetContext);
 
+		// Gurobi manual: dispose any and all used models and then dispose the env
+		model.dispose();
 		env.dispose();
 
 		return matching;
