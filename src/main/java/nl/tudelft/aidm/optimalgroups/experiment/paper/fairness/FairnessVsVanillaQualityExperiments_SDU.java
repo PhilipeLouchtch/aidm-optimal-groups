@@ -3,10 +3,8 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.fairness;
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
-import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEdition;
 import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.fairness.report.FairnessVsVanillaQualityExperimentReport;
-import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 
 import java.io.File;
 import java.time.Instant;
@@ -19,14 +17,14 @@ public class FairnessVsVanillaQualityExperiments_SDU
 	{
 		var experimentsRunId = Instant.now().getEpochSecond();
 		
-		var pregroupingType = PregroupingType.anyCliqueHardGrouped();
+		var pregroupingType = PregroupingType.sizedCliqueHardGrouped(10);
 		
 		var algorithms = List.of(
 			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(pregroupingType),
 			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), pregroupingType)
 		);
 		
-		var datasets = List.<SDUDatasetContext>of(
+		var datasets = List.of(
 				SDUDatasetContext.instanceOfYear(2008)/*,
 				SDUDatasetContext.instanceOfYear(2009),
 				SDUDatasetContext.instanceOfYear(2010),
