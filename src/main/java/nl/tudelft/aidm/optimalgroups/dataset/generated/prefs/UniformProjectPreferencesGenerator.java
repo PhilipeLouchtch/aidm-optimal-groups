@@ -9,10 +9,9 @@ public class UniformProjectPreferencesGenerator extends ProjectPreferencesFromDi
 	 * Creates a new Linearly Distributed ProjectPreferences Generator. It generates ProjectPreferences
 	 * where in the projects rank is related to the probability of that project.
 	 * @param projects The projects for which the preferences are generated
-	 * @param slopeSteepness The steepness of the slope - that is the z in y = z*x FIXME
 	 */
 	public UniformProjectPreferencesGenerator(Projects projects)
 	{
-		super(projects, new UniformRealDistribution(0, 40));
+		super(projects, new UniformRealDistribution(0, projects.count()));
 	}
 }
