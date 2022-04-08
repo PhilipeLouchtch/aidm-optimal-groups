@@ -3,17 +3,13 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.runtime;
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.ExponentiallyDistributedProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.ProjectPreferenceGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.UniformProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.DatasetParams;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
-import nl.tudelft.aidm.optimalgroups.model.pref.base.ListBasedProjectPreferences;
-import nl.tudelft.aidm.optimalgroups.model.project.Projects;
-import org.jetbrains.annotations.NotNull;
 import plouchtch.assertion.Assert;
 
 import java.io.BufferedWriter;
@@ -61,10 +57,23 @@ public class RuntimeExperiments
 		//  *singleton     *(sligtly perturbed singleton pref)      *chaotic/random
 		//       |-------------|--------------------------------------------|
 		
+		// Preference types
+		var prefGenerators = List.of(
+				ProjPrefVariations.singleton(), // flat linear
+				ProjPrefVariations.linearPerturbedSlightly(), // some perturbation
+				ProjPrefVariations.linearPerturbedMore(), // more chaos
+				ProjPrefVariations.random() // random
+		);
+		// Pregrouping type
+		var pregroupGen = new NamedPregroupingGenerator(PregroupingGenerator.none(), "none");
+		
+		// Group size bounds
 		var gsc = new GroupSizeConstraint.Manual(4, 5);
 
+		// Holder for results
 		var expResults = new LinkedList<ExpResult>();
 		
+		// Da loop
 		for (Integer numStudents : studentCounts)
 		{
 			for (Integer numProjects : projectCounts)
@@ -74,23 +83,10 @@ public class RuntimeExperiments
 					var numStudentsSupported = numProjects * numSlotsPerProject * gsc.maxSize();
 					if (numStudents > numStudentsSupported) continue;
 					
-					var projects = Projects.generated(numProjects, numSlotsPerProject);
-					
-					// generate the right 'type' of project preferences
-					// todo: would be nice to have outside the loop
-					var prefGenerators = List.of(
-							new NamedPrefGenerator("singleton", () -> new ListBasedProjectPreferences(new ArrayList<>(projects.asCollection()))), // flat linear
-							new NamedPrefGenerator("linear_perturbed_1", new ExponentiallyDistributedProjectPreferencesGenerator(projects, 1)), // some perturbation
-							new NamedPrefGenerator("linear_perturbed_4", new ExponentiallyDistributedProjectPreferencesGenerator(projects, 4)), // more chaos
-							new NamedPrefGenerator("random", new UniformProjectPreferencesGenerator(projects)) // random
-					);
-					
 					for (var prefGenType : prefGenerators)
 					{
-						var pregroupGen = new NamedPregroupingGenerator(PregroupingGenerator.none(), "none");
-						
 						// make dataset
-						var datasetParams = new DatasetParams(numStudents, projects, numSlotsPerProject, gsc, prefGenType, pregroupGen);
+						var datasetParams = new DatasetParams(numStudents, numProjects, numSlotsPerProject, gsc, prefGenType, pregroupGen);
 						
 //						AvgPreferenceRankOfProjects.ofAgentsInDatasetContext(dataset).displayChart();
 						
@@ -169,23 +165,23 @@ public class RuntimeExperiments
 	
 	record ExpResult(DatasetParams datasetParams, GroupProjectAlgorithm mechanism, Duration runDuration, Integer trialRunNum) {}
 	
-		static void exportResults(Collection<ExpResult> results)
+	static void exportResults(Collection<ExpResult> results)
 	{
 		var file = new File(fileNameResults);
 		try (var writer = new PrintWriter(new BufferedWriter(new FileWriter(file))))
 		{
 			var cols = List.of("num_students", "num_projects", "num_slots", "proj_pref_type", "pregroup_type", "mechanism", "duration_ms", "trial").toArray(String[]::new);
 			var format = Arrays.stream(cols).collect(Collectors.joining(",", "", "\n"));
-			writer.printf(format, cols);
+			writer.printf(format, (Object[]) cols);
 			
 			for (ExpResult result : results)
 			{
 				writer.printf(format,
 						result.datasetParams().numStudents(),
-						result.datasetParams().projects().count(),
+						result.datasetParams().numProjects(),
 						result.datasetParams().numSlotsPerProj(),
 						result.datasetParams().prefGenerator().shortName(),
-						result.datasetParams().pregroupingGenerator().name(),
+						result.datasetParams().pregroupingGenerator().shortName(),
 						result.mechanism().name(),
 						result.runDuration().toMillis(),
 						result.trialRunNum()
@@ -200,30 +196,4 @@ public class RuntimeExperiments
 		}
 	}
 	
-	record NamedPregroupingGenerator(PregroupingGenerator generator, String name)
-	{ }
-	
-	record NamedPrefGenerator(String shortName, ProjectPreferenceGenerator generator)
-	{ }
-	
-	record DatasetParams(Integer numStudents, Projects projects, Integer numSlotsPerProj, GroupSizeConstraint gsc, NamedPrefGenerator prefGenerator, NamedPregroupingGenerator pregroupingGenerator)
-	{
-		public DatasetContext intoNewlyGeneratedDataset()
-		{
-			final var prefGenerator = this.prefGenerator.generator();
-			return new GeneratedDataContext(numStudents, projects, gsc, prefGenerator, pregroupingGenerator.generator());
-		}
-		
-		@Override
-		public String toString()
-		{
-			return ("DatasetParams[ st#%s, pr#%s[%s], pp[%s], gp[%s] ]").formatted(
-						numStudents,
-						projects.count(),
-						numSlotsPerProj,
-						prefGenerator.shortName(),
-						pregroupingGenerator().name()
-					);
-		}
-	}
 }
