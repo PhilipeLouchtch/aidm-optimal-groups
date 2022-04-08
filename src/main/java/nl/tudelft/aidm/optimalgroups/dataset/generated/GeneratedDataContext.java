@@ -39,10 +39,10 @@ public class GeneratedDataContext implements DatasetContext
 		Supplier<Integer> cliqueSizeSupplier = null;
 		
 		var agentsAsList = new ArrayList<Agent>();
-		for (int i = 1; i < numAgents; i = agentsAsList.size())
+		for (int i = 1; i <= numAgents; i = agentsAsList.size() + 1)
 		{
 			var groupSize = pregroupingGenerator.draw();
-			var numAgentsToMakeRemaining = numAgents - i;
+			var numAgentsToMakeRemaining = numAgents - i + 1;
 			var numAgentsToMake = Math.min(groupSize, numAgentsToMakeRemaining);
 			
 			final var projectPreference = projPrefGenerator.generateNew();

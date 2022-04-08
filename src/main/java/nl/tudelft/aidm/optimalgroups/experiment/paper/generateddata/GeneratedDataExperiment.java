@@ -126,6 +126,9 @@ public abstract class GeneratedDataExperiment
 							var matching = algo.determineMatching(dataset);
 							var end = Instant.now();
 							
+							Assert.that(dataset.allAgents().count() == AgentToProjectMatching.from(matching).countDistinctStudents())
+									.orThrowMessage("Invalid result");
+							
 							System.out.print("\b."); // done
 							
 							var runtime = Duration.between(start, end).abs();
