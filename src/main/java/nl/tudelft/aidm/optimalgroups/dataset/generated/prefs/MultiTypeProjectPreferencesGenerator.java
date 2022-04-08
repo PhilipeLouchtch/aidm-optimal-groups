@@ -20,7 +20,6 @@ public class MultiTypeProjectPreferencesGenerator implements ProjectPreferenceGe
 		
 		this.generatorTypes = Arrays.asList(types);
 		
-		
 		var pmf = generatorTypes.stream().map(type -> Pair.create(type.generator(), type.chance())).toList();
 		this.distribution = new EnumeratedDistribution<>(pmf);
 	}
