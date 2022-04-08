@@ -24,7 +24,7 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 			throw new RuntimeException(ex);
 		}
 		catch (Error err) {
-			throw new RuntimeException("Error occurred and I was able to handle this thing (but not completely, TODO)");
+			throw new RuntimeException("Error occurred and I was able to handle this thing (but not completely, TODO for OOM or Gurobi stuff)", err);
 		}
 	}
 
