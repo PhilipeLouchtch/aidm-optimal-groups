@@ -86,10 +86,10 @@ public class SizeExperiment extends GeneratedDataExperiment
 			);
 		
 		// A row of placeholders for printf of proper length
-		var rowFormat = IntStream.range(0, cols.size()).mapToObj(__ -> "%s")
+		var rowFormat = cols.stream().map(__ -> "%s")
 				.collect(Collectors.joining(",", "", "\n"));
 		
-		writer.printf(rowFormat, cols);
+		writer.printf(rowFormat, (Object[]) cols.toArray(new String[0]));
 		
 		for (var result : results)
 		{
@@ -109,6 +109,7 @@ public class SizeExperiment extends GeneratedDataExperiment
 					result.trialRunNum(),
 					
 					result.runtime().toMillis(),
+					
 					serializeProfile(profileOfAllStudentRanks),
 					serializeProfile(Profile.fromProfileArray()),
 					serializeProfile(Profile.fromProfileArray()),

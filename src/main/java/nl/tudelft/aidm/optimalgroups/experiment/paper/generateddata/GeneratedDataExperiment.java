@@ -6,6 +6,7 @@ import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.Datase
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResult;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
+import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import org.apache.commons.lang3.tuple.Pair;
 import plouchtch.assertion.Assert;
 
@@ -25,7 +26,7 @@ import java.util.stream.IntStream;
  */
 public abstract class GeneratedDataExperiment
 {
-	private static final String experimentDataLocation = "/results/thesis/";
+	private static final String experimentDataLocation = "results/thesis/";
 	
 	protected final String identifier;
 	
@@ -70,13 +71,15 @@ public abstract class GeneratedDataExperiment
 	
 	protected String serializeProfile(Profile profile)
 	{
-		var profileAsArray = new Integer[profile.maxRank()];
+		var profileAsArray = new Integer[profile.maxRank()+1];
 		
 		profile.forEach((rank, count) -> {
 			profileAsArray[rank] = count;
 		});
 		
-		return Arrays.stream(profileAsArray).map(Object::toString).collect(Collectors.joining("|"));
+		return Arrays.stream(profileAsArray)
+				.map(i -> i == null ? 0 : i).map(Object::toString)
+				.collect(Collectors.joining("|"));
 	}
 	
 	private /*List<ExperimentAlgorithmSubresult>*/ void generateAndWriteResults()
