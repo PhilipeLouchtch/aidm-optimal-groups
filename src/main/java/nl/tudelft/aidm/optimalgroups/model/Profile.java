@@ -36,7 +36,7 @@ public interface Profile
 	int numAgents();
 
 	/**
-	 *	The higest rank contained in the profile
+	 *	The higest rank contained in the profile. Returns 0 if profile is empty
 	 */
 	int maxRank();
 	
@@ -117,10 +117,20 @@ public interface Profile
 		private final int numStudentsInProfile;
 		private final int[] numStudentsByRank;
 		
+		/**
+		 * Initializes this Array-backed Profile implementation from the given array
+		 *
+		 * The Array is direct mapping between ranks and the number of agents with that rank.
+		 * Rank 0 is not a valid rank and must be empty or will trigger a bugcheck.
+		 * @param numStudentsByRank
+		 */
 		public Simple(int[] numStudentsByRank)
 		{
+			Assert.that(!(numStudentsByRank.length > 0) || numStudentsByRank[0] == 0)
+					.orThrowMessage("There cannot be any students with rank 0, bug?");
+			
 			this.numStudentsByRank = numStudentsByRank;
-			this.maxRank = numStudentsByRank.length - 1;
+			this.maxRank = Math.max(0, numStudentsByRank.length - 1);
 			this.numStudentsInProfile = Arrays.stream(numStudentsByRank).sum();
 		}
 
@@ -169,8 +179,9 @@ public interface Profile
 			};
 			
 			return Arrays.stream(numStudentsByRank)
-					.mapToObj(int2string::apply)
-					.collect(Collectors.joining(" ", "[", "]"));
+			             .skip(1) // skip element at index 0
+			             .mapToObj(int2string::apply)
+			             .collect(Collectors.joining(" ", "[", "]"));
 		}
 		
 		@Override

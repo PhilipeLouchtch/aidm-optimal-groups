@@ -126,11 +126,12 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	
 	protected String serializeProfile(Profile profile)
 	{
-		var profileAsArray = new Integer[profile.maxRank()+1];
+		var profileAsArray = new Integer[profile.maxRank()];
 		
-		profile.forEach((rank, count) -> {
-			profileAsArray[rank] = count;
-		});
+		for (int rank = 1; rank <= profile.maxRank(); rank++)
+		{
+			profileAsArray[rank-1] = profile.numAgentsWithRank(rank);
+		}
 		
 		return Arrays.stream(profileAsArray)
 		             .map(i -> i == null ? 0 : i)
