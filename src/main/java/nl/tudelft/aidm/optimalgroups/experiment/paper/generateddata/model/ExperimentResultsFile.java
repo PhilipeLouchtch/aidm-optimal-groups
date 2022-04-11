@@ -34,9 +34,6 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	
 	public ExperimentResultsFile(String path)
 	{
-		// todo: split over multiple files - by algo and params
-		// solution: do this on a higher level, not here
-		
 		this.file = new File(path);
 		this.resultsBuffer = new ArrayList<>(100);
 	}
