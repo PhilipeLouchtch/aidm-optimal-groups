@@ -24,9 +24,10 @@ public class ThesisExperimentsRunner
 	
 	public static void main(String[] args)
 	{
-		// todo: ez warmup experiment first
+		// ez warmup experiment first
+		new WarmupExperiment(mechanisms()).run();
 		
-		var exp = new SizeExperiment("size_exp_test", mechanisms(), numDatasetsToGen, runsPerDataset);
+		var exp = new SizeExperiment("size_exp_att1", mechanisms(), numDatasetsToGen, runsPerDataset);
 		exp.run();
 	}
 }

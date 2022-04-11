@@ -2,25 +2,22 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.DatasetParams;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResult;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPrefGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
+import plouchtch.lang.exception.ImplementMe;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class SizeExperiment extends GeneratedDataExperiment
 {
-	private static List<DatasetParams> paramsForExperiments()
+	private static GroupedDatasetParams paramsForExperiments()
 	{
 		List<Integer> nums_students = List.of(80, 160, 240, 320, 400, 480, 560, 640, 720, 800);
 		List<Integer> nums_projects = List.of(5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180);
@@ -45,79 +42,43 @@ public class SizeExperiment extends GeneratedDataExperiment
 		
 		var pregroupingGen = new NamedPregroupingGenerator(PregroupingGenerator.none(), "none");
 		
+		var paramGroups = new ArrayList<GroupedDatasetParams.Group>();
+		
 		for (var num_students : nums_students)
-		for (var num_projects : nums_projects)
-		for (var num_slots : nums_slots)
-		for (var gsc : gscs)
-		for (var projPrefsGen : projectPrefGenerators)
 		{
-			// Don't make infeasible params
-			var numStudentsSupported = num_projects * num_slots * gsc.maxSize();
-			if (num_students > numStudentsSupported) continue;
+			var datasetParamGroup = new ArrayList<DatasetParams>(nums_projects.size() * nums_slots.size() * gscs.size() * projectPrefGenerators.size());
 			
-			var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
+			for (var num_projects : nums_projects)
+			for (var num_slots : nums_slots)
+			for (var gsc : gscs)
+			for (var projPrefsGen : projectPrefGenerators)
+			{
+				// Don't make infeasible params
+				var numStudentsSupported = num_projects * num_slots * gsc.maxSize();
+				if (num_students > numStudentsSupported)
+					continue;
+					
+					var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
+					
+					datasetParamGroup.add(paramsForDataset);
+			}
 			
-			datasetParamCombinations.add(paramsForDataset);
+			paramGroups.add(new GroupedDatasetParams.Group("stud[%s]".formatted(num_students), datasetParamGroup));
 		}
 		
-		return datasetParamCombinations;
+		return new GroupedDatasetParams(paramGroups);
 	}
+	
 	
 	public SizeExperiment(String identifier, List<GroupProjectAlgorithm> algos, int numToGenPerParam, int runs)
 	{
 		super(identifier, paramsForExperiments(), algos, numToGenPerParam, runs);
 	}
 	
-	@Override
-	protected void exportData(PrintWriter writer, List<ExperimentResult> results) throws IOException
-	{
-		
-		// metrics: only rank profile, generate metrics in R
-		// runtime: do record runtime duration
-		
-		var cols = List.of(
-				"num_students", "num_projects", "num_slots",
-				
-				"proj_pref_type", "pregroup_type", "mechanism", "trial",
-				
-				"duration_ms",
-				
-				"profile_all", "profile_singles", "profile_pregrouped", "profile_unsatpregroup"
-			);
-		
-		// A row of placeholders for printf of proper length
-		var rowFormat = cols.stream().map(__ -> "%s")
-				.collect(Collectors.joining(",", "", "\n"));
-		
-		writer.printf(rowFormat, (Object[]) cols.toArray(new String[0]));
-		
-		for (var result : results)
-		{
-			// TODO: Need 4 variants,
-			//  - all, individuals, grouped, grouped-unsatisfied
-			// but for now, the size experiment only has one variant: all
-			var profileOfAllStudentRanks = Profile.of(AgentToProjectMatching.from(result.matching()));
-			
-			writer.printf(rowFormat,
-					result.params().numStudents(),
-					result.params().numProjects(),
-					result.params().numSlotsPerProj(),
-					
-					result.params().prefGenerator().shortName(),
-					result.params().pregroupingGenerator().shortName(),
-					result.mechanism().name(),
-					result.trialRunNum(),
-					
-					result.runtime().toMillis(),
-					
-					serializeProfile(profileOfAllStudentRanks),
-					serializeProfile(Profile.fromProfileArray()),
-					serializeProfile(Profile.fromProfileArray()),
-					serializeProfile(Profile.fromProfileArray())
-				);
-			
-			writer.flush();
-		}
-	}
 	
+	@Override
+	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
+	{
+		return new ExperimentResultsFile(filePath);
+	}
 }
