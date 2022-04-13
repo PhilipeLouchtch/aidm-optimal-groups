@@ -5,19 +5,15 @@ import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerato
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
-import nl.tudelft.aidm.optimalgroups.model.Profile;
-import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
-import plouchtch.lang.exception.ImplementMe;
+import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class SizeExperiment extends GeneratedDataExperiment
+public class SizeExperiment extends GeneratedDataExperiment<SimpleDatasetParams>
 {
-	private static GroupedDatasetParams paramsForExperiments()
+	private static GroupedDatasetParams<SimpleDatasetParams> paramsForExperiments()
 	{
 		List<Integer> nums_students = List.of(80, 160, 240, 320, 400, 480, 560, 640, 720, 800);
 		List<Integer> nums_projects = List.of(5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180);
@@ -35,18 +31,18 @@ public class SizeExperiment extends GeneratedDataExperiment
 				GroupSizeConstraint.manual(4, 5)
 		);
 	
-		var datasetParamCombinations = new ArrayList<DatasetParams>(
+		var datasetParamCombinations = new ArrayList<SimpleDatasetParams>(
 				nums_students.size() * nums_projects.size() * nums_slots.size()
 				* projectPrefGenerators.size() * gscs.size()
 		);
 		
 		var pregroupingGen = new NamedPregroupingGenerator(PregroupingGenerator.none(), "none");
 		
-		var paramGroups = new ArrayList<GroupedDatasetParams.Group>();
+		var paramGroups = new ArrayList<GroupedDatasetParams.Group<SimpleDatasetParams>>();
 		
 		for (var num_students : nums_students)
 		{
-			var datasetParamGroup = new ArrayList<DatasetParams>(nums_projects.size() * nums_slots.size() * gscs.size() * projectPrefGenerators.size());
+			var datasetParamGroup = new ArrayList<SimpleDatasetParams>(nums_projects.size() * nums_slots.size() * gscs.size() * projectPrefGenerators.size());
 			
 			for (var num_projects : nums_projects)
 			for (var num_slots : nums_slots)
@@ -58,12 +54,12 @@ public class SizeExperiment extends GeneratedDataExperiment
 				if (num_students > numStudentsSupported)
 					continue;
 					
-					var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
+					var paramsForDataset = new SimpleDatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
 					
 					datasetParamGroup.add(paramsForDataset);
 			}
 			
-			paramGroups.add(new GroupedDatasetParams.Group("stud[%s]".formatted(num_students), datasetParamGroup));
+			paramGroups.add(new GroupedDatasetParams.Group<>("stud[%s]".formatted(num_students), datasetParamGroup));
 		}
 		
 		return new GroupedDatasetParams(paramGroups);
@@ -80,5 +76,11 @@ public class SizeExperiment extends GeneratedDataExperiment
 	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
 	{
 		return new ExperimentResultsFile(filePath);
+	}
+	
+	@Override
+	protected ExperimentSubResult newExperimentSubResult(SimpleDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
+	{
+		return new SizeExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}
 }

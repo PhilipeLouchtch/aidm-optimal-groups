@@ -5,14 +5,14 @@ import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerato
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
+import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WarmupExperiment extends GeneratedDataExperiment
+public class WarmupExperiment extends GeneratedDataExperiment<SimpleDatasetParams>
 {
 	private static GroupedDatasetParams paramsForExperiments()
 	{
@@ -32,7 +32,7 @@ public class WarmupExperiment extends GeneratedDataExperiment
 				GroupSizeConstraint.manual(4, 5)
 		);
 	
-		var datasetParamCombinations = new ArrayList<DatasetParams>(
+		var datasetParamCombinations = new ArrayList<SimpleDatasetParams>(
 				nums_students.size() * nums_projects.size() * nums_slots.size()
 				* projectPrefGenerators.size() * gscs.size()
 		);
@@ -49,7 +49,7 @@ public class WarmupExperiment extends GeneratedDataExperiment
 			var numStudentsSupported = num_projects * num_slots * gsc.maxSize();
 			if (num_students > numStudentsSupported) continue;
 			
-			var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
+			var paramsForDataset = new SimpleDatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen);
 			
 			datasetParamCombinations.add(paramsForDataset);
 		}
@@ -82,5 +82,11 @@ public class WarmupExperiment extends GeneratedDataExperiment
 				// ignore
 			}
 		};
+	}
+	
+	@Override
+	protected ExperimentSubResult newExperimentSubResult(SimpleDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
+	{
+		return new SizeExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}
 }

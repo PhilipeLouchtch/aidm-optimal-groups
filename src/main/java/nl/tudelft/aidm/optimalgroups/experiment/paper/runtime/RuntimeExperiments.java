@@ -6,6 +6,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.O
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.DatasetParams;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.SimpleDatasetParams;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -86,7 +87,7 @@ public class RuntimeExperiments
 					for (var prefGenType : prefGenerators)
 					{
 						// make dataset
-						var datasetParams = new DatasetParams(numStudents, numProjects, numSlotsPerProject, gsc, prefGenType, pregroupGen);
+						var datasetParams = new SimpleDatasetParams(numStudents, numProjects, numSlotsPerProject, gsc, prefGenType, pregroupGen);
 						
 //						AvgPreferenceRankOfProjects.ofAgentsInDatasetContext(dataset).displayChart();
 						
@@ -103,7 +104,7 @@ public class RuntimeExperiments
 		return;
 	}
 	
-	static Collection<ExpResult> experiment(Collection<? extends GroupProjectAlgorithm> mechanisms, DatasetParams datasetParams)
+	static Collection<ExpResult> experiment(Collection<? extends GroupProjectAlgorithm> mechanisms, SimpleDatasetParams datasetParams)
 	{
 		System.out.print("Exp run for: " + datasetParams.toString() + "\n");
 		
@@ -163,7 +164,7 @@ public class RuntimeExperiments
 		return results;
 	}
 	
-	record ExpResult(DatasetParams datasetParams, GroupProjectAlgorithm mechanism, Duration runDuration, Integer trialRunNum) {}
+	record ExpResult(SimpleDatasetParams datasetParams, GroupProjectAlgorithm mechanism, Duration runDuration, Integer trialRunNum) {}
 	
 	static void exportResults(Collection<ExpResult> results)
 	{

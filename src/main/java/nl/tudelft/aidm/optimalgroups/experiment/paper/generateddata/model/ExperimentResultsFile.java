@@ -13,18 +13,6 @@ import java.util.stream.Collectors;
 
 public class ExperimentResultsFile implements ExperimentResultsCollector
 {
-	private static final List<String> columnHeaders = List.of(
-			"num_students", "num_projects", "num_slots",
-			"proj_pref_type", "pregroup_type", "mechanism", "trial",
-			"duration_ms",
-			"profile_all", "profile_singles", "profile_pregrouped", "profile_unsatpregroup"
-		);
-	
-	// A row of placeholders for printf of proper length
-	private static final Lazy<String> rowFormat = new Lazy<>(() -> columnHeaders.stream().map(__ -> "%s")
-				.collect(Collectors.joining(",", "", "\n")));
-	
-	
 	private final File file;
 	
 	private final ArrayList<ExperimentSubResult> resultsBuffer;
@@ -69,50 +57,27 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 		}
 	}
 	
-	private void writeColumnHeaders(PrintWriter writer)
+	private void writeRow(PrintWriter writer, List<Object> rowData)
 	{
-		writer.printf(rowFormat.get(), (Object[]) columnHeaders.toArray(new String[0]));
+		var rowAsCsv = rowData.stream()
+		                      .map(Object::toString)
+		                      .collect(Collectors.joining(","));
+		writer.println(rowAsCsv);
 	}
 	
 	protected void writeResults(Collection<ExperimentSubResult> results)
 	{
 		try (var writer = new PrintWriter(new BufferedWriter(new FileWriter(file, true))))
 		{
-			if (printColumnHeaders) {
-				writeColumnHeaders(writer);
-				printColumnHeaders = false;
-			}
 			
 			for (ExperimentSubResult result : results)
 			{
-				// metrics: export only rank profile, generate metrics in R
-				// runtime: do record runtime duration
-				// TODO: Need 4 variants,
-				//  - all, individuals, grouped, grouped-unsatisfied
-				// but for now, the size experiment only has one variant: all
+				if (printColumnHeaders) {
+					writeRow(writer, result.columnHeaders());
+					printColumnHeaders = false;
+				}
 				
-				var profileOfAllStudentRanks = Profile.of(
-						AgentToProjectMatching.from(result.matching())
-				);
-				
-				// todo: move some parts to the subresult
-				writer.printf(rowFormat.get(),
-						result.params().numStudents(),
-						result.params().numProjects(),
-						result.params().numSlotsPerProj(),
-						
-						result.params().prefGenerator().shortName(),
-						result.params().pregroupingGenerator().shortName(),
-						result.mechanism().name(),
-						result.trialRunNum(),
-						
-						result.runtime().toMillis(),
-						
-						serializeProfile(result.profileAllStudents()),
-						serializeProfile(result.profileSingles()),
-						serializeProfile(result.profilePregrouped()),
-						serializeProfile(result.profileUnsatpregroup())
-				);
+				writeRow(writer, result.columnValues());
 			}
 			
 			writer.flush();
@@ -122,21 +87,6 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 			// Can't do anything if we can't open the file
 			throw new RuntimeException(ex);
 		}
-	}
-	
-	protected String serializeProfile(Profile profile)
-	{
-		var profileAsArray = new Integer[profile.maxRank()];
-		
-		for (int rank = 1; rank <= profile.maxRank(); rank++)
-		{
-			profileAsArray[rank-1] = profile.numAgentsWithRank(rank);
-		}
-		
-		return Arrays.stream(profileAsArray)
-		             .map(i -> i == null ? 0 : i)
-		             .map(Object::toString)
-		             .collect(Collectors.joining("|"));
 	}
 	
 }

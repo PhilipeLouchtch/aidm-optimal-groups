@@ -29,5 +29,8 @@ public class ThesisExperimentsRunner
 		
 		var exp = new SizeExperiment("size_exp_att1", mechanisms(), numDatasetsToGen, runsPerDataset);
 		exp.run();
+		
+		var exp2 = new SlotsScalingExperiment("slots_exp_tst", mechanisms(), numDatasetsToGen, runsPerDataset);
+		exp2.run();
 	}
 }

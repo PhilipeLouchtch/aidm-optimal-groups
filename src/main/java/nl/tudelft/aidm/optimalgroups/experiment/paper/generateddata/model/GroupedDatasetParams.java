@@ -2,7 +2,7 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
 
 import java.util.List;
 
-public record GroupedDatasetParams(List<Group> groups)
+public record GroupedDatasetParams<DATASET_PARAMS extends DatasetParams>(List<Group<DATASET_PARAMS>> groups)
 {
-	public record Group(String groupIdentifier, List<DatasetParams> asList) {}
+	public record Group<DATASET_PARAMS extends DatasetParams>(String groupIdentifier, List<DATASET_PARAMS> asList) {}
 }

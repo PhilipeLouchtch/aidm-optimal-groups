@@ -1,11 +1,10 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsCollector;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResultForNoPregroupings;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.GroupedDatasetParams;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
+import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import plouchtch.assertion.Assert;
 
 import java.time.Duration;
@@ -18,13 +17,13 @@ import java.util.stream.IntStream;
  * Created for the purpose of bundling together experiments of generated datasets, more specifically,
  * generated datasets that are generated from the same parameters.
  */
-public abstract class GeneratedDataExperiment
+public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetParams>
 {
 	private static final String experimentDataLocation = "results/thesis/";
 	
 	protected final String identifier;
 	
-	protected final GroupedDatasetParams groupedDatasetParams;
+	protected final GroupedDatasetParams<DATASET_PARAMS> groupedDatasetParams;
 	protected final List<GroupProjectAlgorithm> algos;
 	
 	private final int numToGenPerParam;
@@ -32,7 +31,7 @@ public abstract class GeneratedDataExperiment
 	
 	
 	// TODO? give <list of params> for data generation, generate data here. An experiment is the dataset space...
-	public GeneratedDataExperiment(String identifier, GroupedDatasetParams groupedDatasetParams, List<GroupProjectAlgorithm> algos, int numToGenPerParam, int runs)
+	public GeneratedDataExperiment(String identifier, GroupedDatasetParams<DATASET_PARAMS> groupedDatasetParams, List<GroupProjectAlgorithm> algos, int numToGenPerParam, int runs)
 	{
 		this.identifier = identifier;
 		this.groupedDatasetParams = groupedDatasetParams;
@@ -72,12 +71,14 @@ public abstract class GeneratedDataExperiment
 	
 	abstract protected ExperimentResultsCollector newExperimentResultsFile(String filePath);
 	
+	abstract protected ExperimentSubResult newExperimentSubResult(DATASET_PARAMS params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum);
+	
 	// MAIN FN - make choices here
 	private void generateAndWriteResults()
 	{
 		System.out.printf("\n\nExperiment: %s", identifier);
 		
-		for (GroupedDatasetParams.Group paramGroup : groupedDatasetParams.groups())
+		for (var paramGroup : groupedDatasetParams.groups())
 		{
 			var resultsCollector = newExperimentResultsFile(resultsFileName(paramGroup.groupIdentifier()));
 			
@@ -119,7 +120,7 @@ public abstract class GeneratedDataExperiment
 								                      .abs();
 								
 								// todo
-								var result = new ExperimentSubResultForNoPregroupings(datasetParams, algo, matching, runtime, run_no);
+								var result = newExperimentSubResult(datasetParams, algo, matching, runtime, run_no);
 								
 								resultsCollector.add(result);
 							}
