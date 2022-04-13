@@ -54,7 +54,7 @@ public class CombinedPreferencesGreedy implements GroupFormingAlgorithm {
         List<Agent> sortedList = new ArrayList<>(this.students.asCollection());
         sortedList.sort(Comparator.comparing(Agent::groupPreferenceLength).reversed());
 
-        var groupSizes = new SetOfGroupSizesThatCanStillBeCreated(this.students.count(), groupSizeConstraint, SetOfGroupSizesThatCanStillBeCreated.FocusMode.MAX_FOCUS);
+        var groupSizes = new SetOfGroupSizesThatCanStillBeCreated(this.students.count(), groupSizeConstraint);
 
         // Start iterating and forming groups greedily
         for (Agent student : sortedList) {

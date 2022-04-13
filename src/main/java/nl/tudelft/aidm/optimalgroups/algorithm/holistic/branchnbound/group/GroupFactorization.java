@@ -9,10 +9,10 @@ import java.util.stream.IntStream;
 
 public class GroupFactorization
 {
-	public static record Factorization(boolean isFactorable, int numGroupsOfMinSize, int numGroupsOfMaxSize) {}
+	public record Factorization(boolean isFactorable, int[] numGroupsOfSize) {}
 
 	private List<Factorization> isFactorable;
-	private final GroupSizeConstraint groupSizeConstraint;
+	private final GroupSizeConstraint gsc;
 
 
 	// TODO: capacities for num groups
@@ -27,13 +27,13 @@ public class GroupFactorization
 
 
 	/* CTOR */
-	public GroupFactorization(GroupSizeConstraint groupSizeConstraint, int expectedStudentsMax)
+	public GroupFactorization(GroupSizeConstraint gsc, int expectedStudentsMax)
 	{
-		this.groupSizeConstraint = groupSizeConstraint;
+		this.gsc = gsc;
 
 		this.isFactorable = makeFreshLookupList(expectedStudentsMax);
 
-		Assert.that(groupSizeConstraint.maxSize() - groupSizeConstraint.minSize() == 1)
+		Assert.that(gsc.maxSize() - gsc.minSize() == 1)
 			.orThrowMessage("Fix group factorization to support delta != 1");
 	}
 
@@ -43,38 +43,68 @@ public class GroupFactorization
 
 		return isFactorable.get(numStudents);
 	}
-
-	public synchronized boolean isFactorableIntoValidGroups(int numStudents)
+		
+	public boolean isFactorableIntoValidGroups(int numStudents)
 	{
-		if (numStudents + 1 > isFactorable.size()) {
-			// If larger size is requested, expand list
-			isFactorable = copyIntoResized(isFactorable, numStudents);
-		}
-
-		var resultForNumStudents = isFactorable.get(numStudents);
-		if (resultForNumStudents != null) {
-			return resultForNumStudents.isFactorable;
-		}
-
-		// Not previously evaluted, compute result:
-
-		int maxGroupSize = groupSizeConstraint.maxSize();
-		int minGroupSize = groupSizeConstraint.minSize();
-
-		for (int i = 0; i <= numStudents / maxGroupSize; i++) {
-			for (int j = 0; j <= (numStudents - i * maxGroupSize) / minGroupSize; j++) {
-				int n = maxGroupSize * i + minGroupSize * j;
-				if (n == numStudents) {
-					var factorization = new Factorization(true, j, i);
-					isFactorable.set(numStudents, factorization);
-					return true;
+		var numGroupsOfSize = new int[gsc.maxSize()+1];
+		var remainingStudents = numStudents;
+		
+		int groupSize = gsc.maxSize();
+		
+		int res = 0;
+		while (remainingStudents > 0)
+		{
+			if (res == -1) {
+				if (numGroupsOfSize[groupSize] == 0) {
+					if (groupSize == gsc.maxSize())
+						return false; // can't go higher - inpossible instance
+					groupSize++; // go higher level
+					continue;
+				}
+				else {
+					numGroupsOfSize[groupSize]--;
+					remainingStudents += groupSize;
+					groupSize--; // go down again
+					res = 0;
 				}
 			}
+			
+			var maxGrpsOfCurrentSize = remainingStudents / groupSize;
+			remainingStudents -= maxGrpsOfCurrentSize * groupSize;
+			
+			numGroupsOfSize[groupSize] += maxGrpsOfCurrentSize;
+			
+			if (remainingStudents > 0 && groupSize > gsc.minSize()) {
+				groupSize--;
+			}
+			else if (remainingStudents > 0 && groupSize == gsc.minSize()) {
+				// Could not partition all students over groups, must revise factors
+				res = -1; // some higher sized group must disband
+				
+				// reset for this group size
+				remainingStudents += numGroupsOfSize[groupSize] * groupSize;
+				numGroupsOfSize[groupSize] = 0;
+				
+				// continue with larger sized groups next
+				groupSize++;
+			}
 		}
-
-		var factorization = new Factorization(false, 0, 0);
-		isFactorable.set(numStudents, factorization);
-		return false;
+		
+		
+		// If larger size is requested, expand list
+		isFactorable = copyIntoResized(isFactorable, numStudents);
+		
+//		&& Arrays.stream(numGroupsOfSize).sum() <= numGroupsUpperbound
+		if (remainingStudents == 0) {
+			var factorization = new Factorization(true, numGroupsOfSize);
+			isFactorable.set(numStudents, factorization);
+			return true;
+		}
+		else {
+			var factorization = new Factorization(false, new int[gsc.maxSize()+1]);
+			isFactorable.set(numStudents, factorization);
+			return false;
+		}
 	}
 
 

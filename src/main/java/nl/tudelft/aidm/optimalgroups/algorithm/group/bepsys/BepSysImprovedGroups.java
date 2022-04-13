@@ -239,7 +239,7 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
         unmerged.sort(Comparator.comparingInt((Group group) -> group.members().count()));
 
         int amountOfStudentsToGroup = tentativelyFormedGroups.countDistinctStudents() - finalFormedGroups.countDistinctStudents();
-        var groupConstraints = new SetOfGroupSizesThatCanStillBeCreated(amountOfStudentsToGroup, groupSizeConstraint, SetOfGroupSizesThatCanStillBeCreated.FocusMode.MAX_FOCUS);
+        var groupConstraints = new SetOfGroupSizesThatCanStillBeCreated(amountOfStudentsToGroup, groupSizeConstraint);
 
         /*
             The following is a greedy merge. By group merge we mean combining (partial) groups

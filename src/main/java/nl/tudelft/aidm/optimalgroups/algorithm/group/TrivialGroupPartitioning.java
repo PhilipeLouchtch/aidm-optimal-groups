@@ -45,43 +45,29 @@ public class TrivialGroupPartitioning extends Groups.ListBacked<Group.FormedGrou
 					agents.count(), gsc.minSize(), gsc.maxSize())
 				);
 
-			var numGroupsMaxSize = factorization.numGroupsOfMaxSize();
-			var numGroupsMinSize = factorization.numGroupsOfMinSize();
-
 			var agentsCopyToShuffled = new ArrayList<>(agents.asCollection());
 			Collections.shuffle(agentsCopyToShuffled);
 
 			var agentsToGroup = new Stack<Agent>();
 			agentsToGroup.addAll(agentsCopyToShuffled);
 
-			var maxSize = gsc.maxSize();
-			for (int i = 0; i < numGroupsMaxSize; i++)
+			for (int grpSize = gsc.minSize(); grpSize <= gsc.maxSize(); grpSize++)
 			{
-				var group = new ArrayList<Agent>();
-				for (int j = 0; j < maxSize; j++)
+				var numGroupsOfSize = factorization.numGroupsOfSize()[grpSize];
+				
+				for (int i = 0; i < numGroupsOfSize; i++)
 				{
-					group.add(agentsToGroup.pop());
+					var group = new ArrayList<Agent>();
+					for (int j = 0; j < grpSize; j++)
+					{
+						group.add(agentsToGroup.pop());
+					}
+					
+					var groupAsAgents = Agents.from(group);
+					var projPrefs = AggregatedProjectPreference.usingGloballyConfiguredMethod(groupAsAgents);
+					var tentativeGroup = new Group.TentativeGroup(Agents.from(group), projPrefs);
+					groupsTemp.addAsFormed(tentativeGroup);
 				}
-
-				var groupAsAgents = Agents.from(group);
-				var projPrefs = AggregatedProjectPreference.usingGloballyConfiguredMethod(groupAsAgents);
-				var tentativeGroup = new Group.TentativeGroup(Agents.from(group), projPrefs);
-				groupsTemp.addAsFormed(tentativeGroup);
-			}
-
-			var minSize = gsc.minSize();
-			for (int i = 0; i < numGroupsMinSize; i++)
-			{
-				var group = new ArrayList<Agent>();
-				for (int j = 0; j < minSize; j++)
-				{
-					group.add(agentsToGroup.pop());
-				}
-
-				var groupAsAgents = Agents.from(group);
-				var projPrefs = AggregatedProjectPreference.usingGloballyConfiguredMethod(groupAsAgents);
-				var tentativeGroup = new Group.TentativeGroup(Agents.from(group), projPrefs);
-				groupsTemp.addAsFormed(tentativeGroup);
 			}
 
 			Assert.that(agentsToGroup.isEmpty())
