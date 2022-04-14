@@ -41,11 +41,6 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 				GroupSizeConstraint.manual(4, 5)
 		);
 		
-		var datasetParamCombinations = new ArrayList<SlotsScalingDatasetParams>(
-				nums_students.size() * project_pressure_levels.size() * nums_slots.size()
-						* projectPrefGenerators.size() * gscs.size()
-		);
-		
 		var pregroupingGen = new NamedPregroupingGenerator(PregroupingGenerator.none(), "none");
 		
 		var paramGroups = new ArrayList<GroupedDatasetParams.Group<SlotsScalingDatasetParams>>();
@@ -96,6 +91,7 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 		return new SlotsScalingExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}
 	
+	
 	public record SlotsScalingDatasetParams(Integer numStudents, Integer numProjects, Integer numSlotsPerProj, GroupSizeConstraint gsc, NamedPrefGenerator prefGenerator, NamedPregroupingGenerator pregroupingGenerator, PROJ_PRESSURE proj_pressure) implements DatasetParams
 	{
 		@Override
@@ -110,16 +106,18 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 		@Override
 		public String toString()
 		{
-			return ("DatasetParams[ st#%s, pr#%s[%s], pp[%s-%s], gp[%s] ]").formatted(
-					numStudents,
-					numProjects,
-					proj_pressure,
-					numSlotsPerProj,
-					prefGenerator.shortName(),
-					pregroupingGenerator().shortName()
-			);
+			return "DatasetParams[ st#%s, pr#%s[%s]-[%s], pp[%s], gp[%s] ]"
+					.formatted(
+							numStudents,
+							numProjects,
+							numSlotsPerProj,
+							proj_pressure,
+							prefGenerator.shortName(),
+							pregroupingGenerator().shortName()
+					);
 		}
 	}
+	
 	
 	record SlotsScalingExperimentSubResult(SlotsScalingDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum) implements ExperimentSubResult
 	{
