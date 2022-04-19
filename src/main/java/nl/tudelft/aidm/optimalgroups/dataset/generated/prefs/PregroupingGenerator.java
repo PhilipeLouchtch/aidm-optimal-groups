@@ -5,6 +5,8 @@ import plouchtch.assertion.Assert;
 
 import java.util.Arrays;
 
+import static nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator.ChancePerTypeBased.*;
+
 public interface PregroupingGenerator
 {
 	/**
@@ -25,7 +27,11 @@ public interface PregroupingGenerator
 			return distribution.sample();
 		}
 		
-		public record Item(Integer groupSize, Double chance) {}
+		public record Item(Integer groupSize, Double chance) {
+			public Item {
+				Assert.that(0 <= chance && chance <= 1).orThrowMessage("Invalid value for chance, must be within [0, 1]");
+			}
+		}
 		
 		public ChancePerTypeBased {
 			var chanceSum = Arrays.stream(items).mapToDouble(Item::chance).sum();
@@ -33,15 +39,31 @@ public interface PregroupingGenerator
 		}
 	}
 	
+	/**
+	 * A generator that either creates a non-pregrouping student, or a clique or pregrouping
+	 * students.
+	 *
+	 * @param groupSize The size of clique
+	 * @param chance Chance of creating a clique of given size. Value between [0, 1]
+	 * @return
+	 */
+	static PregroupingGenerator singlePregroupingSizeOnly(int groupSize, double chance)
+	{
+		return new PregroupingGenerator.ChancePerTypeBased(
+				new Item(1, 1 - chance),
+				new Item(groupSize, chance)
+		);
+	}
+	
 	static PregroupingGenerator CE10Like()
 	{
 		// sortof based on CE10
 		return new PregroupingGenerator.ChancePerTypeBased(
-				new ChancePerTypeBased.Item(1, 0.3),
-				new ChancePerTypeBased.Item(2, 0.03),
-				new ChancePerTypeBased.Item(3, 0.15),
-				new ChancePerTypeBased.Item(4, 0.27),
-				new ChancePerTypeBased.Item(5, 0.25)
+				new Item(1, 0.3),
+				new Item(2, 0.03),
+				new Item(3, 0.15),
+				new Item(4, 0.27),
+				new Item(5, 0.25)
 		);
 	}
 	
