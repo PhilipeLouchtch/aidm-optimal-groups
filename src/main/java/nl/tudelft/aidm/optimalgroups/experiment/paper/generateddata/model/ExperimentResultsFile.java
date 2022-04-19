@@ -1,12 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
 
-import nl.tudelft.aidm.optimalgroups.model.Profile;
-import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
-import plouchtch.lang.Lazy;
-
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +10,7 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 {
 	private final File file;
 	
+	private final static int bufferSize = 5;
 	private final ArrayList<ExperimentSubResult> resultsBuffer;
 	
 	private boolean printColumnHeaders = true;
@@ -23,7 +19,7 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	public ExperimentResultsFile(String path)
 	{
 		this.file = new File(path);
-		this.resultsBuffer = new ArrayList<>(100);
+		this.resultsBuffer = new ArrayList<>(bufferSize);
 	}
 	
 	/**
@@ -51,10 +47,15 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	{
 		resultsBuffer.add(subResult);
 		
-		if (resultsBuffer.size() >= 100) {
-			writeResults(resultsBuffer);
-			resultsBuffer.clear();
+		if (resultsBuffer.size() >= bufferSize) {
+			writeBufferToFile();
 		}
+	}
+	
+	private void writeBufferToFile()
+	{
+		writeResults(resultsBuffer);
+		resultsBuffer.clear();
 	}
 	
 	private void writeRow(PrintWriter writer, List<Object> rowData)
@@ -69,7 +70,6 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	{
 		try (var writer = new PrintWriter(new BufferedWriter(new FileWriter(file, true))))
 		{
-			
 			for (ExperimentSubResult result : results)
 			{
 				if (printColumnHeaders) {
@@ -89,4 +89,9 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 		}
 	}
 	
+	@Override
+	public void close() throws Exception
+	{
+		writeBufferToFile();
+	}
 }

@@ -48,28 +48,12 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 		this.generateAndWriteResults();
 	}
 	
-	// SKIP
-//	private /*List<ExperimentAlgorithmSubresult>*/ void generateAndWriteResults()
-//	{
-//		// If the file doesn't exist, or this is a "warmup the javaVM" experiment -> exec the experiment
-//		if (this instanceof WarmupExperiment || !file.exists())
-//		{
-//			var results = generateResults();
-//
-//			// write results to file
-//			writeToFile(file, results);
-//		}
-//
-//		// why read????
-//		return /* readFile */;
-//	}
-	
 	protected String resultsFileName(String suffix)
 	{
 		return experimentDataLocation + identifier + "_%s".formatted(suffix) + ".csv";
 	}
 	
-	abstract protected ExperimentResultsCollector newExperimentResultsFile(String filePath);
+	abstract protected ExperimentResultsCollector newExperimentResultsCollector(String filePath);
 	
 	abstract protected ExperimentSubResult newExperimentSubResult(DATASET_PARAMS params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum);
 	
@@ -80,17 +64,16 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 		
 		for (var paramGroup : groupedDatasetParams.groups())
 		{
-			var resultsCollector = newExperimentResultsFile(resultsFileName(paramGroup.groupIdentifier()));
-			
-			if (resultsCollector.resultsCollectionCanBeSkipped())
-				// Ok, next group
-				continue;
-			
-			for (var datasetParams : paramGroup.asList())
+			try (var resultsCollector = newExperimentResultsCollector(resultsFileName(paramGroup.groupIdentifier())))
 			{
-				System.out.print("\n  exp run for: " + datasetParams.toString());
-				for (int j = 0; j < numToGenPerParam; j++)
+				if (resultsCollector.resultsCollectionCanBeSkipped())
+					// Ok, this one has been done already
+					continue;
+				
+				for (var datasetParams : paramGroup.asList())
 				{
+					System.out.print("\n  exp run for: " + datasetParams.toString());
+					
 					var datasets = IntStream.rangeClosed(1, numToGenPerParam)
 					                        .mapToObj(__ -> datasetParams.intoNewlyGeneratedDataset())
 					                        .toList();
@@ -109,9 +92,7 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 								var matching = algo.determineMatching(dataset);
 								var end = Instant.now();
 								
-								Assert.that(dataset.allAgents()
-								                   .count() == AgentToProjectMatching.from(matching)
-								                                                     .countDistinctStudents())
+								Assert.that(dataset.allAgents().count() == AgentToProjectMatching.from(matching).countDistinctStudents())
 								      .orThrowMessage("Invalid result");
 								
 								System.out.print("\b."); // done
@@ -119,7 +100,6 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 								var runtime = Duration.between(start, end)
 								                      .abs();
 								
-								// todo
 								var result = newExperimentSubResult(datasetParams, algo, matching, runtime, run_no);
 								
 								resultsCollector.add(result);
@@ -128,9 +108,12 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 						
 					} // algos
 					
-				} // Genned dataset
-				
-			} // single dataset param
+				} // single dataset param
+			}
+			catch (Exception ex) {
+				// Needed to do a try-with-resources
+				throw new RuntimeException(ex);
+			}
 			
 		} // group
 	}

@@ -73,7 +73,7 @@ public class SizeExperiment extends GeneratedDataExperiment<SimpleDatasetParams>
 	
 	
 	@Override
-	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
+	protected ExperimentResultsCollector newExperimentResultsCollector(String filePath)
 	{
 		return new ExperimentResultsFile(filePath);
 	}

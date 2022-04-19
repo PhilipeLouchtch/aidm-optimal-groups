@@ -80,7 +80,7 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 	}
 	
 	@Override
-	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
+	protected ExperimentResultsCollector newExperimentResultsCollector(String filePath)
 	{
 		return new ExperimentResultsFile(filePath);
 	}

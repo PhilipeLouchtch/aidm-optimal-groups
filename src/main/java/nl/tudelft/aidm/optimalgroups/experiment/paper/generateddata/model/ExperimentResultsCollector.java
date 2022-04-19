@@ -1,6 +1,6 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
 
-public interface ExperimentResultsCollector
+public interface ExperimentResultsCollector extends AutoCloseable
 {
 	boolean resultsCollectionCanBeSkipped();
 	

@@ -60,12 +60,12 @@ public class WarmupExperiment extends GeneratedDataExperiment<SimpleDatasetParam
 	
 	public WarmupExperiment(List<GroupProjectAlgorithm> algos)
 	{
-		super(String.valueOf(Instant.now().toEpochMilli()), paramsForExperiments(), algos, 5, 5);
+		super(String.valueOf("Warmup @" + Instant.now().toEpochMilli()), paramsForExperiments(), algos, 5, 5);
 	}
 	
 	
 	@Override
-	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
+	protected ExperimentResultsCollector newExperimentResultsCollector(String filePath)
 	{
 		// "ExperimentResultsBlackhole"
 		return new ExperimentResultsCollector()
@@ -80,6 +80,12 @@ public class WarmupExperiment extends GeneratedDataExperiment<SimpleDatasetParam
 			public void add(ExperimentSubResult subResult)
 			{
 				// ignore
+			}
+			
+			@Override
+			public void close() throws Exception
+			{
+				// nothing
 			}
 		};
 	}

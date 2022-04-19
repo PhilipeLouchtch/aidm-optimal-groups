@@ -91,7 +91,7 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 	}
 	
 	@Override
-	protected ExperimentResultsCollector newExperimentResultsFile(String filePath)
+	protected ExperimentResultsCollector newExperimentResultsCollector(String filePath)
 	{
 		return new ExperimentResultsFile(filePath);
 	}
