@@ -231,6 +231,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
 
             var possibleGroupMerges = new PriorityQueue<>(Comparator.comparing(BepSysReworked.PossibleGroupMerge::matchDisutilScore));
 
+            // Create potential group merges
             for (var otherUnmergedGroup : unmerged) {
                 int numMembersInOtherUnmergedGroup = otherUnmergedGroup.members().count();
                 int together = numMembersInUnmergedGroup + numMembersInOtherUnmergedGroup;
@@ -241,14 +242,22 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 }
             }
 
-            // if no candidate group merges
+            // If there were no potential merges found, try doing a partial merge (merged group that cannot be 'formed' yet)
             if (possibleGroupMerges.size() == 0) {
                 for (Group otherUnmergedGroup : unmerged) {
                     int together = numMembersInUnmergedGroup + otherUnmergedGroup.members().count();
 
-
-                    // try again with relaxed constraints on group creation (up to group size)
-                    if (together <= groupSizeConstraint.maxSize()) {
+                    // Determine the group size upperbound for the potential merges:
+                    int togetherMaxBound = groupSizeConstraint.maxSize();
+                    for (int i = groupSizeConstraint.maxSize(); i > 0; i--) {
+                        if (groupConstraints.mayFormGroupOfSize(i))
+                            togetherMaxBound = i;
+                    }
+                    
+                    // original bepsys: if together <= groupSizeConstraint.maxSize()
+                    // but we must have a tigher bound to prevent infinite loops
+                    // (eg group of 4 and group of 6 (with that order in the unmergedGroups collection) with gsc(5,8)
+                    if (together <= togetherMaxBound) {
                         possibleGroupMerges.add(new PossibleGroupMerge(unmergedGroup, otherUnmergedGroup));
                     }
                 }
