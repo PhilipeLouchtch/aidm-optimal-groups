@@ -37,10 +37,10 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 		
 		List<GroupSizeConstraint> gscs = new ArrayList<>();
 		
-		for (int i = 1; i <= 6; i++)
+		for (int i = 2; i <= 6; i++)
 		for (int j = 2; j <= 8; j++)
 		{
-			if (i < j) {
+			if (i < j && j - i <= 4) {
 				// Min size must be lower than max size (by definition)
 				// and: do not consider min = max sizes as this complicates the experiment
 				// parameters - the number of students must then be dividable by the group-size
