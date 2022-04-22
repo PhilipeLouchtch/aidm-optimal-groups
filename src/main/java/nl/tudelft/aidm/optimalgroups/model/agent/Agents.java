@@ -60,7 +60,7 @@ public class Agents implements Iterable<Agent>
 	
 	public Optional<Agent> findBySequenceNumber(Integer sequenceNumber)
 	{
-		if (sequenceNumber <= 0 || sequenceNumber >= count())
+		if (sequenceNumber <= 0 || count() < sequenceNumber)
 			return Optional.empty();
 		
 		return Optional.of(this.asArray[sequenceNumber]);
