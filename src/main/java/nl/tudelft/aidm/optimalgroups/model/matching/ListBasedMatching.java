@@ -10,7 +10,11 @@ public abstract class ListBasedMatching<F, T> implements Matching<F, T>
 {
 	private final DatasetContext datasetContext;
 	private List<Match<F, T>> backingList;
-
+	
+	/**
+	 * Constructs an empty Matching
+	 * @param datasetContext The dataset context for which this matching belongs to (partially)
+	 */
 	public ListBasedMatching(DatasetContext datasetContext)
 	{
 		this(datasetContext, new ArrayList<>());

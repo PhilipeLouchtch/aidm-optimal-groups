@@ -65,6 +65,9 @@ public interface AgentToProjectMatching extends Matching<Agent, Project>
 	 */
 	class Simple extends ListBasedMatching<Agent, Project> implements AgentToProjectMatching
 	{
+		/**
+		 * Constructs an empty matching
+		 */
 		public Simple(DatasetContext datasetContext)
 		{
 			super(datasetContext);

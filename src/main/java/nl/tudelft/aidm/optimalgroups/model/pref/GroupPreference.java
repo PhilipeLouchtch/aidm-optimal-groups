@@ -95,11 +95,11 @@ public interface GroupPreference
 	class LazyGroupPreference implements GroupPreference
 	{
 		private final DatasetContext datasetContext;
-		private final Integer[] agentSeqIds;
+		private final int[] agentSeqIds;
 		
 		private Agent[] asArray;
 		
-		public LazyGroupPreference(DatasetContext datasetContext, Integer... agentSeqIds)
+		public LazyGroupPreference(DatasetContext datasetContext, int... agentSeqIds)
 		{
 			this.datasetContext = datasetContext;
 			this.agentSeqIds = agentSeqIds;
@@ -109,9 +109,13 @@ public interface GroupPreference
 		public Agent[] asArray()
 		{
 			if (asArray == null) {
-				this.asArray = Arrays.stream(agentSeqIds)
-						.map(agentId -> datasetContext.allAgents().findBySequenceNumber(agentId).orElseThrow())
-						.toArray(Agent[]::new);
+				try {
+					this.asArray = Arrays.stream(agentSeqIds)
+					                     .mapToObj(agentId -> datasetContext.allAgents().findBySequenceNumber(agentId).orElseThrow())
+					                     .toArray(Agent[]::new);
+				} catch (NoSuchElementException ex) {
+					throw new RuntimeException(ex);
+				}
 			}
 			
 			return this.asArray;

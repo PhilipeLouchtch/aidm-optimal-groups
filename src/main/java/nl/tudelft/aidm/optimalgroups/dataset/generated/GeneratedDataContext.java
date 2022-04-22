@@ -16,13 +16,8 @@ import plouchtch.assertion.Assert;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator.ChancePerTypeBased.*;
 
 public class GeneratedDataContext implements DatasetContext
 {
@@ -30,13 +25,39 @@ public class GeneratedDataContext implements DatasetContext
 	private final Agents agents;
 	private final Projects projects;
 	private final GroupSizeConstraint groupSizeConstraint;
-
+	
+	/**
+	 * Constructs a new generated dataset without any pregrouping students, thus all students only have preferences over the projects
+	 */
+	public GeneratedDataContext(int numAgents, Projects projects, GroupSizeConstraint groupSizeConstraint, ProjectPreferenceGenerator projPrefGenerator)
+	{
+		this(numAgents, projects, groupSizeConstraint, projPrefGenerator, projPrefGenerator, PregroupingGenerator.none());
+	}
+	
+	/**
+	 * Constructs a new generated dataset whereby the single and pregrouping students project preferences are drawn from the same distribution
+	 */
 	public GeneratedDataContext(int numAgents, Projects projects, GroupSizeConstraint groupSizeConstraint, ProjectPreferenceGenerator projPrefGenerator, PregroupingGenerator pregroupingGenerator)
+	{
+		this(numAgents, projects, groupSizeConstraint, projPrefGenerator, projPrefGenerator, pregroupingGenerator);
+	}
+	
+	/**
+	 * Constructs a new generated dataset with single and pregrouping students whereby the distribution from which the two types of students
+	 * (pregrouping or solo)
+	 * @param numAgents
+	 * @param projects
+	 * @param groupSizeConstraint
+	 * @param soloStudProjPrefGenerator
+	 * @param pregroupStudProjPrefGenerator
+	 * @param pregroupingGenerator
+	 */
+	public GeneratedDataContext(int numAgents, Projects projects, GroupSizeConstraint groupSizeConstraint,
+	                            ProjectPreferenceGenerator soloStudProjPrefGenerator, ProjectPreferenceGenerator pregroupStudProjPrefGenerator,
+	                            PregroupingGenerator pregroupingGenerator)
 	{
 		this.projects = projects;
 		this.groupSizeConstraint = groupSizeConstraint;
-		
-		Supplier<Integer> cliqueSizeSupplier = null;
 		
 		var agentsAsList = new ArrayList<Agent>();
 		for (int i = 1; i <= numAgents; i = agentsAsList.size() + 1)
@@ -45,13 +66,21 @@ public class GeneratedDataContext implements DatasetContext
 			var numAgentsToMakeRemaining = numAgents - i + 1;
 			var numAgentsToMake = Math.min(groupSize, numAgentsToMakeRemaining);
 			
-			final var projectPreference = projPrefGenerator.generateNew();
+			var idsOfAgentsToCreate = IntStream.range(i, i + numAgentsToMake).toArray();
 			
-			var idsOfAgentsToCreate = IntStream.range(i, i + numAgentsToMake).boxed().toArray(Integer[]::new);
+			GroupPreference groupPref;
+			ProjectPreference projectPreference;
 			
-			var groupPref = numAgentsToMake > 1
-					? new GroupPreference.LazyGroupPreference(this, idsOfAgentsToCreate)
-					: GroupPreference.none();
+			if (numAgentsToMake == 1)
+			{
+				projectPreference = soloStudProjPrefGenerator.generateNew();
+				groupPref = GroupPreference.none();
+			}
+			else
+			{
+				projectPreference = pregroupStudProjPrefGenerator.generateNew();
+				groupPref = new GroupPreference.LazyGroupPreference(this, idsOfAgentsToCreate);
+			}
 			
 			for (Integer newAgentSeqId : idsOfAgentsToCreate)
 			{

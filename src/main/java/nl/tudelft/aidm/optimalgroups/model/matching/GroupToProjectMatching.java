@@ -1,5 +1,6 @@
 package nl.tudelft.aidm.optimalgroups.model.matching;
 
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
@@ -10,23 +11,16 @@ import java.util.stream.Collectors;
 
 public interface GroupToProjectMatching<G extends Group> extends Matching<G, Project>
 {
-//	@Override
-//	default GiniCoefficient giniCoefficient()
-//	{
-//		return new GiniCoefficientGroupRank(this);
-//	}
-//
-//	@Override
-//	default AvgRank avgRank()
-//	{
-//		return new AvgRankAssignedProjectToGroup(this);
-//	}
-//
-//	@Override
-//	default WorstRank worstRank()
-//	{
-//		return new WorstRankAssignedProjectToGroup(this);
-//	}
+	/**
+	 * The pregrouping that was determined in the dataset and was used in the making of the matching.
+	 *
+	 * Included in the GroupToProjectMatching to pass the information on for metrics and etc. Especially
+	 * for thesis results collection. Additionally, there (may) exist multiple algorithms that determine
+	 * the cliques/pregroupings in the dataset, by including their results we do not need to keep track
+	 * of how the pregrouping was established
+	 * @return The pregrouping which was determined by some method before running the mechanism (supported mechanisms)
+	 */
+//	Pregrouping pregrouping();
 	
 	static GroupToProjectMatching<Group.FormedGroup> byTriviallyPartitioning(AgentToProjectMatching agentToProjectMatching)
 	{
