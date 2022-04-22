@@ -32,9 +32,6 @@ public class GroupFactorization
 		this.gsc = gsc;
 
 		this.isFactorable = makeFreshLookupList(expectedStudentsMax);
-
-		Assert.that(gsc.maxSize() - gsc.minSize() == 1)
-			.orThrowMessage("Fix group factorization to support delta != 1");
 	}
 
 
