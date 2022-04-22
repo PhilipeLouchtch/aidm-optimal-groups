@@ -20,6 +20,9 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 	{
 		this.file = new File(path);
 		this.resultsBuffer = new ArrayList<>(bufferSize);
+		
+		// If the application is closed, or somehow terminated, try flushing the buffer with results
+		Runtime.getRuntime().addShutdownHook(new Thread(this::writeBufferToFile));
 	}
 	
 	/**
