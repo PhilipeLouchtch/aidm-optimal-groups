@@ -20,8 +20,6 @@ import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model
 
 public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSizeBoundsExperiment.DatasetParams>
 {
-	enum PROJ_PRESSURE {TIGHT, MID, LOOSE}
-	
 	private static GroupedDatasetParams<DatasetParams> paramsForExperiments()
 	{
 		List<Integer> nums_students = List.of(50, 200, 600);
@@ -57,30 +55,25 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 		var paramGroups = new ArrayList<GroupedDatasetParams.Group<DatasetParams>>();
 		
 		for (var num_students : nums_students)
-		for (var project_pressure : project_pressure_levels)
-		{
-			var datasetParamGroup = new ArrayList<DatasetParams>(nums_slots.size() * gscs.size() * projectPrefGenerators.size());
-			
-			for (var num_slots : nums_slots)
-			for (var gsc : gscs)
-			for (var projPrefsGen : projectPrefGenerators)
+			for (var project_pressure : project_pressure_levels)
 			{
-				var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
+				var datasetParamGroup = new ArrayList<DatasetParams>(nums_slots.size() * gscs.size() * projectPrefGenerators.size());
 				
-				var num_projects = switch (project_pressure) {
-						case TIGHT -> minProjectAmount.asInt();
-						case MID -> (int) Math.ceil(minProjectAmount.asInt() * 1.5);
-						case LOOSE -> (int) Math.ceil(minProjectAmount.asInt() * 2);
-				};
+				for (var num_slots : nums_slots)
+					for (var gsc : gscs)
+						for (var projPrefsGen : projectPrefGenerators)
+						{
+							var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
+							var num_projects = (int) Math.ceil(minProjectAmount.asInt() * project_pressure.factor / num_slots);
+							
+							var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen, project_pressure);
+							
+							datasetParamGroup.add(paramsForDataset);
+						}
 				
-				var paramsForDataset = new DatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen, project_pressure);
-				
-				datasetParamGroup.add(paramsForDataset);
+				String groupName = "stud[%s]_pressure[%s]".formatted(num_students, project_pressure.name());
+				paramGroups.add(new GroupedDatasetParams.Group<>(groupName, datasetParamGroup));
 			}
-			
-			String groupName = "stud[%s]_pressure[%s]".formatted(num_students, project_pressure.name());
-			paramGroups.add(new GroupedDatasetParams.Group<>(groupName, datasetParamGroup));
-		}
 		
 		return new GroupedDatasetParams<>(paramGroups);
 	}
@@ -97,7 +90,8 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 	}
 	
 	@Override
-	protected nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult newExperimentSubResult(DatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
+	protected nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult newExperimentSubResult(
+			DatasetParams params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
 	{
 		return new ExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}

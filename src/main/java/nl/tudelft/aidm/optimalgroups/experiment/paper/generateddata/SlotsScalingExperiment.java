@@ -20,8 +20,6 @@ import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model
 
 public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScalingExperiment.SlotsScalingDatasetParams>
 {
-	enum PROJ_PRESSURE {TIGHT, MID, LOOSE}
-	
 	private static GroupedDatasetParams<SlotsScalingDatasetParams> paramsForExperiments()
 	{
 		List<Integer> nums_students = List.of(50, 200, 600);
@@ -55,12 +53,7 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 						for (var projPrefsGen : projectPrefGenerators)
 						{
 							var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
-							
-							var num_projects = switch (project_pressure) {
-									case TIGHT -> minProjectAmount.asInt();
-									case MID -> (int) Math.ceil(minProjectAmount.asInt() * 1.5);
-									case LOOSE -> (int) Math.ceil(minProjectAmount.asInt() * 2);
-							};
+							var num_projects = (int) Math.ceil(minProjectAmount.asInt() * project_pressure.factor / num_slots);
 							
 							var paramsForDataset = new SlotsScalingDatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen, project_pressure);
 							
@@ -86,7 +79,7 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 	}
 	
 	@Override
-	protected ExperimentSubResult newExperimentSubResult(SlotsScalingDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
+	protected ExperimentSubResult newExperimentSubResult(SlotsScalingDatasetParams params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
 	{
 		return new SlotsScalingExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}

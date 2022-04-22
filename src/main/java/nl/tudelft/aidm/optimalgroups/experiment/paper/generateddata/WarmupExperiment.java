@@ -5,6 +5,7 @@ import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerato
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
+import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
 import java.time.Duration;
@@ -91,7 +92,7 @@ public class WarmupExperiment extends GeneratedDataExperiment<SimpleDatasetParam
 	}
 	
 	@Override
-	protected ExperimentSubResult newExperimentSubResult(SimpleDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
+	protected ExperimentSubResult newExperimentSubResult(SimpleDatasetParams params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
 	{
 		return new SizeExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}

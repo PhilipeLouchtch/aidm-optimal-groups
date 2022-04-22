@@ -55,7 +55,7 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 	
 	abstract protected ExperimentResultsCollector newExperimentResultsCollector(String filePath);
 	
-	abstract protected ExperimentSubResult newExperimentSubResult(DATASET_PARAMS params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum);
+	abstract protected ExperimentSubResult newExperimentSubResult(DATASET_PARAMS params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum);
 	
 	// MAIN FN - make choices here
 	private void generateAndWriteResults()
@@ -100,7 +100,7 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 								var runtime = Duration.between(start, end)
 								                      .abs();
 								
-								var result = newExperimentSubResult(datasetParams, algo, matching, runtime, run_no);
+								var result = newExperimentSubResult(datasetParams, dataset, algo, matching, runtime, run_no);
 								
 								resultsCollector.add(result);
 							}
