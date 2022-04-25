@@ -2,7 +2,6 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
-import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator.Type;
@@ -13,7 +12,6 @@ import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsT
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
-import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
@@ -48,7 +46,7 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 		var gsc = GroupSizeConstraint.manual(4,5);
 		
 		List<NamedPrefGenerator> projectPrefGenerators = List.of(
-				ProjPrefVariations.singleton(),
+//				ProjPrefVariations.singleton(),
 				ProjPrefVariations.linearPerturbedSlightly(),
 				ProjPrefVariations.linearPerturbedMore(),
 				ProjPrefVariations.random(),
@@ -189,7 +187,9 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 					
 					"project_pressure",
 					"pregroup_proj_pref_type",
-					"num_groups_fully_together"
+					
+					"num_pregroups_fully_together",
+					"num_pregroups_max"
 			);
 		}
 		
@@ -215,14 +215,21 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 					
 					params().proj_pressure.name(),
 					params().pregroup_pref_dist().name(),
-					numGroupsFullyTogether()
+					
+					numPregroupsFullyTogether(),
+					numPregroupsMax()
 			);
 		}
 		
-		public int numGroupsFullyTogether()
+		public int numPregroupsFullyTogether()
 		{
 			var numPreformedGroupsTogether = new NumberProposedGroupsTogether(matching, currentPregrouping());
 			return numPreformedGroupsTogether.asInt();
+		}
+		
+		public int numPregroupsMax()
+		{
+			return currentPregrouping().count();
 		}
 		
 		public Profile profileAllStudents()
