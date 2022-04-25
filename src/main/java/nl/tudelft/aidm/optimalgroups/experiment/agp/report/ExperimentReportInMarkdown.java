@@ -161,7 +161,7 @@ public class ExperimentReportInMarkdown
 			heading("Algorithm popularity", 4);
 				doc.append(Markdown.italic("Algorithm name followed by the number of agents, in braces, that prefer it over the other") + "\n");
 				
-				unorderedList((String[]) experimentResult.popularityMatrix().asSet().toArray(Object[]::new));
+				unorderedList(experimentResult.popularityMatrix().asSet().stream().map(Object::toString).toArray(String[]::new));
 	}
 	
 	private void image(JFreeChart chart)
