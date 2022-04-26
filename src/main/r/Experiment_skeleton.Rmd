@@ -1,0 +1,266 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r include=FALSE}
+library(tidyverse)
+library(dplyr)
+
+profile_histo <- function(cell) {
+    as.integer(unlist(scan(text = cell, what = "integer", sep = "|", quiet = TRUE)))
+}
+
+rank_profile <- function(cell) {
+    profile_histo(cell) %>%
+        imap(~ list(rep.int(.y, .x))) %>%
+        unlist
+}
+
+# TODO: slots
+aupcr <- function(num_projs, raw_profile) {
+    worst_rank <- worst_obtained_rank(raw_profile)
+    
+    profile <- profile_histo(raw_profile)
+    num_studs <- sum(profile)
+    cumsum_upto_worst = cumsum(profile)
+    
+    # The cumsum of a profile is not complete, because out profiles are not complete
+    # Let "3|2|1" be a profile of 6 students in a setting with 10 projects,
+    # then cumsum will only give us the following: [3, 5, 6] but we need [3, 5, 6, 6, 6, 6, 6, 6, 6, 6]
+    # because we set the "R" (ranks) to be the #projects in order to easily compare and compute AUPCR's between
+    # generated dataset instances with same paramers
+    AUPC <- sum(cumsum_upto_worst) + (num_projs - worst_rank) * cumsum_upto_worst[worst_rank]
+    aupcr <- AUPC / (num_projs * num_studs)
+}
+
+worst_obtained_rank <- function(xa) {
+    profile_histo(xa) %>%
+        length %>%
+        as.integer
+}
+
+## Loading in the data
+exp_name = "size_exp_att1"
+
+data_dir = "D:\\Code\\Git repositories\\aidm-optimal-groups\\results\\thesis"
+
+exp_files <- list.files(data_dir, pattern = paste0(exp_name, "_.*\\.csv"), full.names = TRUE)
+
+column_spec <- cols_only(
+    num_students = col_integer(),
+    num_projects = col_integer(),
+    num_slots = col_factor(),
+    proj_pref_type = col_factor(),
+    pregroup_type = col_factor(),
+    mechanism = col_factor(),
+    trial = col_factor(),
+    duration_ms = col_integer(),
+    profile_all = col_character()
+)
+
+
+data_exps <- map_dfr(exp_files, read_csv, col_types = column_spec)
+data_exps_aug <- data_exps %>%
+    mutate(
+        worst_rank = map(profile_all, worst_obtained_rank) %>% unlist,
+        aupcr = map2(num_projects, profile_all, aupcr) %>% unlist
+    )
+
+```
+
+
+
+```{r}
+# data_all <-  read_csv("../../../reports/runtimes_big.csv", col_types = cols(num_students = col_factor(), num_projects = col_factor(), proj_pref_type = col_factor(), mechanism = col_factor()))
+
+data_all <- data_exps_aug
+
+data_singleton <- data_all %>% filter(proj_pref_type == "singleton")
+data_p1 <- data_all %>% filter(proj_pref_type == "linear_perturbed_1")
+data_p4 <- data_all %>% filter(proj_pref_type == "linear_perturbed_4")
+data_rand <- data_all %>% filter(proj_pref_type == "random")
+data_realistic <- data_all %>% filter(proj_pref_type == "realistic")
+
+
+# colors_mechanism = c("#7a5195", "#ffa600")
+```
+
+## Some initial playing with scatterplot3d
+```{r}
+library(scatterplot3d)
+
+plot_scatter3d <- function(data) {
+    
+    #colors <- c("#003f5c", "#58508d", "#bc5090", "#ff6361", "#ffa600")
+    colors = c("#003f5c" ,"#7a5195" ,"#ef5675" ,"#ffa600")
+    colors_mechanism = c('#66c2a5','#fc8d62','#8da0cb','#e78ac3')
+    
+    shapes <- c(15, 16, 17, 18)
+    
+    scatterplot3d(
+        x = data$num_projects,
+        y = data$num_students,
+        z = data$duration_ms / 1000, 
+        pch = shapes[factor(data$proj_pref_type)],
+        color = colors_mechanism[factor(data$mechanism)]
+        #,zlim = c(0,15)
+    )
+    
+}
+
+plot_scatter3d(filter(data_all, num_slots == 1))
+
+plot_scatter3d(data_singleton)
+plot_scatter3d(data_p1)
+plot_scatter3d(data_p4)
+plot_scatter3d(data_rand)
+plot_scatter3d(data_realistic)
+
+```
+
+These are some other plots
+
+```{r eval=FALSE, include=FALSE}
+library(tidyverse)
+library(svglite)
+
+# install.packages("svglite")
+
+# data_all <- read_csv("../../../reports/runtimes_big.csv", col_types = cols(num_students = col_factor(), num_projects = col_factor(), proj_pref_type = col_factor()))
+
+#unique(data_all$num_students)
+
+mechanism_name_map = new.env()
+mechanism_name_map[["Chiarandini w Fair pregrouping owa - no_grouping"]] = "Fair"
+mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
+mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
+
+title <- function(mechanism_name, proj_pref_type) {
+    pretty_mechanism_name = mechanism_name_map[[mechanism_name]]
+    pretty_proj_pref_type = paste("(", proj_pref_type, ")", sep = "")
+    paste(pretty_mechanism_name, pretty_proj_pref_type, sep = " - ")
+}
+
+
+# RUNTIMES
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        data_filtered <- data_all %>% filter(mechanism == mech & proj_pref_type == ppt)
+        
+        pretty_title = title(mech, ppt)
+        
+        plot <- ggplot(data_filtered, aes(x = num_students, y = duration_ms / 1000, group = num_students)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_wrap(~num_projects) +
+                    ylim(0, 90) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "Duration (sec)",
+                        x = "# students"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "size_exp", "runtimes", ppt, sep = "/")
+        filename <- paste(path, paste("runtimes_", pretty_title, ".png", sep = ""), sep ="/")
+        ggsave(filename,
+               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        )
+    }
+}
+
+# QUALITY (AUPCR)
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        data_filtered <- data_all %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
+        
+        pretty_title = title(mech, ppt)
+        
+        plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = num_students)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_wrap(~num_projects) +
+                    ylim(0.5, 1) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "AUPCR",
+                        x = "# students"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "size_exp", "aupcr", ppt, sep = "/")
+        filename <- paste(path, paste("aupcr_", pretty_title, ".png", sep = ""), sep ="/")
+        ggsave(filename,
+               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        )
+    }
+}
+
+# SLOTS - RUNTIME
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        data_filtered <- data_all %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
+        
+        pretty_title = title(mech, ppt)
+        
+        plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = num_students)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_wrap(~num_projects) +
+                    ylim(0.5, 1) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "AUPCR",
+                        x = "# students"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "size_exp", "aupcr", ppt, sep = "/")
+        filename <- paste(path, paste("aupcr_", pretty_title, ".png", sep = ""), sep ="/")
+        ggsave(filename,
+               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        )
+    }
+}
+```
+
+## Using plotly
+```{r}
+
+library(plotly)
+
+plot_data <- function(data) {
+    fig <- plot_ly(data,
+            x = ~num_projects,
+            y = ~num_students,
+            z = ~(duration_ms / 1000),
+            color = ~as.factor(mechanism),
+            colors = colors_mechanism
+        ) %>%
+        add_markers(size=1) %>% 
+        layout(
+            scene = list(
+                xaxis = list(title = "# projects"),
+                yaxis = list(title = "# students"),
+                zaxis = list(title = "duration (sec)", type = "log"),
+                camera = list(projection = list(type = 'orthographic'))
+            ),
+            legend = list(orientation = "h")
+        )
+    
+    return(fig)
+}
+
+plot_data(data_all)
+plot_data(data_singleton)
+plot_data(data_p1)
+plot_data(data_p4)
+plot_data(data_r)
+```
+

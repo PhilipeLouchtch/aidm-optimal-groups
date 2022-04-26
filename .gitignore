@@ -8,10 +8,13 @@ build
 .classpath
 bin/
 lib
-outputtxt/*
-reports/
-data/
-results/thesis
 
 !/gradle
 .Rproj.user
+
+outputtxt/*
+data/
+reports/
+results/thesis
+src/main/r/plots
+

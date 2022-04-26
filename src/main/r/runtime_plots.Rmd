@@ -106,4 +106,3 @@ plot_data(data_p4)
 plot_data(data_r)
 ```
 
-
