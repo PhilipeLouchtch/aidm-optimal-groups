@@ -10,7 +10,10 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 {
 	private final File file;
 	
-	private final static int bufferSize = 5;
+	// same as number of trials so that only a full set of trials is recorded
+	// (brittle implementation though)
+	private final static int bufferSize = 3;
+	
 	private final ArrayList<ExperimentSubResult> resultsBuffer;
 	
 	private boolean printColumnHeaders = true;
@@ -22,7 +25,7 @@ public class ExperimentResultsFile implements ExperimentResultsCollector
 		this.resultsBuffer = new ArrayList<>(bufferSize);
 		
 		// If the application is closed, or somehow terminated, try flushing the buffer with results
-		Runtime.getRuntime().addShutdownHook(new Thread(this::writeBufferToFile));
+//		Runtime.getRuntime().addShutdownHook(new Thread(this::writeBufferToFile));
 	}
 	
 	/**
