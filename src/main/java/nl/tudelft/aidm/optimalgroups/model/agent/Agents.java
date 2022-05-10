@@ -98,14 +98,19 @@ public class Agents implements Iterable<Agent>
 
 	public Agents with(Agents other)
 	{
-		Assert.that(/*((datasetContext == null && other.datasetContext != null) || (datasetContext != null && other.datasetContext == null) || (datasetContext != null && other.datasetContext != null))*/
-			datasetContext.equals(other.datasetContext)).orThrowMessage("Cannot combine Agents: datasetcontext mismatch");
+		if (this.datasetContext == null)
+			return other;
+		if (other.datasetContext == null)
+			return this; // doesn't matter
+		
+		Assert.that(datasetContext.equals(other.datasetContext))
+		      .orThrowMessage("Cannot combine Agents: datasetcontext mismatch");
 
-		var copyAgents = new LinkedHashSet<Agent>(this.asSet.size() + other.asSet.size());
-		copyAgents.addAll(this.asSet);
-		copyAgents.addAll(other.asSet);
+		var combinedAgentsSet = new LinkedHashSet<Agent>(this.asSet.size() + other.asSet.size());
+		combinedAgentsSet.addAll(this.asSet);
+		combinedAgentsSet.addAll(other.asSet);
 
-		return new Agents(datasetContext, copyAgents);
+		return new Agents(this.datasetContext, combinedAgentsSet);
 	}
 
 	public Agents without(Agent agent)
@@ -120,12 +125,13 @@ public class Agents implements Iterable<Agent>
 
 	public Agents without(Agents other)
 	{
-		if (other.count() == 0) return this;
+		if (this.count() == 0 || other.count() == 0)
+			return this;
 
 		Assert.that(datasetContext.equals(other.datasetContext))
 			.orThrowMessage("Cannot remove Agents: datasetcontext mismatch");
 
-		LinkedHashSet<Agent> without = new LinkedHashSet<>(Math.max(this.asSet.size() - other.count(), 0));
+		LinkedHashSet<Agent> without = new LinkedHashSet<>(Math.max(this.count() - other.count(), 0));
 		for (var agent : this.asSet) {
 			if (!other.asSet.contains(agent)) {
 				without.add(agent);
@@ -139,6 +145,11 @@ public class Agents implements Iterable<Agent>
 	public Iterator<Agent> iterator()
 	{
 		return asSet.iterator();
+	}
+	
+	public static Agents empty()
+	{
+		return new Agents(null, new LinkedHashSet<>());
 	}
 	
 	public static Agents from(Agent... agents)

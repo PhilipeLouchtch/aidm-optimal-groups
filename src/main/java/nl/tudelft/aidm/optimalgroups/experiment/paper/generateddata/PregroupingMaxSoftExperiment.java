@@ -3,8 +3,13 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator.Type;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.PregroupingAgentsGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.ProportionalAgentGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.ProportionalAgentGenerator.SubGen;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.SoloAgentGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.SoloAndPregroupingAgentsGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator.Type;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
@@ -21,27 +26,35 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.WeakHashMap;
+import java.util.stream.Stream;
 
 import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.serializeProfile;
 
 public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<PregroupingMaxSoftExperiment.MaxPregroupingsDatasetParams>
 {
-	enum PREGROUP_PREF_DIST
+	enum PREGROUP_PREF_DIST_TYPE
 	{
 		IDENTICAL,
 		DIFFERENT,
 		MIX
 	}
 	
+	record Proportion(double asDouble)
+	{
+		public String asString()
+		{
+			return ((int) asDouble * 100) + " %";
+		}
+	}
+	
 	private static GroupedDatasetParams<MaxPregroupingsDatasetParams> paramsForExperiments()
 	{
-		List<Integer> nums_students = List.of(600, 200, 50);
-		List<PROJ_PRESSURE> project_pressure_levels = List.of(PROJ_PRESSURE.TIGHT, PROJ_PRESSURE.MID, PROJ_PRESSURE.LOOSE);
-//		List<Integer> nums_projects = List.of(5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180);
-		List<Integer> nums_slots = List.of(1);
+		var nums_students = List.of(600, 200, 50);
+		var project_pressure_levels = List.of(PROJ_PRESSURE.TIGHT, PROJ_PRESSURE.MID, PROJ_PRESSURE.LOOSE);
+		var nums_slots = List.of(1);
 		
-		List<Integer> pregrouping_proportions = List.of(/*0, */ 10, /*20,*/ 30,/* 40, 50,*/ 60, /*70, 80,*/ 90);//, 100);
-		List<PREGROUP_PREF_DIST> pregrouping_proj_pref_types = List.of(PREGROUP_PREF_DIST.IDENTICAL, PREGROUP_PREF_DIST.DIFFERENT, PREGROUP_PREF_DIST.MIX);
+		var pregrouping_proportions = Stream.of(0.1, 0.3, 0.6, 0.9).map(Proportion::new).toList();
+		var pregrouping_proj_pref_types = List.of(PREGROUP_PREF_DIST_TYPE.IDENTICAL, PREGROUP_PREF_DIST_TYPE.DIFFERENT, PREGROUP_PREF_DIST_TYPE.MIX);
 		
 		var gsc = GroupSizeConstraint.manual(4,5);
 		
@@ -68,16 +81,7 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 				var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
 				var num_projects = (int) Math.ceil(minProjectAmount.asInt() * project_pressure.factor / num_slots);
 				
-				var grp_size = 5;
-				var exp_pregroups = num_students * (pregrouping_proportion / 100.0) / grp_size;
-				var chance = exp_pregroups / (num_students - (grp_size - 1) * exp_pregroups);
-				
-				var pregroupingGen = new NamedPregroupingGenerator(
-						PregroupingGenerator.singlePregroupingSizeOnly(grp_size, chance),
-						pregrouping_proportion + " %"
-				);
-				
-				var paramsForDataset = new MaxPregroupingsDatasetParams(num_students, num_projects, num_slots, gsc, proj_pref_gen, pregroupingGen, project_pressure, pregrouping_proj_pref_type);
+				var paramsForDataset = new MaxPregroupingsDatasetParams(num_students, num_projects, num_slots, gsc, proj_pref_gen, pregrouping_proportion, project_pressure, pregrouping_proj_pref_type);
 				datasetParamGroup.add(paramsForDataset);
 			}
 			
@@ -108,26 +112,36 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 	
 	public record MaxPregroupingsDatasetParams(
 			Integer numStudents, Integer numProjects, Integer numSlotsPerProj, GroupSizeConstraint gsc,
-			NamedPrefGenerator prefGenerator, NamedPregroupingGenerator pregroupingGenerator,
-			PROJ_PRESSURE proj_pressure, PREGROUP_PREF_DIST pregroup_pref_dist
+			NamedPrefGenerator prefGenerator,
+			Proportion pregrouping_proportion,
+			PROJ_PRESSURE proj_pressure,
+			PREGROUP_PREF_DIST_TYPE pregroup_pref_dist_type
 	) implements DatasetParams
 	{
 		@Override
 		public DatasetContext intoNewlyGeneratedDataset()
 		{
 			var projects = Projects.generated(numProjects, numSlotsPerProj);
-			var prefGenerator = this.prefGenerator.makeGeneratorFor(projects);
 			
-			var pregroupProjPrefGenerator = switch (pregroup_pref_dist) {
-				case IDENTICAL -> prefGenerator; // same distribution
+			var soloPrefGenerator = this.prefGenerator.makeGeneratorFor(projects);
+			// Pick the project preferences for the pregrouping students
+			var pregroupProjPrefGenerator = switch (pregroup_pref_dist_type) {
+				case IDENTICAL -> soloPrefGenerator; // same distribution instance
 				case DIFFERENT -> this.prefGenerator.makeGeneratorFor(projects); // same distribution TYPE, but newly drawn
 				// 50-50 mix of exactly the same as solo students and newly drawn
-				case MIX -> new MultiTypeProjectPreferencesGenerator(new Type(prefGenerator, 0.5), new Type(this.prefGenerator.makeGeneratorFor(projects), 0.5));
+				case MIX -> new MultiTypeProjectPreferencesGenerator(
+						new Type(soloPrefGenerator, 0.5),
+						new Type(this.prefGenerator.makeGeneratorFor(projects), 0.5)
+				);
 			};
 			
-			// do the pregrouping pref dist selection here...
+			var agentGenerator = new SoloAndPregroupingAgentsGenerator(
+					new SoloAgentGenerator(soloPrefGenerator),
+					new PregroupingAgentsGenerator(gsc.maxSize(), pregroupProjPrefGenerator),
+					pregrouping_proportion.asDouble()
+			);
 			
-			return new GeneratedDataContext(numStudents, projects, gsc, prefGenerator, pregroupProjPrefGenerator, pregroupingGenerator.generator());
+			return new GeneratedDataContext(numStudents, projects, gsc, agentGenerator);
 		}
 		
 		@Override
@@ -140,8 +154,8 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 							numSlotsPerProj,
 							proj_pressure,
 							prefGenerator.shortName(),
-							pregroup_pref_dist,
-							pregroupingGenerator().shortName()
+							pregroup_pref_dist_type,
+							pregrouping_proportion.asString()
 					);
 		}
 	}
@@ -202,7 +216,7 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 					params().numSlotsPerProj(),
 					
 					params().prefGenerator().shortName(),
-					params().pregroupingGenerator().shortName(),
+					params().pregrouping_proportion().asString(),
 					mechanism().name(),
 					trialRunNum(),
 					
@@ -214,7 +228,7 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 					serializeProfile(profileUnsatpregroup()),
 					
 					params().proj_pressure.name(),
-					params().pregroup_pref_dist().name(),
+					params().pregroup_pref_dist_type().name(),
 					
 					numPregroupsFullyTogether(),
 					numPregroupsMax()

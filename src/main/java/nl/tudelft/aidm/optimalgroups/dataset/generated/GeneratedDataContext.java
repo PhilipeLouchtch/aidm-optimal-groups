@@ -1,5 +1,6 @@
 package nl.tudelft.aidm.optimalgroups.dataset.generated;
 
+import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.AgentGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.NormallyDistributedProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferenceGenerator;
@@ -16,7 +17,7 @@ import plouchtch.assertion.Assert;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class GeneratedDataContext implements DatasetContext
@@ -25,6 +26,27 @@ public class GeneratedDataContext implements DatasetContext
 	private final Agents agents;
 	private final Projects projects;
 	private final GroupSizeConstraint groupSizeConstraint;
+	
+	
+	/**
+	 * Cleaner constructor for GeneratedDataContext, makes use of {@link AgentGenerator} to generate the agents. All the logic
+	 * for generating them is thereby moved to those types.
+	 * @param numAgents Number of agents this dataset should have (total)
+	 * @param projects The projects
+	 * @param groupSizeConstraint Group size bounds
+	 * @param agentGenerator The agent generator
+	 */
+	public GeneratedDataContext(int numAgents, Projects projects, GroupSizeConstraint groupSizeConstraint, AgentGenerator agentGenerator)
+	{
+		this.projects = projects;
+		this.groupSizeConstraint = groupSizeConstraint;
+		
+		this.agents = agentGenerator.generate(this, numAgents, new AtomicInteger(1)::getAndIncrement);
+		Assert.that(this.agents.count() == numAgents).orThrowMessage("Bugcheck: not enough agents generated");
+		
+		var hexEpochSeconds = Long.toHexString(Instant.now().getEpochSecond());
+		this.id = "DC[RND_a%s_p%s_%s]_%s".formatted(numAgents, projects.count(), hexEpochSeconds, groupSizeConstraint);
+	}
 	
 	/**
 	 * Constructs a new generated dataset without any pregrouping students, thus all students only have preferences over the projects
