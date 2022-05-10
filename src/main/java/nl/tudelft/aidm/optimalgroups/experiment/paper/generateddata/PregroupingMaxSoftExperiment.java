@@ -35,56 +35,55 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 	
 	private static GroupedDatasetParams<MaxPregroupingsDatasetParams> paramsForExperiments()
 	{
-		List<Integer> nums_students = List.of(50, 200, 600);
+		List<Integer> nums_students = List.of(600, 200, 50);
 		List<PROJ_PRESSURE> project_pressure_levels = List.of(PROJ_PRESSURE.TIGHT, PROJ_PRESSURE.MID, PROJ_PRESSURE.LOOSE);
 //		List<Integer> nums_projects = List.of(5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180);
 		List<Integer> nums_slots = List.of(1);
 		
-		List<Integer> pregrouping_proportions = List.of(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100);
-		List<PREGROUP_PREF_DIST> pregrouping_pref_dist = List.of(PREGROUP_PREF_DIST.IDENTICAL, PREGROUP_PREF_DIST.DIFFERENT, PREGROUP_PREF_DIST.MIX);
+		List<Integer> pregrouping_proportions = List.of(/*0, */ 10, /*20,*/ 30,/* 40, 50,*/ 60, /*70, 80,*/ 90);//, 100);
+		List<PREGROUP_PREF_DIST> pregrouping_proj_pref_types = List.of(PREGROUP_PREF_DIST.IDENTICAL, PREGROUP_PREF_DIST.DIFFERENT, PREGROUP_PREF_DIST.MIX);
 		
 		var gsc = GroupSizeConstraint.manual(4,5);
 		
-		List<NamedPrefGenerator> projectPrefGenerators = List.of(
+		List<NamedPrefGenerator> proj_pref_gens = List.of(
 //				ProjPrefVariations.singleton(),
 				ProjPrefVariations.linearPerturbedSlightly(),
 				ProjPrefVariations.linearPerturbedMore(),
-				ProjPrefVariations.random(),
+//				ProjPrefVariations.random(),
 				ProjPrefVariations.realistic()
-		);
-		
-		List<GroupSizeConstraint> gscs = List.of(
-				GroupSizeConstraint.manual(4, 5)
 		);
 		
 		var paramGroups = new ArrayList<GroupedDatasetParams.Group<MaxPregroupingsDatasetParams>>();
 		
 		for (var num_students : nums_students)
+		for (var proj_pref_gen : proj_pref_gens)
+		for (var pregrouping_proj_pref_type : pregrouping_proj_pref_types)
+		{
+			var datasetParamGroup = new ArrayList<MaxPregroupingsDatasetParams>(nums_slots.size() * proj_pref_gens.size());
+			
+			for (var pregrouping_proportion : pregrouping_proportions)
+			for (var num_slots : nums_slots)
 			for (var project_pressure : project_pressure_levels)
 			{
-				var datasetParamGroup = new ArrayList<MaxPregroupingsDatasetParams>(nums_slots.size() * gscs.size() * projectPrefGenerators.size());
+				var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
+				var num_projects = (int) Math.ceil(minProjectAmount.asInt() * project_pressure.factor / num_slots);
 				
-				for (var pregroup_pref_dist : pregrouping_pref_dist)
-				for (var pregrouping_proportion : pregrouping_proportions)
-				for (var num_slots : nums_slots)
-				for (var projPrefsGen : projectPrefGenerators)
-				{
-					var minProjectAmount = new MinimumReqProjectAmount(gsc, num_students);
-					var num_projects = (int) Math.ceil(minProjectAmount.asInt() * project_pressure.factor / num_slots);
-					
-					var pregroupingGen = new NamedPregroupingGenerator(
-							PregroupingGenerator.singlePregroupingSizeOnly(5, pregrouping_proportion * 1.0 / 100),
-							pregrouping_proportion + " %"
-					);
-					
-					var paramsForDataset = new MaxPregroupingsDatasetParams(num_students, num_projects, num_slots, gsc, projPrefsGen, pregroupingGen, project_pressure, pregroup_pref_dist);
-					
-					datasetParamGroup.add(paramsForDataset);
-				}
+				var grp_size = 5;
+				var exp_pregroups = num_students * (pregrouping_proportion / 100.0) / grp_size;
+				var chance = exp_pregroups / (num_students - (grp_size - 1) * exp_pregroups);
 				
-				String groupName = "stud[%s]_pressure[%s]".formatted(num_students, project_pressure.name());
-				paramGroups.add(new GroupedDatasetParams.Group<>(groupName, datasetParamGroup));
+				var pregroupingGen = new NamedPregroupingGenerator(
+						PregroupingGenerator.singlePregroupingSizeOnly(grp_size, chance),
+						pregrouping_proportion + " %"
+				);
+				
+				var paramsForDataset = new MaxPregroupingsDatasetParams(num_students, num_projects, num_slots, gsc, proj_pref_gen, pregroupingGen, project_pressure, pregrouping_proj_pref_type);
+				datasetParamGroup.add(paramsForDataset);
 			}
+			
+			String groupName = "stud[%s]_pp[%s]_gpp[%s]".formatted(num_students, proj_pref_gen.shortName(), pregrouping_proj_pref_type);
+			paramGroups.add(new GroupedDatasetParams.Group<>(groupName, datasetParamGroup));
+		}
 		
 		return new GroupedDatasetParams<>(paramGroups);
 	}
@@ -134,13 +133,14 @@ public class PregroupingMaxSoftExperiment extends GeneratedDataExperiment<Pregro
 		@Override
 		public String toString()
 		{
-			return "DatasetParams[ st#%s, pr#%s[%s]-[%s], pp[%s], gp[%s] ]"
+			return "DatasetParams[ st#%s, pr#%s[%s]-[%s], pp[%s], gpp[%s], gp[%s] ]"
 					.formatted(
 							numStudents,
 							numProjects,
 							numSlotsPerProj,
 							proj_pressure,
 							prefGenerator.shortName(),
+							pregroup_pref_dist,
 							pregroupingGenerator().shortName()
 					);
 		}
