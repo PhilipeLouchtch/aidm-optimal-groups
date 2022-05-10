@@ -1,0 +1,426 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggridges)
+
+source('metrics.r')
+
+## Loading in the data
+exp_name = "grouping_max_soft"
+exp_data_prefix = "grouping_maxsize_att3_eps"
+
+data_dir = "D:\\Code\\Git repositories\\aidm-optimal-groups\\results\\thesis"
+
+exp_files <- list.files(data_dir, pattern = paste0(exp_data_prefix, "_.*\\.csv"), full.names = TRUE)
+
+column_spec <- cols_only(
+    num_students = col_integer(),
+    num_projects = col_integer(),
+    num_slots = col_factor(),
+    proj_pref_type = col_factor(),
+    pregroup_type = col_factor(),
+    mechanism = col_factor(),
+    trial = col_factor(),
+    duration_ms = col_integer(),
+    profile_all = col_character(),
+    profile_singles = col_character(),
+    profile_pregrouped = col_character(),
+    profile_unsatpregroup = col_character(),
+    project_pressure = col_factor(),
+    pregroup_proj_pref_type = col_factor()
+)
+
+
+data_exps <- map_dfr(exp_files, read_csv, col_types = column_spec)
+
+data_all <- data_exps
+```
+
+
+These are some other plots
+
+```{r}
+
+mechanism_name_map = new.env()
+mechanism_name_map[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] = "Fair (soft)"
+mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrp"]] = "Fair (impr)(soft)"
+mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrpEps"]] = "Fair"
+mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
+mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chiarandini"
+
+mechanism_name_map_short = new.env()
+mechanism_name_map_short[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] = "Fair (soft)"
+mechanism_name_map_short[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrp"]] = "Fair (impr)(soft)"
+mechanism_name_map_short[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrpEps"]] = "Fair"
+mechanism_name_map_short[["BepSys (reworked) - Borda"]] = "BEPSys"
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chiarandini"	
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chiarandini"
+
+title <- function(mechanism_name, proj_pref_type) {
+    pretty_mechanism_name = mechanism_name_map[[mechanism_name]]
+    pretty_proj_pref_type = paste("(", proj_pref_type, ")", sep = "")
+    paste(pretty_mechanism_name, pretty_proj_pref_type, sep = " - ")
+}
+
+```
+
+
+# RUNTIMES
+```{r}
+for (ppt in levels(data_all$proj_pref_type)){
+    # for (mech in levels(data_all$mechanism)) {
+        
+        data_filtered <- data_all %>%
+            filter(proj_pref_type == ppt) %>%
+            mutate(
+                mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
+            )
+        
+        # pretty_title = title(mech, ppt)
+        
+        plot <- ggplot(data_filtered, aes(x = mechanism_short, y = duration_ms / 1000, group = mechanism_short)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_grid(num_students ~ project_pressure) +
+                    # ylim(0, 90) + 
+                    # scale_y_log10() +
+                    scale_y_continuous(
+                        trans='log10',
+                        oob = scales::oob_squish_infinite,
+                        breaks = scales::trans_breaks('log10', function(x) 10^x),
+                        labels = scales::trans_format('log10', scales::math_format(10^.x))
+                    ) +
+                    labs(
+                        title = ppt,
+                        y = "Duration (sec)",
+                        x = "Mechanism"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", exp_name, "runtimes", sep = "/")
+        filename <- paste(path, paste("runtimes_", ppt, ".png", sep = ""), sep ="/")
+        ggsave(filename,
+               device = "png", width = 200, height = 120, units = "mm", pointsize = 100
+        )
+    # }
+}
+
+
+# ggplot(data_all, aes(x = mechanism, y = duration_ms / 1000, group = mechanism)) +
+#     geom_boxplot() 
+#     ylim(0, 100)
+```
+
+# QUALITY (AUPCR)
+```{r}
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        pretty_title = title(mech, ppt)
+        
+        data_filtered <- data_all %>%
+            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
+            mutate(
+                aupcr = map2(num_projects, profile_all, calc_aupcr) %>% unlist
+            )
+        
+        
+        plot <- ggplot(data_filtered, aes(x = num_slots, y = aupcr, group = num_slots)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_grid(num_students ~ project_pressure) +
+                    ylim(0.5, 1) +
+                    labs(
+                        title = title(mech, ppt),
+                        y = "AUPCR",
+                        x = "# slots (per project topic)"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "slots_exp", "aupcr", ppt, sep = "/")
+        filename <- paste(path, paste("aupcr_", pretty_title, ".png", sep = ""), sep ="/")
+        ggsave(filename,
+               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        )
+    }
+}
+
+```
+
+# WORST RANK PLOTS
+```{r}
+# WORST RANK
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        pretty_title = title(mech, ppt)
+        
+        data_filtered <- data_all %>%
+            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
+            mutate(
+                worst_rank = map(profile_all, worst_obtained_rank) %>% unlist
+            )
+        
+        # y-limit must be shared over all plots within group???
+        
+        plot <- ggplot(data_filtered, aes(x = num_slots, y = worst_rank, group = num_slots)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_grid(num_students ~ project_pressure) +
+                    # ylim(0.5, 1) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "Worst rank",
+                        x = "# slots (per project topic)"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
+        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
+        # ggsave(filename,
+        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        # )
+    }
+}
+```
+
+# AVG RANK
+```{r}
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        pretty_title = title(mech, ppt)
+        
+        data_filtered <- data_all %>%
+            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
+            mutate(
+                avg_rank = map(profile_all, avg_rank) %>% unlist
+            )
+        
+        # y-limit must be shared over all plots within group???
+        
+        plot <- ggplot(data_filtered, aes(x = num_slots, y = avg_rank, group = num_slots)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_grid(num_students ~ project_pressure) +
+                    # ylim(0.5, 1) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "AVG rank",
+                        x = "# slots (per project topic)"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
+        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
+        # ggsave(filename,
+        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        # )
+    }
+}
+```
+
+# AVG RANK (WEIGHTED)
+```{r}
+for (ppt in levels(data_all$proj_pref_type)){
+    for (mech in levels(data_all$mechanism)) {
+        
+        pretty_title = title(mech, ppt)
+        
+        data_filtered <- data_all %>%
+            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
+            mutate(
+                avg_rank_w = map(profile_all, avg_weighted_rank) %>% unlist
+            )
+        
+        # y-limit must be shared over all plots within group???
+        
+        plot <- ggplot(data_filtered, aes(x = num_slots, y = avg_rank_w, group = num_slots)) +
+                    geom_boxplot() +
+                    # geom_jitter(position=position_jitter(0.2)) +
+                    facet_grid(num_students ~ project_pressure) +
+                    # ylim(0, 2000) + 
+                    labs(
+                        title = title(mech, ppt),
+                        y = "AVG rank",
+                        x = "# slots (per project topic)"
+                    )
+        
+        print(plot)
+        
+        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
+        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
+        # ggsave(filename,
+        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        # )
+    }
+}
+```
+
+
+# VIOLIN PLOT - Quality comparison between types (Only Chia vs Fair, no 100%)
+```{r, fig.height = 15}
+# unique(data_all$mechanism)
+for (studs in levels(ordered(unique(data_all$num_students)))) {
+    for (ppt in levels(data_all$proj_pref_type)) {
+        for (pressure in levels(data_all$project_pressure)) {
+            
+            pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, sep = " - ")
+            
+            data_filtered <- data_all %>%
+                filter(
+                    trial == 0 &
+                    project_pressure == pressure &
+                        proj_pref_type == ppt &
+                        num_students == studs &
+                        mechanism != 'BepSys (reworked) - Borda' &
+                        pregroup_type != '100 %'
+                    ) %>% #& pregroup_proj_pref_type == preg_pref_type)
+                mutate(
+                        mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
+                    )
+            
+            map(data_filtered$profile_unsatpregroup, rank_profile)
+            
+            zzz <- data_filtered %>%
+                mutate(
+                    profile_solo = map(profile_singles, rank_profile),
+                    profile_singles = NULL,
+                    profile_preg = map(profile_pregrouped, rank_profile),
+                    profile_pregrouped = NULL,
+                    profile_unsat = map(profile_unsatpregroup, rank_profile),
+                    profile_unsatpregroup = NULL,
+                    profile_all = map(profile_all, rank_profile)
+                ) %>%
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                )
+            
+            xxx <- zzz %>% unchop(rank)
+            xxx$student_type <- factor(xxx$student_type, levels = c("all", "solo", "preg", "unsat"))
+            
+            # y-limit must be shared over all plots within group???
+            
+            plot <- ggplot(xxx, aes(x = student_type, y = rank, group = student_type)) +
+                        geom_violin(scale = "count") +
+                        # geom_jitter(position=position_jitter(0.2)) +
+                        facet_grid(pregroup_type + mechanism_short ~ pregroup_proj_pref_type, scales = "free_x") +
+                        # ylim(0, 20) + 
+                        labs(
+                            title = pretty_title,
+                            y = "rank",
+                            x = "student grouping type"
+                        )
+            
+            print(plot)
+            
+            # path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
+            # filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
+            # # ggsave(filename,
+            # #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+            # # )
+        }
+    }
+}
+
+```
+
+# VIOLIN PLOT - Quality comparison between types (Only Chia vs Fair, no 100%)
+
+```{r, fig.height = 15}
+# unique(data_all$mechanism)
+for (studs in levels(ordered(unique(data_all$num_students)))) {
+    for (ppt in levels(data_all$proj_pref_type)) {
+        for (pressure in levels(data_all$project_pressure)) {
+            
+            pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, sep = " - ")
+            
+            data_filtered <- data_all %>%
+                filter(
+                    trial == 0 &
+                    project_pressure == pressure &
+                        proj_pref_type == ppt &
+                        num_students == studs &
+                        mechanism != 'BepSys (reworked) - Borda' &
+                        pregroup_type != '100 %'
+                    ) %>% #& pregroup_proj_pref_type == preg_pref_type)
+                mutate(
+                        mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
+                    )
+            
+            map(data_filtered$profile_unsatpregroup, rank_profile)
+            
+            zzz <- data_filtered %>%
+                mutate(
+                    profile_solo = map(profile_singles, rank_profile),
+                    profile_singles = NULL,
+                    profile_preg = map(profile_pregrouped, rank_profile),
+                    profile_pregrouped = NULL,
+                    profile_unsat = map(profile_unsatpregroup, rank_profile),
+                    profile_unsatpregroup = NULL,
+                    profile_all = map(profile_all, rank_profile)
+                ) %>%
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                ) %>%
+                filter(
+                    student_type != 'all'
+                )
+
+            xxx <- zzz %>% unchop(rank)
+            xxx$student_type <- factor(xxx$student_type, levels = c( "solo", "preg", "unsat")) #"all",
+            
+            # y-limit must be shared over all plots within group???
+            
+            #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+            plot <- ggplot() + 
+                        geom_density(
+                            data = subset(xxx, mechanism_short == 'Fair'),
+                            position = 'stack',
+                            aes(x = rank, y = after_stat(count),
+                                fill = student_type)
+                            ) +
+                        geom_density(
+                            data = subset(xxx, mechanism_short == 'Chiarandini'),
+                            position = 'stack',
+                            aes(x = rank, y = -after_stat(count),
+                                fill = student_type)
+                            ) +
+                        # geom_jitter(position=position_jitter(0.2)) +
+                        facet_grid(pregroup_type ~ pregroup_proj_pref_type, scales = "free_x") +
+                        # ylim(0, 20) + 
+                        labs(
+                            title = pretty_title,
+                            y = "rank",
+                            x = "student grouping type"
+                        )
+            
+            print(plot)
+        studs = 200    
+            # path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
+            # filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
+            # # ggsave(filename,
+            # #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+            # # )
+        }
+    }
+}
+
+```
