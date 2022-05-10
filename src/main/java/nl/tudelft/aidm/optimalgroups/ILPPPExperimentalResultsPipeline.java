@@ -3,7 +3,7 @@ package nl.tudelft.aidm.optimalgroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.ilppp.ILPPPDeterminedMatching;
 import nl.tudelft.aidm.optimalgroups.algorithm.project.AgentProjectMaxFlowMatching;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
 import nl.tudelft.aidm.optimalgroups.metric.*;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.GroupPreferenceSatisfactionHistogram;
 import nl.tudelft.aidm.optimalgroups.metric.matching.aupcr.AUPCR;

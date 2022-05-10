@@ -5,7 +5,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator.Type;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;

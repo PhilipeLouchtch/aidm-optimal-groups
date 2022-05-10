@@ -5,9 +5,9 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregro
 import nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenIndividually;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.NormallyDistributedProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.UniformProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.NormallyDistributedProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.UniformProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.experiment.agp.datasets.ThesisDatasets;
 import nl.tudelft.aidm.optimalgroups.experiment.agp.report.ExperimentReportInHtml;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;

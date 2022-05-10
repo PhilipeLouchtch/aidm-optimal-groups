@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs;
 
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
 import nl.tudelft.aidm.optimalgroups.model.project.Projects;

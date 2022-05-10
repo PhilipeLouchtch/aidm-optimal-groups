@@ -1,8 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.dataset.variantvakken.generated;
 
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.ProjectPreferencesFromPmfGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferencesFromPmfGenerator;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
-import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.agent.SimpleAgent;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -12,7 +11,6 @@ import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 

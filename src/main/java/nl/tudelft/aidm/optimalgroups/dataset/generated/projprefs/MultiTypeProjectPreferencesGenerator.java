@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs;
 
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;

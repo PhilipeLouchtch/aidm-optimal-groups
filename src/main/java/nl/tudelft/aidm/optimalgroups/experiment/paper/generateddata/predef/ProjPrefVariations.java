@@ -1,12 +1,11 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef;
 
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.ExponentiallyDistributedProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.MultiTypeProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.NormallyDistributedProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.UniformProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ExponentiallyDistributedProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.NormallyDistributedProjectPreferencesGenerator;
+import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.UniformProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPrefGenerator;
 import nl.tudelft.aidm.optimalgroups.model.pref.base.ListBasedProjectPreferences;
-import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 
 import java.util.ArrayList;
 

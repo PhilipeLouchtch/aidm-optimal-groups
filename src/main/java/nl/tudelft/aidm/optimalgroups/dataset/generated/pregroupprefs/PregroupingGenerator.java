@@ -1,11 +1,11 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs;
 
 import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
 import plouchtch.assertion.Assert;
 
 import java.util.Arrays;
 
-import static nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator.ChanceBased.*;
+import static nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator.ChanceBased.*;
 
 public interface PregroupingGenerator
 {

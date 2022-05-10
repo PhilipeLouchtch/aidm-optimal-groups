@@ -1,9 +1,6 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs;
 
-import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
-
-import java.util.function.Supplier;
 
 /**
  * Identical preference shared by everybody!

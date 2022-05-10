@@ -1,8 +1,7 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs;
 
 import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
-import org.apache.commons.math3.distribution.UniformRealDistribution;
 
 public class ExponentiallyDistributedProjectPreferencesGenerator extends ProjectPreferencesFromDistributionGenerator
 {

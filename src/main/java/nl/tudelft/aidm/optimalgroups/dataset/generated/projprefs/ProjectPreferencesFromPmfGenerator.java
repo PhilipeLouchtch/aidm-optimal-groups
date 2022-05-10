@@ -1,6 +1,5 @@
-package nl.tudelft.aidm.optimalgroups.dataset.generated.prefs;
+package nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs;
 
-import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
 import nl.tudelft.aidm.optimalgroups.model.pref.base.AbstractListBasedProjectPreferences;
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
@@ -9,7 +8,6 @@ import org.apache.commons.math3.distribution.EnumeratedDistribution;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  *  This type of generator generates ProjectPreferences
