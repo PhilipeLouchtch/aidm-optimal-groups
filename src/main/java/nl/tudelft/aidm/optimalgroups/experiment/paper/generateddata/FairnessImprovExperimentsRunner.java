@@ -12,7 +12,7 @@ import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
 import java.util.List;
 
-public class ThesisExperimentsRunner
+public class FairnessImprovExperimentsRunner
 {
 	static class Chiarandini_FairgroupsNEW implements GroupProjectAlgorithm
 	{
@@ -70,17 +70,16 @@ public class ThesisExperimentsRunner
 	
 	public static List<GroupProjectAlgorithm> groupingMechanisms()
 	{
-		var bepsys = new GroupProjectAlgorithm.BepSys_reworked();
-		var normal_hard = new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.anyCliqueHardGrouped());
+		var fairness_soft = new Chiarandini_FairgroupsNEW(new OWAObjective(), PregroupingType.anyCliqueSoftGrouped());
 		var fairness_soft_eps = new Chiarandini_FairgroupsEps(new OWAObjective(), PregroupingType.anyCliqueSoftGroupedEpsilon());
-//		var fairness_none = new Chiarandini_FairgroupsNEW(new OWAObjective(), PregroupingType.anyCliqueSoftGrouped());
 		
-		var mechanisms = List.of(bepsys, normal_hard, fairness_soft_eps);
+		var mechanisms = List.<GroupProjectAlgorithm>of(fairness_soft_eps, fairness_soft);
 		return mechanisms;
 	}
 	
+	
 	static final int runsPerDataset = 3;
-	static final int numDatasetsToGen = 5;
+	static final int numDatasetsToGen = 3;
 	
 	public static void main(String[] args)
 	{
@@ -96,7 +95,7 @@ public class ThesisExperimentsRunner
 //		new GroupSizeBoundsExperiment("gsc_exp_att1", mechanisms(), numDatasetsToGen, runsPerDataset)
 //				.run();
 		
-		new PregroupingMaxSoftExperiment("grouping_maxsize_att3_eps", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
+		new PregroupingMaxSoftExperiment("eps_grouping_maxsize_att2", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
 				.run();
 	}
 }

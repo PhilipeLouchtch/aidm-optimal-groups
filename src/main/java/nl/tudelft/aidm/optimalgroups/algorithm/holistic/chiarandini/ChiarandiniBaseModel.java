@@ -15,10 +15,16 @@ import plouchtch.assertion.Assert;
 
 public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunction objectiveFunction, Constraint... constraints)
 {
+	public static class InfeasbileMatchingException extends RuntimeException {	}
+	
 	public GroupToProjectMatching<Group.FormedGroup> doIt()
 	{
 		try {
 			return doItDirty();
+		}
+		catch (InfeasbileMatchingException ex) {
+			// Do not process the "Infeasible" exception (see code below)
+			throw ex;
 		}
 		catch (Exception ex) {
 			throw new RuntimeException(ex);
@@ -56,6 +62,11 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 		model.optimize();
 		
 		var status = model.get(GRB.IntAttr.Status);
+		
+		if (status == GRB.INFEASIBLE) {
+			// HACK: Dirty hack to signal the epsilon-constraint soft-grouping approach that the epsilon value is infeasible
+			throw new InfeasbileMatchingException();
+		}
 		
 		Assert.that(status == GRB.OPTIMAL).orThrowMessage("Model not solved");
 

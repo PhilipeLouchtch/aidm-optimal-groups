@@ -7,6 +7,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.ConditionalGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.HardGroupingConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupConstraint;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupEpsilonConstraint;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
@@ -37,6 +38,14 @@ public interface PregroupingType
 		return new NamedLambda(
 				"anyClique_softGrp",
 				(datasetContext) -> new Pregrouping.anyClique(datasetContext, SoftGroupConstraint::new)
+		);
+	}
+	
+	static PregroupingType anyCliqueSoftGroupedEpsilon()
+	{
+		return new NamedLambda(
+				"anyClique_softGrpEps",
+				(datasetContext) -> new Pregrouping.anyClique(datasetContext, SoftGroupEpsilonConstraint::new)
 		);
 	}
 	
