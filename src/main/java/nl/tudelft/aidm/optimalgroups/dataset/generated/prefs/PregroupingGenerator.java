@@ -5,7 +5,7 @@ import plouchtch.assertion.Assert;
 
 import java.util.Arrays;
 
-import static nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator.ChancePerTypeBased.*;
+import static nl.tudelft.aidm.optimalgroups.dataset.generated.prefs.PregroupingGenerator.ChanceBased.*;
 
 public interface PregroupingGenerator
 {
@@ -15,7 +15,7 @@ public interface PregroupingGenerator
 	 */
 	Integer draw();
 	
-	record ChancePerTypeBased(Item... items) implements PregroupingGenerator
+	record ChanceBased(Item... items) implements PregroupingGenerator
 	{
 		@Override
 		public Integer draw()
@@ -33,8 +33,23 @@ public interface PregroupingGenerator
 			}
 		}
 		
-		public ChancePerTypeBased {
+		public ChanceBased
+		{
 			var chanceSum = Arrays.stream(items).mapToDouble(Item::chance).sum();
+			Assert.that(chanceSum == 1.0).orThrowMessage("Chances must sum up to 1.0");
+		}
+	}
+	
+	record ProportionBased(ProportionBased.Item... items)
+	{
+		public record Item(Integer groupSize, Double proportion) {
+			public Item {
+				Assert.that(0 <= proportion && proportion <= 1).orThrowMessage("Invalid value for proportion, must be within [0, 1]");
+			}
+		}
+		
+		public ProportionBased {
+			var chanceSum = Arrays.stream(items).mapToDouble(Item::proportion).sum();
 			Assert.that(chanceSum == 1.0).orThrowMessage("Chances must sum up to 1.0");
 		}
 	}
@@ -49,7 +64,7 @@ public interface PregroupingGenerator
 	 */
 	static PregroupingGenerator singlePregroupingSizeOnly(int groupSize, double chance)
 	{
-		return new PregroupingGenerator.ChancePerTypeBased(
+		return new ChanceBased(
 				new Item(1, 1 - chance),
 				new Item(groupSize, chance)
 		);
@@ -58,7 +73,7 @@ public interface PregroupingGenerator
 	static PregroupingGenerator CE10Like()
 	{
 		// sortof based on CE10
-		return new PregroupingGenerator.ChancePerTypeBased(
+		return new ChanceBased(
 				new Item(1, 0.3),
 				new Item(2, 0.03),
 				new Item(3, 0.15),
