@@ -69,11 +69,12 @@ public class MILP_Mechanism_FairPregroupingEpsilon
 		var groupingConstraint = (EpsilonConstraint) x;
 		
 		/* EPSILON SEARCH */
-		enum EpsilonOutcome { FEASIBLE, INFEASIBLE}
+		enum EpsilonOutcome { FEASIBLE, INFEASIBLE }
 		record EpsilonResult(EpsilonOutcome outcome, GroupToProjectMatching<Group.FormedGroup> result) {}
 		
 		var resultPerEpsilon = new EpsilonResult[preFormedGroups.count()+1];
 //		var epsilonSearch = new EpsilonSearchBinary(preFormedGroups.count());
+		// Often, there are only a few pregroupings not possible, thus linear search has better best-case performance
 		var epsilonSearch = new EpsilonSearchLinear(preFormedGroups.count());
 		
 		Function<Integer, EpsilonResult> epsilonMatching = (Integer epsilon) -> {

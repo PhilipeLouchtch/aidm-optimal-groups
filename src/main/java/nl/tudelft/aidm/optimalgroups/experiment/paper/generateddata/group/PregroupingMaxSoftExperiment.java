@@ -1,16 +1,14 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.PregroupingAgentsGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.ProportionalAgentGenerator;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.ProportionalAgentGenerator.SubGen;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.SoloAgentGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.SoloAndPregroupingAgentsGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator.Type;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.GeneratedDataExperiment;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;

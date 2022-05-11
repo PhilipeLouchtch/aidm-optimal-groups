@@ -248,7 +248,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class RSD implements GroupProjectAlgorithm
+	class BEPSys_RSD implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()

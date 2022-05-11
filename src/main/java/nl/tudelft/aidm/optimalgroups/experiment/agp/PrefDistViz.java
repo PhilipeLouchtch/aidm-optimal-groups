@@ -21,7 +21,7 @@ public class PrefDistViz
 
 		var algorithms = List.of(
 			new GroupProjectAlgorithm.BepSys(),
-			new GroupProjectAlgorithm.RSD()
+			new GroupProjectAlgorithm.BEPSys_RSD()
 			/*new ILPPP_TGAlgorithm()*/); // will not succeed on CE10
 
 		var groupSize = GroupSizeConstraint.manual(4, 5);

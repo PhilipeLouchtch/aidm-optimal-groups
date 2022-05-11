@@ -1,6 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.Experiment;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
@@ -17,7 +18,7 @@ import java.util.stream.IntStream;
  * Created for the purpose of bundling together experiments of generated datasets, more specifically,
  * generated datasets that are generated from the same parameters.
  */
-public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetParams>
+public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetParams> implements Experiment
 {
 	private static final String experimentDataLocation = "results/thesis/";
 	
@@ -30,7 +31,6 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 	private final int runs;
 	
 	
-	// TODO? give <list of params> for data generation, generate data here. An experiment is the dataset space...
 	public GeneratedDataExperiment(String identifier, GroupedDatasetParams<DATASET_PARAMS> groupedDatasetParams, List<GroupProjectAlgorithm> algos, int numToGenPerParam, int runs)
 	{
 		this.identifier = identifier;
@@ -42,7 +42,7 @@ public abstract class GeneratedDataExperiment<DATASET_PARAMS extends DatasetPara
 		this.runs = runs;
 	}
 	
-	
+	@Override
 	public final void run()
 	{
 		this.generateAndWriteResults();
