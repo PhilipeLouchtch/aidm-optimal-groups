@@ -119,6 +119,14 @@ public class ActiveProjects extends ListBasedProjects implements Projects
 						.sum();
 				// ]
 				// ]
+				
+				// Corner case: all not-full projects are at valid capacity but assigning a student to one of them
+				// will cause remaining students to be unable to open a yet-unopened project. For example, we have
+				// 3 agents, and two projects, p12, p13. Group size bounds are [3,4], project p12 has 3 members assigned,
+				// p13 none. Without the if-below, both p12 and p13 are calculated as active. If the active agent / dictator
+				// selects p12, there would remain 2 students who no longer have any active projects to choose from!
+				if (studentsProjectStillNeeds + neededForOtherProjects == 0 && remainingAgents.count() > 0 && remainingAgents.count() < groupSizeConstraint.minSize())
+					return false;
 
 				return (studentsProjectStillNeeds + neededForOtherProjects) <= (remainingAgents.count());
 			})
