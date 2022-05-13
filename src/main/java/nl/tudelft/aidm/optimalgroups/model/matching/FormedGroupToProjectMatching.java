@@ -10,6 +10,7 @@ import nl.tudelft.aidm.optimalgroups.model.group.Group.FormedGroup;
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
 import plouchtch.assertion.Assert;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -25,24 +26,19 @@ public class FormedGroupToProjectMatching extends ListBasedMatching<FormedGroup,
 	public static FormedGroupToProjectMatching byTriviallyPartitioning(AgentToProjectMatching agentToProjectMatching)
 	{
 		var datasetContext = agentToProjectMatching.datasetContext();
+
+		var matchingAsList = new ArrayList<Match<Group.FormedGroup, Project>>();
 		
-		Assert.that(datasetContext.numMaxSlots() == 1).orThrowMessage("TODO: get mapping slot to agent (projects in dataset have more than 1 slot)");
-
-		var result = new HashMap<Project, Collection<FormedGroup>>();
-
-		agentToProjectMatching.groupedByProject().forEach((proj, agentList) -> {
-			Agents agentsWithProject = Agents.from(agentList);
-			var groups = new TrivialGroupPartitioning(agentsWithProject);
-			result.put(proj, groups.asCollection());
+		agentToProjectMatching.groupedByProject().forEach((project, agents) -> {
+			var groups = new TrivialGroupPartitioning(Agents.from(agents));
+			
+			for (var group : groups.asCollection())
+			{
+				var match = new GroupToProjectMatch<>(group, project);
+				matchingAsList.add(match);
+			}
 		});
 
-		List<GroupToProjectMatch<Group.FormedGroup>> matchingsAsList = result.entrySet().stream()
-			.flatMap(entry -> entry.getValue().stream()
-				.map(formedGroup -> new GroupToProjectMatch<>(formedGroup, entry.getKey()))
-			)
-			.collect(Collectors.toList());
-
-
-		return new FormedGroupToProjectMatching(datasetContext, matchingsAsList);
+		return new FormedGroupToProjectMatching(datasetContext, matchingAsList);
 	}
 }
