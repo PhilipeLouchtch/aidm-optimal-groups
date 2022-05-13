@@ -37,7 +37,7 @@ public record PregroupingAgentsGenerator(int size, ProjectPreferenceGenerator pr
 			                        .map(__ -> sequenceNumberSupplier.getAsInt())
 			                        .toArray();
 			
-			var mutualPregroupingPreference = new GroupPreference.LazyGroupPreference(this.context, agentIds);
+			var mutualPregroupingPreference = new GroupPreference.LazyGroupPreference(context, agentIds);
 			var mutualProjectPreference = projPrefGen.generateNew();
 			
 			// Make agents of group
@@ -47,7 +47,7 @@ public record PregroupingAgentsGenerator(int size, ProjectPreferenceGenerator pr
 						agentId,
 						mutualProjectPreference,
 						mutualPregroupingPreference,
-						this.context
+						context
 				);
 				
 				agentSet.add(agent);
