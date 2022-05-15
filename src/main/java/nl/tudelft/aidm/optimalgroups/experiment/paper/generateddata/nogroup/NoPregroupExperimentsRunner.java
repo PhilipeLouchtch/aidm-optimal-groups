@@ -8,6 +8,7 @@ import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperi
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group.mechanism.Chiarandini_Fairgroups_EpsilonConstraintVersion;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class NoPregroupExperimentsRunner implements Experiment
 {
@@ -40,7 +41,11 @@ public class NoPregroupExperimentsRunner implements Experiment
 		new SlotsScalingExperiment("slots_exp_" + postfix, mechanisms, numDatasetsToGen, runsPerDataset)
 				.run();
 		
-		new GroupSizeBoundsExperiment("gsc_exp_" + postfix, mechanisms, numDatasetsToGen, runsPerDataset)
+		
+		// SDPC often fails to find a complete matching in the following experiment
+		var withoutSDPC = mechanisms.stream().filter(a -> !a.name().startsWith("SDPC")).toList();
+		
+		new GroupSizeBoundsExperiment("gsc_exp_" + postfix, withoutSDPC, numDatasetsToGen, runsPerDataset)
 				.run();
 	}
 	

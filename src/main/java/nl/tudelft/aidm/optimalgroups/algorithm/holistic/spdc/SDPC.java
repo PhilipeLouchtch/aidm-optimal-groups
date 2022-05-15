@@ -59,7 +59,7 @@ public class SDPC
 			remainingAgents = remainingAgents.without(dictatorInThisStep);
 
 			var activeProjects = new ActiveProjects(partialMatching, projects, remainingAgents, groupSizeConstraint);
-			System.out.printf("Dictator@[t:\t%s]: %s\n", t, dictatorInThisStep);
+//			System.out.printf("Dictator@[t:\t%s]: %s\n", t, dictatorInThisStep);
 
 			var chosenProject = dictatorInThisStep.projectPreference().asList().stream()
 				.dropWhile(Predicate.not(activeProjects::contains))
