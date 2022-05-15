@@ -15,7 +15,6 @@ exp_data_prefix = "grouping_maxsize_att3_eps"
 
 data_dir = "D:\\Code\\Git repositories\\aidm-optimal-groups\\results\\thesis"
 
-exp_files <- list.files(data_dir, pattern = paste0(exp_data_prefix, "_.*\\.csv"), full.names = TRUE)
 
 column_spec <- cols_only(
     num_students = col_integer(),
@@ -35,15 +34,9 @@ column_spec <- cols_only(
 )
 
 
-data_exps <- map_dfr(exp_files, read_csv, col_types = column_spec)
+exp_files <- list.files(data_dir, pattern = paste0(exp_data_prefix, "_.*\\.csv"), full.names = TRUE)
 
-data_all <- data_exps
-```
-
-
-These are some other plots
-
-```{r}
+data_all <- map_dfr(exp_files, read_csv, col_types = column_spec)
 
 mechanism_name_map = new.env()
 mechanism_name_map[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] = "Fair (soft)"
@@ -339,14 +332,16 @@ for (studs in levels(ordered(unique(data_all$num_students)))) {
 
 ```
 
-# VIOLIN PLOT - Quality comparison between types (Only Chia vs Fair, no 100%)
+# DENSITY PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
 
 ```{r, fig.height = 15}
 # unique(data_all$mechanism)
 for (studs in levels(ordered(unique(data_all$num_students)))) {
-    for (ppt in levels(data_all$proj_pref_type)) {
+    ppt <- "realistic"
+    # for (ppt in levels(data_all$proj_pref_type)) {
         for (pressure in levels(data_all$project_pressure)) {
-            
+        # for (b in seq(0.5, 1, by = 0.1)) {
+     
             pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, sep = " - ")
             
             data_filtered <- data_all %>%
@@ -389,38 +384,210 @@ for (studs in levels(ordered(unique(data_all$num_students)))) {
             
             # y-limit must be shared over all plots within group???
             
+            fair_subset <- subset(xxx, mechanism_short == 'Fair')
+            chia_subset <- subset(xxx, mechanism_short == 'Chiarandini')
+            
             #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
             plot <- ggplot() + 
-                        geom_density(
-                            data = subset(xxx, mechanism_short == 'Fair'),
-                            position = 'stack',
-                            aes(x = rank, y = after_stat(count),
-                                fill = student_type)
-                            ) +
-                        geom_density(
-                            data = subset(xxx, mechanism_short == 'Chiarandini'),
-                            position = 'stack',
-                            aes(x = rank, y = -after_stat(count),
-                                fill = student_type)
-                            ) +
-                        # geom_jitter(position=position_jitter(0.2)) +
-                        facet_grid(pregroup_type ~ pregroup_proj_pref_type, scales = "free_x") +
-                        # ylim(0, 20) + 
-                        labs(
-                            title = pretty_title,
-                            y = "rank",
-                            x = "student grouping type"
-                        )
+                # geom_density(
+                #     outline.type = "both", bw = 0.5,
+                #     data = fair_subset,
+                #     position = 'stack',
+                #     aes(x = rank, y = after_stat(density),
+                #         fill = student_type)
+                #     ) +
+                geom_histogram(
+                    data = fair_subset,
+                    boundary = -0.5,
+                    binwidth = 1,
+                        ## there are 12 cells (facets), we want y to be the proportion/percent
+                        aes(x = rank, y = after_stat(count / nrow(fair_subset) * 12), fill = student_type)
+                    ) +
+                # geom_density(
+                #     outline.type = "both", bw = 0.5,
+                #     data = chia_subset,
+                #     position = 'stack',
+                #     aes(x = rank, y = -after_stat(density),
+                #         fill = student_type)
+                #     ) +
+                geom_histogram(
+                    data = chia_subset,
+                    boundary = -0.5,
+                    binwidth = 1,
+                        aes(x = rank, y = -after_stat(count / nrow(chia_subset) * 12), fill = student_type)
+                    ) +
+                # geom_jitter(position=position_jitter(0.2)) +
+                facet_grid(pregroup_type ~ pregroup_proj_pref_type) +
+                labs(
+                    title = pretty_title,
+                    y = "students (proportional)",
+                    x = "rank"
+                ) +
+                # scale_x_continuous(trans = "log2", limits = c(1, max(xxx$rank))) +
+                scale_y_continuous(trans = "log") +
+                scale_x_continuous() +
+                theme(legend.key.size = unit(5, "mm"))
+                    
+                        
             
             print(plot)
-        studs = 200    
-            # path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
-            # filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
-            # # ggsave(filename,
-            # #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-            # # )
+        
+            # path = paste("plots", exp_name, "quality", sep = "/")
+            # filename <- paste(path, paste("density_", paste(studs, ppt, pressure, sep = "_"), ".png", sep = ""), sep ="/")
+            # ggsave(filename,
+            #        device = "png", width = 400, height = 250, units = "mm", pointsize = 100
+            # )
         }
-    }
+    
 }
+
+
+```
+
+# HISTO PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
+```{r, fig.height = 15}
+# unique(data_all$mechanism)
+for (studs in levels(ordered(unique(data_all$num_students)))) {
+    ppt <- "realistic"
+    # for (ppt in levels(data_all$proj_pref_type)) {
+        for (pressure in levels(data_all$project_pressure)) {
+        # for (b in seq(0.5, 1, by = 0.1)) {
+     
+            pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, sep = " - ")
+            
+            data_filtered <- data_all %>%
+                filter(
+                    trial == 0 &
+                    project_pressure == pressure &
+                        proj_pref_type == ppt &
+                        num_students == studs &
+                        mechanism != 'BepSys (reworked) - Borda' &
+                        pregroup_type != '100 %'
+                    ) %>% #& pregroup_proj_pref_type == preg_pref_type)
+                mutate(
+                        mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
+                    )
+            
+            map(data_filtered$profile_unsatpregroup, rank_profile)
+            
+            zzz <- data_filtered %>%
+                mutate(
+                    profile_solo = map(profile_singles, rank_profile),
+                    profile_singles = NULL,
+                    profile_preg = map(profile_pregrouped, rank_profile),
+                    profile_pregrouped = NULL,
+                    profile_unsat = map(profile_unsatpregroup, rank_profile),
+                    profile_unsatpregroup = NULL,
+                    profile_all = map(profile_all, rank_profile)
+                ) %>%
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                ) %>%
+                filter(
+                    student_type != 'all'
+                )
+
+            xxx <- zzz %>% unchop(rank)
+            xxx$student_type <- factor(xxx$student_type, levels = c( "solo", "preg", "unsat")) #"all",
+            
+            # y-limit must be shared over all plots within group???
+            
+            fair_subset <- subset(xxx, mechanism_short == 'Fair')
+            chia_subset <- subset(xxx, mechanism_short == 'Chiarandini')
+            
+            br <- seq(0, max(xxx$rank), by = 5)
+            br[1] = 1
+            
+            br <- unique(xxx$rank);
+            br <- pretty(xxx$rank);
+            
+            trans_log1p_fix <- scales::trans_new(
+                name = "log1p_fix",
+                transform = function (x) {
+                    sign(x) * log(1 + abs(x), 10) 
+                },
+                inverse = function (x) {
+                    sign(x) * (10 ^ abs(x) - 1)
+            })
+            
+            trans_sqrt_fix <- scales::trans_new(
+                name = "sqrt_fix",
+                transform = function(x) {
+                    # base::print("call to transform")
+                    # base::print(x)
+                    r <- sign(x) * scales::sqrt_trans()$transform(abs(x))
+                    # base::print("result of transform")
+                    # base::print(r)
+                    return(r)
+                },
+                inverse = function(x) {
+                    # base::print("call to inverse")
+                    # base::print(x)
+                    r <- sign(x) * scales::sqrt_trans()$inverse(abs(x))
+                    # base::print("result of inverse")
+                    # base::print(r)
+                    return(r)
+                },
+                domain = c(-1, 1)
+            )
+            
+            percent_abs <- function(x, ...) {
+                scales::percent(abs(x), ...)
+            }
+            
+            log2(1 + 0.2)
+            exp(1 + log2(0.2))
+            
+            #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+            plot <- ggplot() +
+                
+                geom_histogram(
+                    data = fair_subset,
+                    # boundary = -0.5,
+                    binwidth = 1,
+                        ## there are 12 cells (facets), we want y to be the proportion/percent
+                        aes(x = rank, y = after_stat(count / sum(count) / 12 * 100), fill = student_type)
+                    ) +
+                
+                geom_histogram(
+                    data = chia_subset,
+                    # boundary = -0.5,
+                    binwidth = 1,
+                        aes(x = rank, y = -after_stat(count / sum(count) / 12 * 100), fill = student_type)
+                    ) +
+                
+                facet_grid(pregroup_type ~ pregroup_proj_pref_type) +
+                labs(
+                    title = pretty_title,
+                    y = "students (proportional)",
+                    x = "rank"
+                ) +
+                
+                scale_x_continuous(breaks = br) +
+                
+                coord_trans(y = trans_sqrt_fix) +
+                scale_y_continuous(labels = percent_abs) +
+                # "solo", "preg", "unsat"
+                # "#F8766D" "#00BA38" "#619CFF"
+                # "#0bd000", "#619CFF", "#ffea19"
+                scale_fill_manual(drop = FALSE, values = c("#0fb783", "#FBAE04", "#AE04FB") ) +
+                theme(legend.key.size = unit(5, "mm"))
+                    
+                        
+            
+            print(plot)
+        
+            path = paste("plots", exp_name, "quality", sep = "/")
+            filename <- paste(path, paste("histo_", paste(studs, ppt, pressure, sep = "_"), ".png", sep = ""), sep ="/")
+            ggsave(filename,
+                   device = "png", width = 400, height = 250, units = "mm", pointsize = 100
+            )
+        }
+    
+}
+
 
 ```
