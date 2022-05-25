@@ -22,7 +22,7 @@ public class Chiarandini_Fairgroups_EpsilonConstraintVersion implements GroupPro
 	@Override
 	public String name()
 	{
-		return "Fair (impr,eps) - " + objectiveFunction.name() + " - " + pregroupingType.simpleName();
+		return "Fair (impr-eps) - " + objectiveFunction.name() + " - " + pregroupingType.simpleName();
 	}
 	
 	@Override
