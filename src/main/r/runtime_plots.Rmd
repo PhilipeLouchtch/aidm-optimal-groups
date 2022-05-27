@@ -3,7 +3,9 @@ title: "R Notebook"
 output: html_notebook
 ---
 ```{r include=FALSE}
+install.packages("tidyverse")
 install.packages("plotly")
+install.packages("scatterplot3d")
 
 library(tidyverse)
 

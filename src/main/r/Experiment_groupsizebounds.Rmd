@@ -11,7 +11,8 @@ source('metrics.r')
 ## Loading in the data
 exp_name = "gsc_exp_att1"
 
-data_dir = "D:\\Code\\Git repositories\\aidm-optimal-groups\\results\\thesis"
+root_dir = "C:\\Users\\Philipe\\Documents\\GitHub\\aidm-optimal-groups"
+data_dir = paste(root_dir, "\\results\\thesis", sep="")
 
 exp_files <- list.files(data_dir, pattern = paste0(exp_name, "_.*\\.csv"), full.names = TRUE)
 
@@ -52,7 +53,7 @@ These are some other plots
 ```{r eval=FALSE, include=FALSE}
 
 
-title <- function(mechanism_name, proj_pref_type) {
+make_title <- function(mechanism_name, proj_pref_type) {
     pretty_mechanism_name = mechanism_name_map[[mechanism_name]]
     pretty_proj_pref_type = paste("(", proj_pref_type, ")", sep = "")
     paste(pretty_mechanism_name, pretty_proj_pref_type, sep = " - ")
@@ -63,9 +64,9 @@ title <- function(mechanism_name, proj_pref_type) {
 for (ppt in levels(data_all$proj_pref_type)){
     for (mech in levels(data_all$mechanism)) {
         
-        data_filtered <- data_all %>% filter(mechanism == mech & proj_pref_type == ppt)
+        data_filtered <- data_all %>% filter(mechanism == mech)
         
-        pretty_title = title(mech, ppt)
+        pretty_title = make_title(mech, ppt)
         
         plot <- ggplot(data_filtered, aes(x = num_students, y = duration_ms / 1000, group = num_students)) +
                     geom_boxplot() +
@@ -73,7 +74,7 @@ for (ppt in levels(data_all$proj_pref_type)){
                     facet_grid(gsc_max ~ gsc_min) +
                     ylim(0, 90) + 
                     labs(
-                        title = title(mech, ppt),
+                        title = make_title(mech, ppt),
                         y = "Duration (sec)",
                         x = "# students"
                     )
@@ -82,9 +83,9 @@ for (ppt in levels(data_all$proj_pref_type)){
         
         path = paste("plots", "groupsizes_exp", "runtimes", ppt, sep = "/")
         filename <- paste(path, paste("runtimes_", pretty_title, ".png", sep = ""), sep ="/")
-        ggsave(filename,
-               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        )
+        # ggsave(filename,
+        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        # )
     }
 }
 
@@ -94,7 +95,7 @@ for (ppt in levels(data_all$proj_pref_type)){
         
         data_filtered <- data_all %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
         
-        pretty_title = title(mech, ppt)
+        pretty_title = make_title(mech, ppt)
         
         plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = num_students)) +
                     geom_boxplot() +
@@ -102,7 +103,7 @@ for (ppt in levels(data_all$proj_pref_type)){
                     facet_grid(gsc_max ~ gsc_min) +
                     ylim(0.5, 1) + 
                     labs(
-                        title = title(mech, ppt),
+                        title = make_title(mech, ppt),
                         y = "AUPCR",
                         x = "# students"
                     )

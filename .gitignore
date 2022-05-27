@@ -16,5 +16,8 @@ outputtxt/*
 data/
 reports/
 results/thesis
+
 src/main/r/plots
+src/main/r/.Rhistory
+src/main/r/*.html
 
