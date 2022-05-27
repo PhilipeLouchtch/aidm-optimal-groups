@@ -31,7 +31,7 @@ public class PregroupingExperimentsRunner implements Experiment
 		// ez warmup experiment first
 		new WarmupExperiment(groupingMechanisms()).run();
 		
-		new PregroupingMaxSoftExperiment("grouping_maxsize_att3_eps", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
+		new PregroupingSoftGrpingExperiment("grouping_maxsize_att3_eps", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
 				.run();
 	}
 	

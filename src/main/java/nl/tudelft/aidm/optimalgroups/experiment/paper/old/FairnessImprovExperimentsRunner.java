@@ -7,7 +7,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Object
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group.PregroupingMaxSoftExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group.PregroupingSoftGrpingExperiment;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
@@ -97,7 +97,7 @@ public class FairnessImprovExperimentsRunner
 //		new GroupSizeBoundsExperiment("gsc_exp_att1", mechanisms(), numDatasetsToGen, runsPerDataset)
 //				.run();
 		
-		new PregroupingMaxSoftExperiment("eps_grouping_maxsize_att2", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
+		new PregroupingSoftGrpingExperiment("eps_grouping_maxsize_att2", groupingMechanisms(), numDatasetsToGen, runsPerDataset)
 				.run();
 	}
 }
