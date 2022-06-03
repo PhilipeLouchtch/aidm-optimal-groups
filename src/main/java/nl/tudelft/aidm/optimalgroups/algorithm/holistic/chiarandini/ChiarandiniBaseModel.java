@@ -47,6 +47,25 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 		env.start();
 
 		var model = new GRBModel(env);
+		
+		try
+		{
+			var matching = buildAndSolveModel(model);
+			return matching;
+		}
+		finally
+		{
+			// Gurobi manual: dispose any and all used models and then dispose the env
+			// The buildAndSolve may throw an exception, in which case we still need to clean up and the model & env
+			// to prevent OOM's in long-running instances (such as during benchmarking or always-on microservices etc)
+			model.dispose();
+			env.dispose();
+		}
+	}
+
+	private GroupToProjectMatching<Group.FormedGroup> buildAndSolveModel(GRBModel emptyModel) throws GRBException
+	{
+		var model = emptyModel;
 
 		AssignmentConstraints assignmentConstraints = AssignmentConstraints.createInModel(model, datasetContext);
 		
@@ -59,12 +78,15 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 			constraint.apply(model, assignmentConstraints);
 		}
 
+		// Solve model
 		model.optimize();
 		
+		// Check status of solving the model
 		var status = model.get(GRB.IntAttr.Status);
 		
 		if (status == GRB.INFEASIBLE) {
 			// HACK: Dirty hack to signal the epsilon-constraint soft-grouping approach that the epsilon value is infeasible
+			// Idea for improvement: return a monad containing status and corresponding potential result
 			throw new InfeasbileMatchingException();
 		}
 		
@@ -72,10 +94,6 @@ public record ChiarandiniBaseModel(DatasetContext datasetContext, ObjectiveFunct
 
 		// extract x's and map to matching
 		var matching = new ChiarandiniGroupToProjectMatching(assignmentConstraints.xVars, datasetContext);
-
-		// Gurobi manual: dispose any and all used models and then dispose the env
-		model.dispose();
-		env.dispose();
 
 		return matching;
 	}
