@@ -90,7 +90,7 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 	{
 		public String asString()
 		{
-			return ((int) asDouble * 100) + " %";
+			return ((int) (asDouble * 100)) + " %";
 		}
 	}
 	
