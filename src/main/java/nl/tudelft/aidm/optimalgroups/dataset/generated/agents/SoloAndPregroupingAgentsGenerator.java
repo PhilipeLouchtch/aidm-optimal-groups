@@ -21,7 +21,7 @@ public record SoloAndPregroupingAgentsGenerator(SoloAgentGenerator soloGenerator
 		var countPregrouped = (int) Math.ceil(count * proportionPregrouped);
 		
 		var pregrouped = pregroupedGenerator.generate(context, countPregrouped, sequenceNumberSupplier);
-		var solo = soloGenerator.generate(context, count - countPregrouped, sequenceNumberSupplier);
+		var solo = soloGenerator.generate(context, count - pregrouped.count(), sequenceNumberSupplier);
 		
 		return pregrouped.with(solo);
 	}

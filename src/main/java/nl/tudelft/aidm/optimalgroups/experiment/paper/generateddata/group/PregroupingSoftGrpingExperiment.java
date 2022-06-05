@@ -66,13 +66,19 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 		
 		public AgentGenerator asGenerator(ProjectPreferenceGenerator projPrefGen)
 		{
-			var subGenerators = new ArrayList<>();
+			var subGenerators = new ArrayList<SubGen>();
 			
 			for (int i = 0; i < this.dist.length; i++)
 			{
 				var pregroupSize = i + 2; // index 0: size 2, index 3: size 5
-				var subGen = new PregroupingAgentsGenerator(pregroupSize, projPrefGen);
-				subGenerators.add(subGen);
+				var proportion = this.dist[i];
+				
+				if (proportion == 0)
+					continue;
+				
+				var generator = new PregroupingAgentsGenerator(pregroupSize, projPrefGen);
+				
+				subGenerators.add(new SubGen(generator, proportion));
 			}
 			
 			var arr = subGenerators.toArray(SubGen[]::new);

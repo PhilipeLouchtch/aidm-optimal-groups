@@ -39,7 +39,7 @@ public record ProportionalAgentGenerator(SubGen... pregroupingGenerators) implem
 	}
 	
 	@Override
-	public Agents generate(DatasetContext context, Integer count, IntSupplier sequenceNumberSupplier)
+	public Agents generate(DatasetContext context, Integer numAgentsToGen, IntSupplier sequenceNumberSupplier)
 	{
 		var generatedAgents = Agents.empty();
 		
@@ -48,10 +48,10 @@ public record ProportionalAgentGenerator(SubGen... pregroupingGenerators) implem
 				                        .sorted(Comparator.comparing(SubGen::proportion))
 				                        .toList();
 		
-		var agentsToGenRemaining = count;
+		var agentsToGenRemaining = numAgentsToGen;
 		for (var proportion : sortedProportions)
 		{
-			var subCount = (int) Math.ceil(count * proportion.proportion());
+			var subCount = (int) Math.round(numAgentsToGen * proportion.proportion());
 			var subCountBound = Math.min(subCount, agentsToGenRemaining); // never more than we can
 			var generated = proportion.generator.generate(context, subCountBound, sequenceNumberSupplier);
 			
@@ -59,8 +59,8 @@ public record ProportionalAgentGenerator(SubGen... pregroupingGenerators) implem
 			generatedAgents = generatedAgents.with(generated);
 		}
 		
-		Assert.that(agentsToGenRemaining == 0)
-		      .orThrowMessage("Not all required agents were generated, bug?");
+		// note: the above does not guarantee exactly numAgentsToGen are generated (may be less)
+		// use this generator with SoloAndPregroupingAgentsGenerator to fill up the remainder with 'solo' agents
 		
 		return generatedAgents;
 	}
