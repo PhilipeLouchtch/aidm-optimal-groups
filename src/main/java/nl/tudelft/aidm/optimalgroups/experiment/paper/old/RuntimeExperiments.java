@@ -43,7 +43,7 @@ public class RuntimeExperiments
 		//  - conditional
 		
 		// Mechanisms
-		var bepsys = new GroupProjectAlgorithm.BepSys_reworked();
+		var bepsys = new GroupProjectAlgorithm.BepSys_reworked(PregroupingType.none());
 		var normal_none = new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.none());
 		var fairness_none = new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.none());
 		

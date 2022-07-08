@@ -102,7 +102,7 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 			var projectPressure = 1d * datasetContext.allProjects().count() * datasetContext.numMaxSlots() / minReqProjectAmount.asInt();
 			
 			// Calc proportion of pregrouping students
-			var pregroupings = pregroupingFor(datasetContext);
+			var pregroupings = currentPregrouping();
 			var pregroupProportion = 1d * pregroupings.asAgents().count() / datasetContext.allAgents().count();
 			
 			// Calc distribution of pregrouping sizes
@@ -111,7 +111,7 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 			                            .collect(joining("|"));
 			
 			// Calc # pregroupings together
-			var numPregroupingsTogether = new NumberProposedGroupsTogether(matching, currentPregrouping());
+			var numPregroupingsTogether = new NumberProposedGroupsTogether(matching, pregroupings);
 			
 			return List.of(
 					datasetContext.identifier(),

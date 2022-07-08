@@ -1,6 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.agp;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.experiment.agp.report.ExperimentReportInHtml;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.MinimumReqProjectAmount;
@@ -18,10 +19,12 @@ public class PrefDistViz
 	public static void main(String[] args)
 	{
 		var experimentsForInReport = new ArrayList<Experiment>();
+		
+		var pregroupingType = PregroupingType.anyCliqueHardGrouped();
 
-		var algorithms = List.of(
-			new GroupProjectAlgorithm.BepSys(),
-			new GroupProjectAlgorithm.BEPSys_RSD()
+		List<GroupProjectAlgorithm> algorithms = List.of(
+			new GroupProjectAlgorithm.BepSys(pregroupingType),
+			new GroupProjectAlgorithm.BEPSys_RSD(pregroupingType)
 			/*new ILPPP_TGAlgorithm()*/); // will not succeed on CE10
 
 		var groupSize = GroupSizeConstraint.manual(4, 5);

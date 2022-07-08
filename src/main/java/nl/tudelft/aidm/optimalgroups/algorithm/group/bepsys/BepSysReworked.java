@@ -2,6 +2,7 @@ package nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.group.GroupFormingAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
@@ -18,13 +19,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * This is a refactored, streamlined, cleanedup version of "BepSys Improved".
+ * This is a refactored, streamlined, cleaned up version of "BepSys Improved".
  * In experiments, it behaves almost identical to it, and can successfully handle more cases
  * (some corner case bugs were elimited) but also ever so slightly worse...
  */
 @SuppressWarnings("DuplicatedCode")
 public class BepSysReworked implements GroupFormingAlgorithm
 {
+    private PregroupingType pregroupingType;
     private Agents students;
 
     private HashSet<Agent> availableStudents;
@@ -36,17 +38,33 @@ public class BepSysReworked implements GroupFormingAlgorithm
     private FormedGroups finalFormedGroups;
 
     private boolean done = false;
-
-    // Pass the list of students to make groups from
-    public BepSysReworked(Agents agents, GroupSizeConstraint groupSizeConstraint) {
+    
+    /**
+     * Default BEPSys pregrouping - only max-size pregroupings are allowed in the first pregrouping round
+     * @param agents
+     * @param groupSizeConstraint
+     */
+    public BepSysReworked(Agents agents, GroupSizeConstraint groupSizeConstraint)
+    {
+        this(PregroupingType.sizedCliqueHardGrouped(groupSizeConstraint.maxSize()), agents, groupSizeConstraint);
+    }
+    
+    /**
+     *
+     * A BEPSys mechanism with configurable pregrouping-determination algorithm
+     * @param pregroupingType
+     * @param agents
+     * @param groupSizeConstraint
+     */
+    public BepSysReworked(PregroupingType pregroupingType, Agents agents, GroupSizeConstraint groupSizeConstraint)
+    {
+        this.pregroupingType = pregroupingType;
         this.students = agents;
 
         this.availableStudents = new HashSet<>();
         this.unavailableStudents = new HashSet<>();
 
         this.groupSizeConstraint = groupSizeConstraint;
-
-//        System.out.println("Student amount: " + students.count());
 
         this.availableStudents.addAll(students.asCollection());
 
@@ -76,8 +94,14 @@ public class BepSysReworked implements GroupFormingAlgorithm
         //System.out.println(System.currentTimeMillis() + ": Start constructing cliques (state 1/3)");
         constructGroupsFromCliques();
 
-        //System.out.println(System.currentTimeMillis() + ": Start matchings ungrouped students (state 2/3)");
-        bestMatchUngrouped();
+        // System.out.println(System.currentTimeMillis() + ": Start matchings ungrouped students (state 2/3)");
+        
+        // If the pregrouping type is configured to none, skip grouping agents by checking their friend lists
+        // because if we do that, we're going to do a sort of anyClique pregrouping, which is probably not what
+        // the user who set the Pregrouping.none() type expected.
+        // Also: brittle implementation with the name comparison... so take care with refactorings
+        if (!pregroupingType.simpleName().equals("no_grouping"))
+            bestMatchUngrouped();
 
         //System.out.println(System.currentTimeMillis() + ": Start merging groups (state 3/3)");
         mergeGroups();
@@ -122,7 +146,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
 
     private void constructGroupsFromCliques()
     {
-        var groupsFromCliques = new CliqueGroups(Agents.from(availableStudents));
+        var groupsFromCliques = pregroupingType.instantiateFor(students).groups();
 
         var studentsInCliqueGroups = groupsFromCliques.asAgents().asCollection();
 

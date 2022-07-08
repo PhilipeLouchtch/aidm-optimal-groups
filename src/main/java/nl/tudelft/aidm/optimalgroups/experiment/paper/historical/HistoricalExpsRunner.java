@@ -17,12 +17,12 @@ public class HistoricalExpsRunner implements Experiment
 {
 	public static List<GroupProjectAlgorithm> groupingMechanisms()
 	{
-		var bepsys = new GroupProjectAlgorithm.BepSys_reworked();
+		var bepsys = new GroupProjectAlgorithm.BepSys_reworked(PregroupingType.anyCliqueSoftGrouped());
 		var normal_hard = new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.anyCliqueSoftGrouped());
 		var fairness_soft_eps = new Chiarandini_Fairgroups_EpsilonConstraintVersion(new OWAObjective(), PregroupingType.anyCliqueSoftGroupedEpsilon());
 //		var fairness_none = new Chiarandini_FairgroupsNEW(new OWAObjective(), PregroupingType.anyCliqueSoftGrouped());
 		
-		var mechanisms = List.of(bepsys, normal_hard, fairness_soft_eps);
+		var mechanisms = List.<GroupProjectAlgorithm>of(bepsys, normal_hard, fairness_soft_eps);
 		return mechanisms;
 	}
 	

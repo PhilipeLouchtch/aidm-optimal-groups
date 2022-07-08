@@ -8,6 +8,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.HardGroupingConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupEpsilonConstraint;
+import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
@@ -17,10 +18,28 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a pregrouping "variant" or "type":
+ *  - how the eligable pregroups are determined
+ *  - the related constraint for the variant/scenario - how the pregroups are to be handled
+ *
+ * Once instantiated for a dataset, it results in a {@link Pregrouping}
+ *
+ * Originally, the Pregrouping and PregroupingType types were imagened to be used with the Chiarandini-based
+ * mechanisms but are extended to also be used for other mechanisms that do not support constraints and thus
+ * have their own ways of handling pregroups. The use was extended because it was necessary to have a same way
+ * of configuring the determining of pregroups and this abstraction was pretty close
+ */
 public interface PregroupingType
 {
 	String simpleName();
-	Pregrouping instantiateFor(DatasetContext datasetContext);
+	
+	Pregrouping instantiateFor(Agents agents);
+	
+	default Pregrouping instantiateFor(DatasetContext datasetContext)
+	{
+		return instantiateFor(datasetContext.allAgents());
+	}
 	
 	/* Factory Methods */
 	
@@ -29,7 +48,7 @@ public interface PregroupingType
 	{
 		return new NamedLambda(
 				"anyClique_hardGrp",
-				(datasetContext) -> new Pregrouping.anyClique(datasetContext, HardGroupingConstraint::new)
+				(agents) -> new Pregrouping.anyClique(agents, HardGroupingConstraint::new)
 		);
 	}
 	
@@ -37,7 +56,7 @@ public interface PregroupingType
 	{
 		return new NamedLambda(
 				"anyClique_softGrp",
-				(datasetContext) -> new Pregrouping.anyClique(datasetContext, SoftGroupConstraint::new)
+				(agents) -> new Pregrouping.anyClique(agents, SoftGroupConstraint::new)
 		);
 	}
 	
@@ -45,7 +64,7 @@ public interface PregroupingType
 	{
 		return new NamedLambda(
 				"anyClique_softGrpEps",
-				(datasetContext) -> new Pregrouping.anyClique(datasetContext, SoftGroupEpsilonConstraint::new)
+				(agents) -> new Pregrouping.anyClique(agents, SoftGroupEpsilonConstraint::new)
 		);
 	}
 	
@@ -53,7 +72,7 @@ public interface PregroupingType
 	{
 		return new NamedLambda(
 				"anyClique_condGrp" + upToIncludingRank,
-				(datasetContext) -> new Pregrouping.anyClique(datasetContext, groups -> new ConditionalGroupConstraint(groups, upToIncludingRank))
+				(agents) -> new Pregrouping.anyClique(agents, groups -> new ConditionalGroupConstraint(groups, upToIncludingRank))
 		);
 	}
 	
@@ -63,7 +82,7 @@ public interface PregroupingType
 		var sizesSetNotation = Arrays.stream(sizes).map(Object::toString).collect(Collectors.joining(",", "{", "}"));
 		return new NamedLambda(
 				"sizedCliques"+sizesSetNotation+"_hardGrp",
-				(datasetContext) -> new Pregrouping.sizedClique(datasetContext, HardGroupingConstraint::new, sizes)
+				(agents) -> new Pregrouping.sizedClique(agents, HardGroupingConstraint::new, sizes)
 		);
 	}
 	
@@ -72,7 +91,7 @@ public interface PregroupingType
 		var sizesSetNotation = Arrays.stream(sizes).map(Object::toString).collect(Collectors.joining(",", "{", "}"));
 		return new NamedLambda(
 				"sizedCliques"+sizesSetNotation+"_softGrp",
-				(datasetContext) -> new Pregrouping.sizedClique(datasetContext, SoftGroupConstraint::new, sizes)
+				(agents) -> new Pregrouping.sizedClique(agents, SoftGroupConstraint::new, sizes)
 		);
 	}
 	
@@ -81,7 +100,16 @@ public interface PregroupingType
 		var sizesSetNotation = Arrays.stream(sizes).map(Object::toString).collect(Collectors.joining(",", "{", "}"));
 		return new NamedLambda(
 				"sizedCliques"+sizesSetNotation+"_condGrp",
-				(datasetContext) -> new Pregrouping.sizedClique(datasetContext,  groups -> new ConditionalGroupConstraint(groups, upToIncludingRank), sizes)
+				(agents) -> new Pregrouping.sizedClique(agents,  groups -> new ConditionalGroupConstraint(groups, upToIncludingRank), sizes)
+		);
+	}
+	
+	/// SIZED - MAX-SIZE ONLY
+	static PregroupingType maxCliqueHardGrouped()
+	{
+		return new NamedLambda(
+				"maxCliques_hardGrp",
+				(agents) -> new Pregrouping.sizedClique(agents, HardGroupingConstraint::new, agents.datasetContext.groupSizeConstraint().maxSize())
 		);
 	}
 	
@@ -92,42 +120,17 @@ public interface PregroupingType
 	static PregroupingType none()
 	{
 		return new NamedLambda("no_grouping",
-				datasetContext -> new Pregrouping()
-				{
-					@Override
-					public Groups<Group.TentativeGroup> groups()
-					{
-						return Groups.of(List.of());
-					}
-					
-					@Override
-					public Constraint constraint()
-					{
-						return new Constraint()
-						{
-							@Override
-							public void apply(GRBModel model, AssignmentConstraints assignmentConstraints) throws GRBException
-							{
-							}
-							
-							@Override
-							public String simpleName()
-							{
-								return "Empty constraint";
-							}
-						};
-					}
-				}
+				agents -> new Pregrouping.None()
 		);
 	}
 	
 	/* */
-	record NamedLambda(String simpleName, Function<DatasetContext, Pregrouping> function) implements PregroupingType
+	record NamedLambda(String simpleName, Function<Agents, Pregrouping> function) implements PregroupingType
 	{
 		@Override
-		public Pregrouping instantiateFor(DatasetContext datasetContext)
+		public Pregrouping instantiateFor(Agents agents)
 		{
-			return function.apply(datasetContext);
+			return function.apply(agents);
 		}
 	}
 	

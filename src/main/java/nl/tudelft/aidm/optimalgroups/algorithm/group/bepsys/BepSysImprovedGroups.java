@@ -2,6 +2,8 @@ package nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.group.GroupFormingAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.AssignmentConstraints;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.model.*;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
@@ -20,6 +22,7 @@ import java.util.function.Consumer;
 
 public class BepSysImprovedGroups implements GroupFormingAlgorithm
 {
+    private PregroupingType pregroupingType;
     private Agents students;
 
     private HashSet<Agent> availableStudents;
@@ -33,9 +36,18 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
     private boolean useImprovedAlgo;
 
     private boolean done = false;
-
-    // Pass the list of students to make groups from
-    public BepSysImprovedGroups(Agents agents, GroupSizeConstraint groupSizeConstraint, boolean useImprovedAlgo) {
+    
+    /**
+     * A BEPSys mechanism with configurable pregrouping-determination algorithm
+     * @param pregroupingType The pregroups algorithm, the constraint is unused. Only the algorithm that determines the pregroupings from group prefs
+     * @param agents
+     * @param groupSizeConstraint
+     * @param useImprovedAlgo If the "fixed" group factoring algorithm is to be used - an old, first approach at fixing BEPSys corner cases
+     */
+    public BepSysImprovedGroups(PregroupingType pregroupingType, Agents agents, GroupSizeConstraint groupSizeConstraint, boolean useImprovedAlgo)
+    {
+        this.pregroupingType = pregroupingType;
+        
         this.students = agents;
 
         this.availableStudents = new HashSet<>();
@@ -52,8 +64,20 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
 
         this.useImprovedAlgo = useImprovedAlgo;
     }
+    
+    /**
+     * Default BEPSys pregrouping - only max-size pregroupings are allowed in the first pregrouping round
+     * @param agents
+     * @param groupSizeConstraint
+     * @param useImprovedAlgo
+     */
+    public BepSysImprovedGroups(Agents agents, GroupSizeConstraint groupSizeConstraint, boolean useImprovedAlgo)
+    {
+        this(PregroupingType.sizedCliqueHardGrouped(groupSizeConstraint.maxSize()), agents, groupSizeConstraint, useImprovedAlgo);
+    }
 
-    private void constructGroups() {
+    private void constructGroups()
+    {
         /*
             _, nogroup, group_list = clique_friends
             best_match = best_match_ungrouped nogroup
@@ -76,7 +100,13 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
         constructGroupsFromCliques();
 
         //System.out.println(System.currentTimeMillis() + ": Start matchings ungrouped students (state 2/3)");
-        bestMatchUngrouped();
+        
+        // If the pregrouping type is configured to none, skip grouping agents by checking their friend lists
+        // because if we do that, we're going to do a sort of anyClique pregrouping, which is probably not what
+        // the user who set the Pregrouping.none() type expected.
+        // Also: brittle implementation with the name comparison... so take care with refactorings
+        if (!pregroupingType.simpleName().equals("no_grouping"))
+            bestMatchUngrouped();
 
         //System.out.println(System.currentTimeMillis() + ": Start merging groups (state 3/3)");
         mergeGroups();
@@ -121,7 +151,7 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
 
     private void constructGroupsFromCliques()
     {
-        var groupsFromCliques = new CliqueGroups(Agents.from(availableStudents));
+        var groupsFromCliques = pregroupingType.instantiateFor(students).groups();
 
         var studentsInCliqueGroups = groupsFromCliques.asAgents().asCollection();
 
@@ -167,7 +197,7 @@ public class BepSysImprovedGroups implements GroupFormingAlgorithm
             possibleGroups.add(new PossibleGroup(friends, score));
         }
 
-        this.pickBestGroups(possibleGroups);
+        pickBestGroups(possibleGroups);
 //        System.out.println(System.currentTimeMillis() + ":\t\t- bestMatchUngrouped: done, " + this.availableStudents.size() + " students left to group");
     }
 

@@ -23,9 +23,12 @@ public class Experiment_Chiarandini_etc_180221
 	public static void main(String[] args)
 	{
 		var experimentsForInReport = new ArrayList<Experiment>();
-
+		
+		
+		var pregroupingType = PregroupingType.anyCliqueHardGrouped();
+		
 		List<GroupProjectAlgorithm> algorithms = List.of(
-			new GroupProjectAlgorithm.BepSys_reworked(),
+			new GroupProjectAlgorithm.BepSys_reworked(pregroupingType),
 //			new GroupProjectAlgorithm.BepSys_reworkedGroups_minimizeIndividualDisutility(),
 //			new GroupProjectAlgorithm.CombinedPrefs(),
 //			new GroupProjectAlgorithm.RSD(),
@@ -34,12 +37,12 @@ public class Experiment_Chiarandini_etc_180221
 			new GroupProjectAlgorithm.SDPCWithSlots(),
 			new GroupProjectAlgorithm.Pessimism(),
 			new GroupProjectAlgorithm.MinizincMIP(),
-			new GroupProjectAlgorithm.Chiarandini_Utilitarian_MinSum_IdentityScheme(PregroupingType.anyCliqueHardGrouped()),
-			new GroupProjectAlgorithm.Chiarandini_Stable_Utilitarian_MinSum_IdentityScheme(PregroupingType.anyCliqueHardGrouped()),
-			new GroupProjectAlgorithm.Chiarandini_Utilitarian_MinSum_ExpScheme(PregroupingType.anyCliqueHardGrouped()),
-			new GroupProjectAlgorithm.Chiarandini_Stable_Utilitarian_MinSum_ExpScheme(PregroupingType.anyCliqueHardGrouped()),
-			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.anyCliqueHardGrouped()),
-			new GroupProjectAlgorithm.Chiaranini_Stable_MiniMax_OWA(PregroupingType.anyCliqueHardGrouped())
+			new GroupProjectAlgorithm.Chiarandini_Utilitarian_MinSum_IdentityScheme(pregroupingType),
+			new GroupProjectAlgorithm.Chiarandini_Stable_Utilitarian_MinSum_IdentityScheme(pregroupingType),
+			new GroupProjectAlgorithm.Chiarandini_Utilitarian_MinSum_ExpScheme(pregroupingType),
+			new GroupProjectAlgorithm.Chiarandini_Stable_Utilitarian_MinSum_ExpScheme(pregroupingType),
+			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(pregroupingType),
+			new GroupProjectAlgorithm.Chiaranini_Stable_MiniMax_OWA(pregroupingType)
 //			new GroupProjectAlgorithm.SDPCWithSlots_potential_numgroupmates_ordered()
 		);
 

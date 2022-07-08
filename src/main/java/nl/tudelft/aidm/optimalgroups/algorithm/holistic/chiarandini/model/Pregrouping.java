@@ -1,7 +1,11 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model;
 
+import gurobi.GRBException;
+import gurobi.GRBModel;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.AssignmentConstraints;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.Constraint;
+import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
@@ -21,9 +25,9 @@ public interface Pregrouping
 		private final Groups<Group.TentativeGroup> groups;
 		private final Constraint constraint;
 		
-		public anyClique(DatasetContext datasetContext, Function<Groups<?>, Constraint> groupingConstraintProvider)
+		public anyClique(Agents agents, Function<Groups<?>, Constraint> groupingConstraintProvider)
 		{
-			this.groups = new CliqueGroups(datasetContext.allAgents());
+			this.groups = new CliqueGroups(agents);
 			this.constraint = groupingConstraintProvider.apply(this.groups);
 		}
 		
@@ -45,9 +49,9 @@ public interface Pregrouping
 		private final Groups<Group.TentativeGroup> groups;
 		private final Constraint constraint;
 		
-		public sizedClique(DatasetContext datasetContext, Function<Groups<?>, Constraint> groupingConstraintProvider, Integer... sizes)
+		public sizedClique(Agents agents, Function<Groups<?>, Constraint> groupingConstraintProvider, Integer... sizes)
 		{
-			this.groups = new CliqueGroups(datasetContext.allAgents()).ofSizes(sizes);
+			this.groups = new CliqueGroups(agents).ofSizes(sizes);
 			this.constraint = groupingConstraintProvider.apply(groups);
 		}
 		
@@ -61,6 +65,33 @@ public interface Pregrouping
 		public Constraint constraint()
 		{
 			return this.constraint;
+		}
+	}
+	
+	class None implements Pregrouping
+	{
+		@Override
+		public Groups<Group.TentativeGroup> groups()
+		{
+			return Groups.of(List.of());
+		}
+		
+		@Override
+		public Constraint constraint()
+		{
+			return new Constraint()
+			{
+				@Override
+				public void apply(GRBModel model, AssignmentConstraints assignmentConstraints) throws GRBException
+				{
+				}
+				
+				@Override
+				public String simpleName()
+				{
+					return "Empty constraint";
+				}
+			};
 		}
 	}
 }

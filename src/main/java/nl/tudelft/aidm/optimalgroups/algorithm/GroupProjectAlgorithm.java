@@ -5,9 +5,11 @@ import nl.tudelft.aidm.optimalgroups.Application;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.BepSysImprovedGroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.BepSysReworked;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.CombinedPreferencesGreedy;
+import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.HumbleMiniMaxWithClosuresSearch;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.*;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.ObjectiveFunction;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.ilppp.ILPPPDeterminedMatching;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.WorstAmongBestHumblePairingsSearch;
@@ -20,6 +22,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.project.RandomizedSerialDictators
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
+import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.FormedGroupToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.pref.AggregatedProjectPreference;
@@ -29,7 +32,13 @@ import java.util.Objects;
 public interface GroupProjectAlgorithm extends Algorithm
 {
 	GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext);
+	
+	/**
+	 * The pregrouping type associated or configured for the algorithm
+	 */
+	PregroupingType pregroupingType();
 
+	
 	class Result implements Algorithm.Result<GroupProjectAlgorithm, GroupToProjectMatching<Group.FormedGroup>>
 	{
 		private final GroupProjectAlgorithm algo;
@@ -70,7 +79,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class BepSys implements GroupProjectAlgorithm
+	record BepSys(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()
@@ -82,12 +91,12 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
-			var groups = new BepSysImprovedGroups(datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true);
+			var groups = new BepSysImprovedGroups(pregroupingType, datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true);
 			var groupsToProjects = new GroupProjectMaxFlow(datasetContext, groups.asFormedGroups(), datasetContext.allProjects());
 
 			return groupsToProjects;
 		}
-
+		
 		@Override
 		public String toString()
 		{
@@ -95,7 +104,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class BepSys_reworked implements GroupProjectAlgorithm
+	record BepSys_reworked(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()
@@ -106,7 +115,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
-			var groups = new BepSysReworked(datasetContext.allAgents(), datasetContext.groupSizeConstraint());
+			var groups = new BepSysReworked(pregroupingType, datasetContext.allAgents(), datasetContext.groupSizeConstraint());
 			var groupsToProjects = new GroupProjectMaxFlow(datasetContext, groups.asFormedGroups(), datasetContext.allProjects());
 
 			return groupsToProjects;
@@ -119,7 +128,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class BepSys_ogGroups_minimizeIndividualDisutility implements GroupProjectAlgorithm
+	record BepSys_ogGroups_minimizeIndividualDisutility(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()
@@ -131,7 +140,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
-			var groups = new BepSysImprovedGroups(datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true);
+			var groups = new BepSysImprovedGroups(pregroupingType, datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true);
 
 			var groupsToProjects = new GroupProjectMaxFlow(datasetContext, groups.asFormedGroups(), datasetContext.allProjects(),
 
@@ -159,7 +168,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class BepSys_reworkedGroups_minimizeIndividualDisutility implements GroupProjectAlgorithm
+	record BepSys_reworkedGroups_minimizeIndividualDisutility(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()
@@ -171,7 +180,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
-			var groups = new BepSysReworked(datasetContext.allAgents(), datasetContext.groupSizeConstraint());
+			var groups = new BepSysReworked(pregroupingType, datasetContext.allAgents(), datasetContext.groupSizeConstraint());
 
 			var groupsToProjects = new GroupProjectMaxFlow(datasetContext, groups.asFormedGroups(), datasetContext.allProjects(),
 
@@ -210,6 +219,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 		{
 			return "Peer and Topic preferences merging";
 		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// ILPPP has no pregrouping support
+			return PregroupingType.none();
+		}
 
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
@@ -234,7 +250,14 @@ public interface GroupProjectAlgorithm extends Algorithm
 		{
 			return "ILPPP";
 		}
-
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// ILPPP has no pregrouping support
+			return PregroupingType.none();
+		}
+		
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
@@ -248,18 +271,18 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class BEPSys_RSD implements GroupProjectAlgorithm
+	record BEPSys_RSD(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
 		@Override
 		public String name()
 		{
-			return "BepSys groups -> Randomised SD";
+			return "BepSys grouping into Randomised SD";
 		}
 
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
-			var formedGroups = new BepSysImprovedGroups(datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true).asFormedGroups();
+			var formedGroups = new BepSysImprovedGroups(pregroupingType, datasetContext.allAgents(), datasetContext.groupSizeConstraint(), true).asFormedGroups();
 			var matching = new RandomizedSerialDictatorship(datasetContext, formedGroups, datasetContext.allProjects());
 
 			return matching;
@@ -282,6 +305,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(agentsToProjects);
 		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// Pessimism has no pregrouping support
+			return PregroupingType.none();
+		}
 
 		@Override
 		public String name()
@@ -301,6 +331,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(matchingStudentsToProjects);
 		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// SDPC has no pregrouping support
+			return PregroupingType.none();
+		}
 
 		@Override
 		public String name()
@@ -311,7 +348,6 @@ public interface GroupProjectAlgorithm extends Algorithm
 
 	class SDPCWithSlots_potential_numgroupmates_ordered implements GroupProjectAlgorithm
 	{
-
 		@Override
 		public GroupToProjectMatching<Group.FormedGroup> determineMatching(DatasetContext datasetContext)
 		{
@@ -319,6 +355,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 			var matchingStudentsToProjects = sdpc.doIt();
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(matchingStudentsToProjects);
+		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// SDPC has no pregrouping support
+			return PregroupingType.none();
 		}
 
 		@Override
@@ -338,6 +381,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(matchingStudentsToProjects);
 		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// SDPC has no pregrouping support
+			return PregroupingType.none();
+		}
 
 		@Override
 		public String name()
@@ -355,6 +405,13 @@ public interface GroupProjectAlgorithm extends Algorithm
 			var matchingStudentsToProjects = algo.matching();
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(matchingStudentsToProjects);
+		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// SDPC has no pregrouping support
+			return PregroupingType.none();
 		}
 
 		@Override
@@ -379,12 +436,17 @@ public interface GroupProjectAlgorithm extends Algorithm
 
 			return FormedGroupToProjectMatching.byTriviallyPartitioning(matching);
 		}
+		
+		@Override
+		public PregroupingType pregroupingType()
+		{
+			// MZN approach has no pregrouping support
+			return PregroupingType.none();
+		}
 	}
 
-	class Chiarandini_Utilitarian_MinSum_IdentityScheme implements GroupProjectAlgorithm
+	record Chiarandini_Utilitarian_MinSum_IdentityScheme(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_Utilitarian_MinSum_IdentityScheme(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -406,10 +468,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class Chiarandini_Utilitarian_MinSum_ExpScheme implements GroupProjectAlgorithm
+	record Chiarandini_Utilitarian_MinSum_ExpScheme(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_Utilitarian_MinSum_ExpScheme(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -431,10 +491,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class Chiarandini_Stable_Utilitarian_MinSum_IdentityScheme implements GroupProjectAlgorithm
+	record Chiarandini_Stable_Utilitarian_MinSum_IdentityScheme(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_Stable_Utilitarian_MinSum_IdentityScheme(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -456,10 +514,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class Chiarandini_Stable_Utilitarian_MinSum_ExpScheme implements GroupProjectAlgorithm
+	record Chiarandini_Stable_Utilitarian_MinSum_ExpScheme(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_Stable_Utilitarian_MinSum_ExpScheme(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -481,10 +537,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class Chiarandini_MiniMax_OWA implements GroupProjectAlgorithm
+	record Chiarandini_MiniMax_OWA(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_MiniMax_OWA(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -506,10 +560,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 
-	class Chiaranini_Stable_MiniMax_OWA implements GroupProjectAlgorithm
+	record Chiaranini_Stable_MiniMax_OWA(PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final PregroupingType pregroupingType;
-		
 		public Chiaranini_Stable_MiniMax_OWA(PregroupingType pregroupingType)
 		{
 			this.pregroupingType = pregroupingType;
@@ -531,17 +583,8 @@ public interface GroupProjectAlgorithm extends Algorithm
 		}
 	}
 	
-	class Chiarandini_Fairgroups implements GroupProjectAlgorithm
+	record Chiarandini_Fairgroups(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final ObjectiveFunction objectiveFunction;
-		private final PregroupingType pregroupingType;
-		
-		public Chiarandini_Fairgroups(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType)
-		{
-			this.objectiveFunction = objectiveFunction;
-			this.pregroupingType = pregroupingType;
-		}
-
 		@Override
 		public String name()
 		{

@@ -16,11 +16,8 @@ import java.util.List;
 
 public class FairnessImprovExperimentsRunner
 {
-	static class Chiarandini_FairgroupsNEW implements GroupProjectAlgorithm
+	record Chiarandini_FairgroupsNEW(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final ObjectiveFunction objectiveFunction;
-		private final PregroupingType pregroupingType;
-		
 		public Chiarandini_FairgroupsNEW(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType)
 		{
 			this.objectiveFunction = objectiveFunction;
@@ -43,17 +40,8 @@ public class FairnessImprovExperimentsRunner
 		}
 	}
 	
-	static class Chiarandini_FairgroupsEps implements GroupProjectAlgorithm
+	record Chiarandini_FairgroupsEps(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType) implements GroupProjectAlgorithm
 	{
-		private final ObjectiveFunction objectiveFunction;
-		private final PregroupingType pregroupingType;
-		
-		public Chiarandini_FairgroupsEps(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType)
-		{
-			this.objectiveFunction = objectiveFunction;
-			this.pregroupingType = pregroupingType;
-		}
-
 		@Override
 		public String name()
 		{

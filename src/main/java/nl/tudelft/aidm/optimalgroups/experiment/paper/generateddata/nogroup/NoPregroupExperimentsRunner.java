@@ -18,11 +18,11 @@ public class NoPregroupExperimentsRunner implements Experiment
 	private static List<GroupProjectAlgorithm> mechanisms()
 	{
 		var sdpc = new GroupProjectAlgorithm.SDPCWithSlots();
-		var bepsys = new GroupProjectAlgorithm.BepSys_reworked();
+		var bepsys = new GroupProjectAlgorithm.BepSys_reworked(PregroupingType.none());
 		var chiarandini_none = new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.none());
 		var fairness_soft_eps = new Chiarandini_Fairgroups_EpsilonConstraintVersion(new OWAObjective(), PregroupingType.anyCliqueSoftGroupedEpsilon());
 		
-		return List.of(sdpc, bepsys, chiarandini_none, fairness_soft_eps);
+		return List.<GroupProjectAlgorithm>of(sdpc, bepsys, chiarandini_none, fairness_soft_eps);
 	}
 	
 	

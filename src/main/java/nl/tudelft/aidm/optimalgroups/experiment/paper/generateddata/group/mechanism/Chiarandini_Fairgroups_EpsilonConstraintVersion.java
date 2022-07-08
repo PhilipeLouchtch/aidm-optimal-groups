@@ -8,17 +8,8 @@ import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
-public class Chiarandini_Fairgroups_EpsilonConstraintVersion implements GroupProjectAlgorithm
+public record Chiarandini_Fairgroups_EpsilonConstraintVersion(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType) implements GroupProjectAlgorithm
 {
-	private final ObjectiveFunction objectiveFunction;
-	private final PregroupingType pregroupingType;
-	
-	public Chiarandini_Fairgroups_EpsilonConstraintVersion(ObjectiveFunction objectiveFunction, PregroupingType pregroupingType)
-	{
-		this.objectiveFunction = objectiveFunction;
-		this.pregroupingType = pregroupingType;
-	}
-	
 	@Override
 	public String name()
 	{

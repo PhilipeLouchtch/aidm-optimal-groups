@@ -1,6 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.agp;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_GroupPreferences_Cleared;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.experiment.agp.report.ExperimentReportInHtml;
@@ -16,12 +17,14 @@ public class Experiment_CE10_nogroup
 	public static void main(String[] args)
 	{
 		var experimentsForInReport = new ArrayList<Experiment>();
+		
+		var pregroupingType = PregroupingType.anyCliqueHardGrouped();
 
-		var algorithms = List.of(
-			new GroupProjectAlgorithm.BepSys(),
-			new GroupProjectAlgorithm.BepSys_reworked(),
-			new GroupProjectAlgorithm.BepSys_ogGroups_minimizeIndividualDisutility(),
-			new GroupProjectAlgorithm.BepSys_reworkedGroups_minimizeIndividualDisutility()
+		List<GroupProjectAlgorithm> algorithms = List.of(
+			new GroupProjectAlgorithm.BepSys(pregroupingType),
+			new GroupProjectAlgorithm.BepSys_reworked(pregroupingType),
+			new GroupProjectAlgorithm.BepSys_ogGroups_minimizeIndividualDisutility(pregroupingType),
+			new GroupProjectAlgorithm.BepSys_reworkedGroups_minimizeIndividualDisutility(pregroupingType)
 //			,new GroupProjectAlgorithm.ILPPP()
 		);
 
