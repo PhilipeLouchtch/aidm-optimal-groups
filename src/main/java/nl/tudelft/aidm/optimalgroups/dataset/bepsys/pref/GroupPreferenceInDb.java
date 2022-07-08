@@ -54,7 +54,7 @@ public class GroupPreferenceInDb implements GroupPreference
 						.map(agent -> (SimpleAgent.AgentInBepSysSchemaDb) agent)
 						.filter(agent -> agent.bepSysUserId.equals(friendAgentId))
 						.findAny().orElseGet(() -> {
-								System.out.printf("Warning, friend not found: %s of %s peer pref in CE %s\n", friendAgentId, bepSysUserId, courseEdition.bepSysId());
+//								System.out.printf("Warning, friend not found: %s of %s peer pref in CE %s\n", friendAgentId, bepSysUserId, courseEdition.bepSysId());
 								return null;
 						});
 		

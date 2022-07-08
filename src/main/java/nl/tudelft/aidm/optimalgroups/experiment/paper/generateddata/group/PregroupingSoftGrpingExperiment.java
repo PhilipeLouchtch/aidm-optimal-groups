@@ -49,15 +49,22 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 	enum PREGROUP_SIZES_DISTRIBUTION
 	{
 		MAX_ONLY(0, 0, 0, 1),
+		
 		// max size dominant, tapers towards pairs
 		MAX_TAPERED(0.1, 0.2, 0, 0.7),
 		// most people are full team or pair
 		REALISTIC(0.4, 0.2, 0, 0.4),
+		
 		// pair size dominant, tapers towards max-size pref,
 		PAIR_TAPERED(0.6, 0.2, 0, 0.2);
 		
 		private final double[] dist;
 		
+		/**
+		 * @param dist Mapping between group size and proportion of pregrouped students that are in a group of that size. Must sum to 1.
+		 *             For example, the value [0.1, 0.2, 0, 0.7] defines a desired outcome to contain 10% of pregrouping students to be in pairs,
+		 *             20% in groups of 3, nobody in group of 4 and 70% in groups of 5.
+		 */
 		PREGROUP_SIZES_DISTRIBUTION(double... dist)
 		{
 			Assert.that(Arrays.stream(dist).sum() == 1.0).orThrowMessage("Pregroup size dist must sum to 1");
@@ -125,7 +132,10 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 			
 			for (var pregrouping_sizes_dist : pregrouping_size_distributions)
 			{
-				// todo
+				// Skip effectively identical combinations for RANDOM preferences
+				if (proj_pref_gen.shortName().equalsIgnoreCase("RANDOM") && pregrouping_proj_pref_type != PREGROUP_PREF_DIST_TYPE.IDENTICAL)
+					continue;
+				
 				String groupName = "stud[%s]_pp[%s]_gpp[%s]_gd[%s]".formatted(num_students, proj_pref_gen.shortName(), pregrouping_proj_pref_type, pregrouping_sizes_dist);
 				var datasetParamGroup = new GroupedDatasetParams.Group<MaxPregroupingsDatasetParams>(groupName, new ArrayList<>(nums_slots.size() * proj_pref_gens.size()));
 				
@@ -185,6 +195,7 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 			var projects = Projects.generated(numProjects, numSlotsPerProj);
 			
 			var soloPrefGenerator = this.prefGenerator.makeGeneratorFor(projects);
+			
 			// Pick the project preferences for the pregrouping students
 			var pregroupProjPrefGenerator = switch (pregroup_pref_dist_type) {
 				case IDENTICAL -> soloPrefGenerator; // same distribution instance
@@ -221,7 +232,7 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 	}
 	
 	
-	record MaxPregroupingsExperimentSubResult(
+	public record MaxPregroupingsExperimentSubResult(
 			MaxPregroupingsDatasetParams params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism,
 			GroupToProjectMatching<?> matching,
 			Duration runtime, Integer trialRunNum
