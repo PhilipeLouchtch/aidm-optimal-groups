@@ -198,9 +198,13 @@ public class BepSysReworked implements GroupFormingAlgorithm
 
     private void mergeGroups() {
         List<Group> unmerged = new LinkedList<>();
+        
+        // include all available students (not in tentative or final)
+        availableStudents.forEach(availableStudent -> {
+            var asGroup = new Group.TentativeGroup(Agents.from(availableStudent), availableStudent.projectPreference());
+            unmerged.add(asGroup);
+        });
 
-        // todo: split groups into those that are finalized and those that are not
-        //  s.t. no need to do this kind of case distinction here...
         tentativelyFormedGroups.forEach(group -> {
             boolean groupIsOfMaximumSize = group.members().count() == this.groupSizeConstraint.maxSize();
 
@@ -208,17 +212,15 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 finalFormedGroups.addAsFormed(group);
             }
             else {
-                unmerged.add(new Group.TentativeGroup(group));
+                unmerged.add(group);
             }
         });
 
-//        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + finalFormedGroups.asCollection().size() + " groups of max size (final)");
-//        System.out.println(System.currentTimeMillis() + ":\t\t- mergeGroups: " + tentativelyFormedGroups.asCollection().size() + " groups to be merged");
-
         unmerged.sort(Comparator.comparingInt((Group group) -> group.members().count()));
 
-        int amountOfStudentsToGroup = tentativelyFormedGroups.countDistinctStudents() - finalFormedGroups.countDistinctStudents();
-        var groupConstraints = new SetOfGroupSizesThatCanStillBeCreated(amountOfStudentsToGroup, groupSizeConstraint);
+        int amountOfStudentsToGroup = unmerged.stream().mapToInt(g -> g.members().count()).sum();
+        
+        var groupFactorization = new SetOfGroupSizesThatCanStillBeCreated(amountOfStudentsToGroup, groupSizeConstraint);
 
         /*
             The following is a greedy merge. By group merge we mean combining (partial) groups
@@ -237,7 +239,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 int together = numMembersInUnmergedGroup + numMembersInOtherUnmergedGroup;
 
                 // Only add group if it is a final form
-                if(groupConstraints.mayFormGroupOfSize(together)) {
+                if(groupFactorization.mayFormGroupOfSize(together)) {
                     possibleGroupMerges.add(new BepSysReworked.PossibleGroupMerge(unmergedGroup, otherUnmergedGroup));
                 }
             }
@@ -250,7 +252,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
                     // Determine the group size upperbound for the potential merges:
                     int togetherMaxBound = groupSizeConstraint.maxSize();
                     for (int i = groupSizeConstraint.maxSize(); i > 0; i--) {
-                        if (groupConstraints.mayFormGroupOfSize(i))
+                        if (groupFactorization.mayFormGroupOfSize(i))
                             togetherMaxBound = i;
                     }
                     
@@ -285,9 +287,9 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 Group.TentativeGroup tentativeGroup = bestMerge.asTentativeGroup();
                 int together = tentativeGroup.members().count();
 
-                if(groupConstraints.mayFormGroupOfSize(together)) //Does the merged group fit in group size constraints?
+                if(groupFactorization.mayFormGroupOfSize(together)) //Does the merged group fit in group size constraints?
                 {
-                    groupConstraints.recordGroupFormedOfSize(together);
+                    groupFactorization.recordGroupFormedOfSize(together);
                     finalFormedGroups.addAsFormed(tentativeGroup);
                 }
                 else
@@ -296,6 +298,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
                 }
             }
         }
+        return;
     }
 
 

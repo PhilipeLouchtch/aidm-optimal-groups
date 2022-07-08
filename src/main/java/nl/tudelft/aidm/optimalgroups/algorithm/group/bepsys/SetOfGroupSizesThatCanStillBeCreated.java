@@ -3,6 +3,8 @@ package nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.group.GroupFactorization;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 
+import java.util.Arrays;
+
 final public class SetOfGroupSizesThatCanStillBeCreated
 {
     public int[] groupFactorization;
@@ -15,15 +17,26 @@ final public class SetOfGroupSizesThatCanStillBeCreated
      * To keep track of intermediate group sets, recordGroupFormedOfSize will decrement the amount of groups formable for that size, if possible
      * To check if a group with a certain size can be made, use mayFormGroupOfSize
      */
-    public SetOfGroupSizesThatCanStillBeCreated(int nrStudents, GroupSizeConstraint groupSizeConstraint){
+    public SetOfGroupSizesThatCanStillBeCreated(int nrStudents, GroupSizeConstraint groupSizeConstraint)
+    {
         this.nrStudents = nrStudents;
         this.groupSizeConstraint = groupSizeConstraint;
         
-        // This is actually one of possible factorizations,
-        // more precisely, it is a factorization wiuth least number of groups
+        // NOte that there may be more factorization options, but the implementation
+        // below gives a factorization with the least number of groups
         this.groupFactorization = GroupFactorization.cachedInstanceFor(groupSizeConstraint)
                                                     .forGivenNumberOfStudents(nrStudents)
                                                     .numGroupsOfSize();
+        //
+        this.groupFactorization = Arrays.copyOf(groupFactorization, groupFactorization.length);
+    }
+    
+    /**
+     * If there is any group that can still be created
+     */
+    public boolean hasAny()
+    {
+        return Arrays.stream(groupFactorization).sum() > 0;
     }
 
 

@@ -1,7 +1,6 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.group;
 
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
-import plouchtch.assertion.Assert;
 
 import java.util.*;
 import java.util.function.Function;
@@ -11,18 +10,20 @@ public class GroupFactorization
 {
 	public record Factorization(boolean isFactorable, int[] numGroupsOfSize) {}
 
-	private List<Factorization> isFactorable;
+	private List<Factorization> factorizations;
 	private final GroupSizeConstraint gsc;
-
-
+	
+	
 	// TODO: capacities for num groups
 	// TODO: weak references solution if to be used in production environment
 	public static Map<GroupSizeConstraint, GroupFactorization> sharedInstances = new HashMap<>();
 	public static synchronized GroupFactorization cachedInstanceFor(GroupSizeConstraint groupSizeConstraint)
 	{
-		return sharedInstances.computeIfAbsent(groupSizeConstraint,
-			key -> new GroupFactorization(groupSizeConstraint, 1000)
+		var x = sharedInstances.computeIfAbsent(groupSizeConstraint,
+			gsc -> new GroupFactorization(gsc, 1000)
 		);
+		
+		return x;
 	}
 
 
@@ -31,19 +32,34 @@ public class GroupFactorization
 	{
 		this.gsc = gsc;
 
-		this.isFactorable = makeFreshLookupList(expectedStudentsMax);
+		this.factorizations = makeFreshLookupList(expectedStudentsMax);
 	}
 
 
 	public Factorization forGivenNumberOfStudents(int numStudents) {
 		isFactorableIntoValidGroups(numStudents);
 
-		return isFactorable.get(numStudents);
+		var factorization = factorizations.get(numStudents);
+		
+		// Bugfix: copy the factorization - the array is modifiable and is being modified by SetOfGroupSizesThatCanStillBeCreated
+		// choosing to make a copy here than letting the users take care of it
+		return new Factorization(factorization.isFactorable, factorization.numGroupsOfSize);
 	}
 		
 	public boolean isFactorableIntoValidGroups(int numStudents)
 	{
-		var numGroupsOfSize = new int[gsc.maxSize()+1];
+		// check cache
+		var cached = factorizations.get(numStudents);
+		if (cached != null)
+			return cached.isFactorable;
+		
+		// catch an impossible instance:
+		if (gsc.maxSize() - gsc.minSize() == 0 && numStudents % gsc.maxSize() > 0) {
+			markAsNotFactorible(numStudents);
+			return false;
+		}
+		
+		var numGroupsPerSize = new int[gsc.maxSize()+1];
 		var remainingStudents = numStudents;
 		
 		int groupSize = gsc.maxSize();
@@ -52,14 +68,14 @@ public class GroupFactorization
 		while (remainingStudents > 0)
 		{
 			if (res == -1) {
-				if (numGroupsOfSize[groupSize] == 0) {
+				if (numGroupsPerSize[groupSize] == 0) {
 					if (groupSize == gsc.maxSize())
-						return false; // can't go higher - inpossible instance
+						return false; // can't go higher - impossible instance
 					groupSize++; // go higher level
 					continue;
 				}
 				else {
-					numGroupsOfSize[groupSize]--;
+					numGroupsPerSize[groupSize]--;
 					remainingStudents += groupSize;
 					groupSize--; // go down again
 					res = 0;
@@ -69,7 +85,7 @@ public class GroupFactorization
 			var maxGrpsOfCurrentSize = remainingStudents / groupSize;
 			remainingStudents -= maxGrpsOfCurrentSize * groupSize;
 			
-			numGroupsOfSize[groupSize] += maxGrpsOfCurrentSize;
+			numGroupsPerSize[groupSize] += maxGrpsOfCurrentSize;
 			
 			if (remainingStudents > 0 && groupSize > gsc.minSize()) {
 				groupSize--;
@@ -79,31 +95,41 @@ public class GroupFactorization
 				res = -1; // some higher sized group must disband
 				
 				// reset for this group size
-				remainingStudents += numGroupsOfSize[groupSize] * groupSize;
-				numGroupsOfSize[groupSize] = 0;
+				remainingStudents += numGroupsPerSize[groupSize] * groupSize;
+				numGroupsPerSize[groupSize] = 0;
 				
 				// continue with larger sized groups next
 				groupSize++;
 			}
 		}
 		
-		
-		// If larger size is requested, expand list
-		isFactorable = copyIntoResized(isFactorable, numStudents);
-		
-//		&& Arrays.stream(numGroupsOfSize).sum() <= numGroupsUpperbound
 		if (remainingStudents == 0) {
-			var factorization = new Factorization(true, numGroupsOfSize);
-			isFactorable.set(numStudents, factorization);
+			markAsFactorizable(numStudents, numGroupsPerSize);
 			return true;
 		}
 		else {
-			var factorization = new Factorization(false, new int[gsc.maxSize()+1]);
-			isFactorable.set(numStudents, factorization);
+			markAsNotFactorible(numStudents);
 			return false;
 		}
 	}
-
+	
+	private void markAsFactorizable(int numStudents, int[] factorization)
+	{
+		// If larger size is requested, expand list
+		factorizations = copyIntoResized(factorizations, numStudents);
+		
+		var f = new Factorization(true, factorization);
+		factorizations.set(numStudents, f);
+	}
+	
+	private void markAsNotFactorible(int numStudents)
+	{
+		// If larger size is requested, expand list
+		factorizations = copyIntoResized(factorizations, numStudents);
+		
+		var f = new Factorization(false, new int[gsc.maxSize()+1]);
+		factorizations.set(numStudents, f);
+	}
 
 	/* HELPER FNS */
 	private static List<Factorization> makeFreshLookupList(int upToIndexInclusive)
