@@ -83,6 +83,12 @@ public class CourseEditionFromDb extends CourseEdition
 		return agents.get();
 	}
 	
+	@Override
+	public String toString()
+	{
+		return identifier();
+	}
+	
 	
 	
 	public Optional<Agent> findAgentByUserId(Integer bepSysUserId)
@@ -150,12 +156,20 @@ public class CourseEditionFromDb extends CourseEdition
 
 	private static Projects fetchProjects(DataSource dataSource, CourseEditionFromDb courseEdition)
 	{
+		// Use the project_preferences table as proxy for the projects table
+		// to work around an issue in the datadumps
 		var sqlProjects = """
-				SELECT      p.id as id, cc.max_number_of_groups as numSlots
-				FROM        projects as p
-				INNER JOIN  course_configurations as cc
-							ON p.course_edition_id = cc.course_edition_id
-				WHERE       p.course_edition_id = :courseEditionId
+				WITH p AS (
+	                SELECT  	project_id, course_edition_id
+	                FROM		project_preferences
+	                GROUP BY 	project_id, course_edition_id
+                )
+                
+                SELECT      p.project_id as id, cc.max_number_of_groups as numSlots
+                FROM        p
+                INNER JOIN  course_configurations as cc
+                            ON p.course_edition_id = cc.course_edition_id
+                WHERE       p.course_edition_id = :courseEditionId
 				""";
 		try (var connection = new Sql2o(dataSource).open())
 		{
@@ -179,7 +193,7 @@ public class CourseEditionFromDb extends CourseEdition
 		{
 			case "COOLICER-DESK":
 			case "PHILIPE-DESK":
-				return new GenericDatasource("jdbc:mysql://localhost:3306/aidm", "henk", "henk");
+				return new GenericDatasource("jdbc:mysql://localhost:3306/adim_new", "henk", "henk");
 			case "PHILIPE-LAPTOP":
 				return new GenericDatasource("jdbc:mysql://localhost:3306/test", "henk", "henk");
 			default:
