@@ -1,0 +1,449 @@
+---
+title: "Thesis plots"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggh4x)
+
+source("metrics.r")
+source("common.r")
+source("experiment_data.r")
+
+```
+
+```{r}
+
+data_size <- loadSizeExperimentData("size_exp_final1") |>
+    augment_with_short_mechanism_name() |>
+    filter(proj_pref_type == "realistic" & trial == 1)
+
+for (m in unique(data_size$mechanism_short)) {
+    print(m)
+    model <- lm(
+        data = data_size |> filter(mechanism_short == m),
+        formula = duration_ms ~ num_students * num_projects
+    )
+    
+    smry <- summary(model)
+    print(smry)
+}
+
+```
+
+The regression analysis on size experiment shows that the number of projects is more influential on the runtime than the number of students.
+See the table below:
+
+BEPSys|SDPC|Chia|Fair
+---------------------
+  0.78|  10| 1.5| 3.36  studs
+  0.48|  21| 6.9|26.80  projs
+
+
+# Runtimes - no pregrouping (from slots scaling)
+```{r, fig.height = 10}
+
+# function (labels, multi_line = TRUE, sep = ": ") 
+# {
+#     value <- label_value(labels, multi_line = multi_line)
+#     variable <- label_variable(labels, multi_line = multi_line)
+#     if (multi_line) {
+#         out <- vector("list", length(value))
+#         for (i in seq_along(out)) {
+#             out[[i]] <- paste(variable[[i]], value[[i]], sep = sep)
+#         }
+#     }
+#     else {
+#         value <- do.call("paste", c(value, sep = ", "))
+#         variable <- do.call("paste", c(variable, sep = ", "))
+#         out <- Map(paste, variable, value, sep = sep)
+#         out <- list(unname(unlist(out)))
+#     }
+#     out
+# }
+
+
+data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
+    filter(num_students > 50 & trial == 1) |> #project_pressure == "LOOSE" &  & num_slots == 1
+    filter((num_students == 200 & project_pressure == "LOOSE") | num_students == 600) |>
+    augment_with_short_mechanism_name() |>
+    augment_with_nice_projectpref_name()
+
+
+plot <- ggplot(data_slots, aes(x = mechanism_short, y = duration_ms / 1000, group = interaction(mechanism_short, num_slots), color = num_slots)) +
+        geom_boxplot() + 
+
+        facet_grid(num_students + project_pressure ~ projectpref_short, scale = "free_y", labeller = partial(label_value, multi_line = FALSE)) +
+        facetted_pos_scales(y = list(
+            scale_y_continuous(limits = c(0,5)),
+            scale_y_continuous(limits = c(0,15)),
+            scale_y_continuous(limits = c(0,100)),
+            scale_y_continuous(limits = c(0,100))
+        )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = "Runtimes - no pre-grouping",
+            y = "Duration (sec)",
+            x = "Mechanism",
+            color = "# slots"
+        )
+
+print(plot)
+
+ggsave(paste("plots", "thesis", "runtimes_nogroup.png", sep = "/"),
+       device = "png", width = 300, height = 150, units = "mm", dpi = 300, pointsize = 12
+)
+
+```
+
+
+## Quality - AUPCR, facet by #studs ~ proj_pref -> group per pressure
+TODO: 
+    - Not AUPCR but violin of ranks??
+    - Line-plot worst min rank?
+
+```{r, fig.width=13}
+
+data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
+    augment_with_nice_projectpref_name() |>
+    filter(trial == 0 & num_slots == 1 & projectpref_short != "unanimous") |>
+    augment_with_short_mechanism_name() |>
+    filter(mechanism_short != "Fair")
+
+#num_projects > 50 & project_pressure == "LOOSE" & 
+
+# for (mech in levels(data_slots$mechanism_short)){
+    # for (mech in levels(data_exps_aug$mechanism)) {
+        
+        # data_filtered <- data_slots |>
+            # filter(mechanism_short == mech)#& 
+                   #proj_pref_type == ppt)
+        
+        # plot <- ggplot(data_slots, aes(x = project_pressure, y = aupcr, group = interaction(project_pressure, mechanism_short), color = mechanism_short)) +
+        #             geom_boxplot() +
+        #             # geom_point(aes(x = project_pressure, y = worst_rank, group = interaction(project_pressure, mechanism_short)), data_slots) +
+        #             # geom_point(color = "black") +
+        #             # geom_jitter(position=position_jitter(0.1), color = "black") +
+        #             facet_grid(num_students ~ projectpref_short, shrink = FALSE) +
+        #             ylim(0.5, 1) +
+        #             # coord_flip() + 
+        #             # scale_y_continuous(sex.axis = sec_axis()) +
+        #             scale_x_discrete(guide = guide_axis(angle = 10)) +
+        #             labs(
+        #                 title = "All",
+        #                 y = "AUPCR",
+        #                 x = "project preference type",
+        #                 color = "", fill = ""
+        #             ) + 
+        #             theme(legend.position = "bottom", legend.direction = "horizontal")
+        
+        
+        
+worst <- max(data_slots$worst_rank)
+data_slots_aug <- data_slots |> mutate(worst_rank_scaled = worst_rank / worst)
+
+plot <- ggplot(data_slots_aug, aes(x = project_pressure,
+                                   y = aupcr,
+                                   group = interaction(mechanism_short, project_pressure),
+                               )
+               ) +
+    
+            geom_boxplot(aes(color = mechanism_short)) +
+    
+            geom_point(aes(y = worst_rank_scaled,
+                           shape = 8),
+                       position = position_dodge(width = 0.7)
+                       ) +
+            scale_shape_identity() + 
+    
+            facet_grid(num_students ~ projectpref_short, shrink = FALSE) +
+            # ylim(0.5, 1) +
+            # coord_flip() + 
+            scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
+            #scale_x_discrete(guide = guide_axis(angle = 45)) +
+            labs(
+                title = "All",
+                y = "AUPCR",
+                x = expression(paste('Project capacity pressur', e %*% m, "echanism", sep ="")),
+                color = "", fill = ""
+            ) + 
+            theme(legend.position = "bottom", legend.direction = "horizontal", legend.key.size = unit(5, "mm"))
+
+print(plot)
+        
+        
+filename = paste("plots", "thesis", "quality_nogroup2.png", sep = "/")
+ggsave(filename,
+       device = png, width = 240, height = 140, units = "mm", dpi = 300, pointsize = 12
+)
+
+```
+
+# GSB - runtimes
+```{r}
+
+data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1")
+
+plot <- ggplot(data_groupsizb %>% filter(num_students != 50),
+               aes(x = factor(num_students),
+                   y = ceiling(duration_ms / 1000),
+                   group = interaction(mechanism, num_students),
+                   color = mechanism_short)
+            ) +
+            geom_boxplot() +
+            facet_grid(gsc_max ~ gsc_min,
+                       labeller = labeller(gsc_max = ~ paste("u:", .),
+                                           gsc_min = ~ paste("l:", .))
+                       ) +
+            scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
+                               labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
+                               ) + 
+            scale_x_discrete() +
+            labs(
+                title = "Group size bounds scaling - runtime",
+                y = "Duration (sec)",
+                x = "# students",
+                color = "Mechanism: "
+            ) +
+            theme(legend.position = "bottom", legend.direction = "horizontal")
+
+print(plot)
+
+ggsave(paste("plots", "thesis", "gsb_runtimes.png", sep = "/"),
+       device = png, width = 300, height = 160, units = "mm", dpi = 300, pointsize = 12
+)
+
+```
+
+# GSB - quality (worst_rank)
+```{r}
+
+data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+    filter(num_students != 50 & proj_pref_type != "singleton" & trial == 1 & mechanism_short != "Fair")
+
+sample <- data_groupsizb |> filter(gsc_min == 5 & gsc_max == 8 & num_students == 600 & mechanism_short == "BEPSys")
+
+breaks_y <- seq(0, 200, by = 50)
+breaks_y[1] <- 1
+
+plot <- ggplot(data_groupsizb,
+               aes(x = factor(num_students),
+                   y = worst_rank,
+                   group = interaction(mechanism, num_students),
+                   color = mechanism_short)
+            ) +
+            geom_boxplot() +
+    
+            facet_grid(gsc_max ~ gsc_min,
+                       labeller = labeller(gsc_max = ~ paste("u:", .),
+                                           gsc_min = ~ paste("l:", .))
+                       ) +
+            # scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
+                               # labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
+                               # ) + 
+            scale_x_discrete() +
+            scale_y_continuous(breaks = {
+                breaks_y <- seq(0, 200, by = 50)
+                breaks_y[1] <- 1
+                breaks_y
+            }) +
+            labs(
+                title = "Group size bounds scaling - worst ranks",
+                y = "Worst rank",
+                x = "# students",
+                color = "Mechanism: "
+            ) +
+            theme(legend.position = "bottom", legend.direction = "horizontal")
+
+print(plot)
+
+ggsave(paste("plots", "thesis", "gsb_worstrank.png", sep = "/"),
+       device = png, width = 300, height = 140, units = "mm", dpi = 300, pointsize = 12
+)
+
+# sample <- data_groupsizb |> filter(gsc_min == 5 & gsc_max == 8 & num_students == 600 & mechanism_short == "BEPSys")
+
+plot <- ggplot(data_groupsizb,
+               aes(x = factor(num_students),
+                   y = aupcr,
+                   group = interaction(mechanism, num_students),
+                   color = mechanism_short)
+            ) +
+            geom_boxplot() +
+            facet_grid(gsc_max ~ gsc_min,
+                       labeller = labeller(gsc_max = ~ paste("u:", .),
+                                           gsc_min = ~ paste("l:", .))
+                       ) +
+            # scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
+                               # labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
+                               # ) + 
+            scale_x_discrete() +
+            labs(
+                title = "Group size bounds scaling - AUPCR",
+                y = "AUPCR",
+                x = "# students",
+                color = "Mechanism: "
+            ) +
+            theme(legend.position = "bottom", legend.direction = "horizontal")
+
+print(plot)
+
+ggsave(paste("plots", "thesis", "gsb_aupcr.png", sep = "/"),
+       device = png, width = 300, height = 140, units = "mm", dpi = 300, pointsize = 12
+)
+
+```
+
+
+# Grouping!!! Soft only
+```{r fig.width=15, fig.height=8}
+data_pregroup_soft <- loadGroupingSoftExperimentData("grouping_soft_att2_eps") |>
+    augment_with_short_mechanism_name()
+
+
+trans_log1p_fix <- scales::trans_new(
+    name = "log1p_fix",
+    transform = function (x) {
+        sign(x) * log(1 + abs(x), 10) 
+    },
+    inverse = function (x) {
+        sign(x) * (10 ^ abs(x) - 1)
+})
+
+trans_sqrt_fix <- scales::trans_new(
+    name = "sqrt_fix",
+    transform = function(x) {
+        r <- sign(x) * scales::sqrt_trans()$transform(abs(x))
+        return(r)
+    },
+    inverse = function(x) {
+        # base::print("call to inverse")
+        r <- sign(x) * scales::sqrt_trans()$inverse(abs(x))
+        return(r)
+    },
+    domain = c(-1, 1)
+)
+
+percent_abs <- function(x, ...) {
+    scales::percent(abs(x), ...)
+}
+
+# unique(data_all$mechanism)
+for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
+    # ppt <- "realistic"
+    for (ppt in levels(data_pregroup_soft$proj_pref_type)) {
+        for (pressure in levels(data_pregroup_soft$project_pressure)) {
+            for (preg_dist in levels(data_pregroup_soft$gd)) {
+     
+                pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, preg_dist, sep = " - ")
+                
+                data_filtered <- data_pregroup_soft |>
+                    filter(
+                        trial == 0 &
+                        project_pressure == pressure &
+                        proj_pref_type == ppt &
+                        num_students == studs &
+                        mechanism_short != "BEPSys" &
+                        pregroup_type != '100 %' &
+                        gd == preg_dist
+                    )
+                
+                # map(data_filtered$profile_unsatpregroup, rank_profile)
+                
+                xxx <- data_filtered |>
+                    mutate(
+                        profile_solo = map(profile_singles, rank_profile),
+                        profile_singles = NULL,
+                        profile_preg = map(profile_pregrouped, rank_profile),
+                        profile_pregrouped = NULL,
+                        profile_unsat = map(profile_unsatpregroup, rank_profile),
+                        profile_unsatpregroup = NULL,
+                        profile_all = NULL
+                    ) |>
+                    pivot_longer(
+                        cols = starts_with("profile"),
+                        names_to = "student_type",
+                        names_prefix = "profile_",
+                        values_to = "rank"
+                    ) |>
+                    unchop(rank)
+                
+                xxx$student_type <- factor(xxx$student_type, levels = c( "solo", "preg", "unsat")) #"all",
+                
+                # y-limit must be shared over all plots within group???
+                
+                fair_subset <- subset(xxx, mechanism_short == 'Fair')
+                chia_subset <- subset(xxx, mechanism_short == 'Chiarandini')
+                
+                if (nrow(xxx) == 0)
+                    next
+                
+                br <- seq(0, max(xxx$rank), by = 5)
+                br[1] = 1
+                
+                br <- unique(xxx$rank);
+                br <- pretty(xxx$rank);
+                
+                log2(1 + 0.2)
+                exp(1 + log2(0.2))
+                
+                if (br[1] > 1)
+                    br <- prepend(br, 1)
+                else
+                    br[1] <- 1
+                
+                #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+                plot <- ggplot() +
+                    
+                    geom_histogram(
+                        data = fair_subset,
+                        # boundary = -0.5,
+                        binwidth = 1,
+                        ## there are 12 cells (facets), we want y to be the proportion/percent
+                        aes(x = rank, y = after_stat(count / sum(count) / 12 * 100), fill = student_type, group = student_type)
+                    ) +
+                    
+                    geom_histogram(
+                        data = chia_subset,
+                        # boundary = -0.5,
+                        binwidth = 1,
+                        aes(x = rank, y = -after_stat(count / sum(count) / 12 * 100), fill = student_type)
+                    ) +
+                    
+                    facet_grid(pregroup_type ~ pregroup_proj_pref_type) +
+                    labs(
+                        title = pretty_title,
+                        y = "students (proportional)",
+                        x = "rank"
+                    ) +
+                    
+                    scale_x_continuous(breaks = br) +
+                    
+                    coord_trans(y = trans_sqrt_fix) +
+                    scale_y_continuous(labels = percent_abs) +
+                    # "solo", "preg", "unsat"
+                    # "#F8766D" "#00BA38" "#619CFF"
+                    # "#0bd000", "#619CFF", "#ffea19"
+                    scale_fill_manual(drop = FALSE, values = c("#0fb783", "#FBAE04", "#AE04FB") ) +
+                    theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+                        
+                            
+                
+                print(plot)
+                
+                filename <- paste("plots/thesis/", paste(paste("grouped-soft_", studs, ppt, pressure, preg_dist, sep = "_"), ".png", sep = ""), sep = "")
+                # ggsave(filename,
+                #        device = "png", width = 300, height = 160, units = "mm", pointsize = 100
+                # )
+            }
+        }
+    }
+}
+```

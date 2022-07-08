@@ -1,0 +1,213 @@
+---
+title: "thesis_historical"
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggh4x)
+
+source("experiment_data.r")
+source("common.r")
+
+historical_data_tu <- loadHistoricalExperimentData("Historical_TUD") |>
+    augment_with_short_mechanism_name()
+
+# runtimes
+plot <- ggplot(historical_data_tu, aes(x = id, y = duration_ms / 1000, group = interaction(id, mechanism_short), color = mechanism_short)) +
+    
+        geom_boxplot() + 
+
+        # facet_wrap(num_students + project_pressure ~ projectpref_short, scale = "free_y", labeller = partial(label_value, multi_line = FALSE)) +
+        # facetted_pos_scales(y = list(
+        #     scale_y_continuous(limits = c(0,5)),
+        #     scale_y_continuous(limits = c(0,15)),
+        #     scale_y_continuous(limits = c(0,100)),
+        #     scale_y_continuous(limits = c(0,100))
+        # )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = "Runtimes - TU Delft - any&all pregrouping",
+            y = "Duration (sec)",
+            x = "Problem instance",
+            color = "Mechanism"
+        )
+
+print(plot)
+```
+
+```{r fig.width=13}
+# Quality - plot metric per student type - per mechanism (facet)
+
+
+
+z <- historical_data_tu |>
+                mutate(
+                    profile_all = profile_all,
+                    profile_solo = profile_singles,
+                    profile_pregrouped = profile_pregrouped,
+                    profile_unsatisfied = profile_unsatpregroup,
+                    profile_singles = NULL,
+                    profile_unsatpregroup = NULL,
+                ) |>
+    
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                )
+z |>
+                mutate(student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")))
+
+zz <- z |> mutate(
+            aupcr = list(num_projects, num_slots, rank) |> pmap(calc_aupcr) |> unlist()
+        )
+
+qweqwe <- historical_data_tu |>
+                filter(trial == 0) |>
+                mutate(
+                    profile_all = profile_all,
+                    profile_solo = profile_singles,
+                    profile_pregrouped = profile_pregrouped,
+                    profile_unsatisfied = profile_unsatpregroup,
+                    profile_singles = NULL,
+                    profile_unsatpregroup = NULL,
+                ) |>
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                ) |>
+                filter(!is.na(rank)) |>
+                mutate(
+                    ranks = map(rank, rank_profile)
+                ) |>
+                mutate(
+                    student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")),
+                    aupcr = pmap(list(num_projects, num_slots, rank), calc_aupcr) |> unlist(),
+                    sum_ranks_norm = ranks |> map(~ sum(.) / length(.)) |> unlist()
+                ) |>
+                select(
+                    id, student_type, mechanism_short, aupcr, sum_ranks_norm
+                )
+
+# bla <- function() {
+    plot <- ggplot(
+                qweqwe,
+                aes(x = student_type, y = aupcr, group = interaction(mechanism_short, student_type), fill = mechanism_short)
+                ) +
+    
+        geom_col(position = "dodge") + 
+
+        facet_wrap(vars(id), nrow = 2) +
+        # facetted_pos_scales(y = list(
+        #     scale_y_continuous(limits = c(0,5)),
+        #     scale_y_continuous(limits = c(0,15)),
+        #     scale_y_continuous(limits = c(0,100)),
+        #     scale_y_continuous(limits = c(0,100))
+        # )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = "Runtimes - no pre-grouping",
+            y = "Duration (sec)",
+            x = "Mechanism",
+            color = "# slots"
+        ) +
+        coord_cartesian(ylim = c(0.7, 1)) +
+        
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+
+print(plot)
+
+
+historical_data_tu |>
+                filter(trial == 0) |>
+                mutate(
+                    profile_all = profile_all,
+                    profile_solo = profile_singles,
+                    profile_pregrouped = profile_pregrouped,
+                    profile_unsatisfied = profile_unsatpregroup,
+                    profile_singles = NULL,
+                    profile_unsatpregroup = NULL,
+                ) |>
+                pivot_longer(
+                    cols = starts_with("profile"),
+                    names_to = "student_type",
+                    names_prefix = "profile_",
+                    values_to = "rank"
+                ) |>
+                filter(!is.na(rank)) |>
+                mutate(
+                    ranks = map(rank, rank_profile)
+                ) |>
+                mutate(
+                    student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")),
+                    aupcr = pmap(list(num_projects, num_slots, rank), calc_aupcr) |> unlist(),
+                    sum_ranks_norm = ranks |> map(~ sum(.) / length(.)) |> unlist()
+                ) |>
+                select(
+                    id, student_type, mechanism_short, aupcr, sum_ranks_norm
+                )
+
+    plot <- ggplot(
+                zzzzzz <- historical_data_tu |>
+                    filter(trial == 0) |>
+                    mutate(
+                        profile_all = profile_all,
+                        profile_solo = profile_singles,
+                        profile_pregrouped = profile_pregrouped,
+                        profile_unsatisfied = profile_unsatpregroup,
+                        profile_singles = NULL,
+                        profile_unsatpregroup = NULL,
+                    ) |>
+                    pivot_longer(
+                        cols = starts_with("profile"),
+                        names_to = "student_type",
+                        names_prefix = "profile_",
+                        values_to = "rank"
+                    ) |>
+                    filter(!is.na(rank)) |>
+                    mutate(
+                        rank = map(rank, rank_profile)
+                    ) |>
+                    mutate(
+                        student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied"))
+                    ) |>
+                    unchop(rank),
+                
+                aes(x = student_type, y = rank, group = interaction(mechanism_short, student_type), fill = mechanism_short)
+            ) +
+    
+        geom_boxplot() + 
+
+        facet_wrap(vars(id), nrow = 2) +
+        
+        # facetted_pos_scales(y = list(
+        #     scale_y_continuous(limits = c(0,5)),
+        #     scale_y_continuous(limits = c(0,15)),
+        #     scale_y_continuous(limits = c(0,100)),
+        #     scale_y_continuous(limits = c(0,100))
+        # )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = "Runtimes - no pre-grouping",
+            y = "Avg rank",
+            x = "Mechanism",
+            color = "# slots"
+        ) +
+        # coord_cartesian(ylim = c(0.7, 1)) +
+        
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+
+print(plot)
+    
+# }
+
+# Max pregrouping only vs All pregroupings vs All (except for max-1)
+
+```

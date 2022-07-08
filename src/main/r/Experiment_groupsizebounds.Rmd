@@ -6,51 +6,18 @@ output: html_notebook
 library(tidyverse)
 library(dplyr)
 
-source('metrics.r')
+source("metrics.r")
+source("common.r")
+source("experiment_data.r")
 
 ## Loading in the data
-exp_name = "gsc_exp_att1"
-
-root_dir = "C:\\Users\\Philipe\\Documents\\GitHub\\aidm-optimal-groups"
-data_dir = paste(root_dir, "\\results\\thesis", sep="")
-
-exp_files <- list.files(data_dir, pattern = paste0(exp_name, "_.*\\.csv"), full.names = TRUE)
-
-column_spec <- cols_only(
-    num_students = col_integer(),
-    num_projects = col_integer(),
-    num_slots = col_factor(),
-    proj_pref_type = col_factor(),
-    pregroup_type = col_factor(),
-    mechanism = col_factor(),
-    trial = col_factor(),
-    duration_ms = col_integer(),
-    profile_all = col_character(),
-    project_pressure = col_factor(),
-    gsc_min = col_integer(),
-    gsc_max = col_integer()
-)
-
-
-data_exps <- map_dfr(exp_files, read_csv, col_types = column_spec)
-data_exps_aug <- data_exps %>%
-    mutate(
-        worst_rank = map(profile_all, worst_obtained_rank) %>% unlist,
-        aupcr = map2(num_projects, profile_all, calc_aupcr) %>% unlist
-    )
-
-mechanism_name_map = new.env()
-mechanism_name_map[["Chiarandini w Fair pregrouping owa - no_grouping"]] = "Fair"
-mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
-mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
-
-data_all <- data_exps_aug
+data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1")
 
 ```
 
 These are some other plots
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE, include=FALSE, fig.width=13}
 
 
 make_title <- function(mechanism_name, proj_pref_type) {
@@ -61,23 +28,36 @@ make_title <- function(mechanism_name, proj_pref_type) {
 
 
 # RUNTIMES
-for (ppt in levels(data_all$proj_pref_type)){
-    for (mech in levels(data_all$mechanism)) {
+# for (ppt in levels(data_groupsizb$proj_pref_type)) {
+    # for (mech in levels(data_groupsizb$mechanism)) {
         
-        data_filtered <- data_all %>% filter(mechanism == mech)
+        data_filtered <- data_groupsizb %>% filter(mechanism == mech)
         
-        pretty_title = make_title(mech, ppt)
+        pretty_title = make_title(mech, "all")
+        # worst_runtime <- sort(data_filtered$duration_ms, decreasing = TRUE)[4] / 1000
         
-        plot <- ggplot(data_filtered, aes(x = num_students, y = duration_ms / 1000, group = num_students)) +
+        plot <- ggplot(data_groupsizb %>% filter(num_students != 50),
+                       aes(x = factor(num_students),
+                           y = ceiling(duration_ms / 1000),
+                           group = interaction(mechanism, num_students),
+                           color = mechanism_short)
+                    ) +
                     geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(gsc_max ~ gsc_min) +
-                    ylim(0, 90) + 
+                    facet_grid(gsc_max ~ gsc_min,
+                               labeller = labeller(gsc_max = ~ paste("u:", .),
+                                                   gsc_min = ~ paste("l:", .))
+                               ) +
+                    # ylim(0, worst_runtime) + 
+                    scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
+                                       labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
+                                       ) + 
+                    scale_x_discrete() +
                     labs(
-                        title = make_title(mech, ppt),
+                        title = "Group size bounds scaling - runtime",
                         y = "Duration (sec)",
                         x = "# students"
-                    )
+                    ) +
+                    theme(legend.position = "bottom", legend.direction = "horizontal")
         
         print(plot)
         
@@ -86,21 +66,25 @@ for (ppt in levels(data_all$proj_pref_type)){
         # ggsave(filename,
         #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
         # )
-    }
-}
+    # }
+# }
 
-# QUALITY (AUPCR)
-for (ppt in levels(data_all$proj_pref_type)){
-    for (mech in levels(data_all$mechanism)) {
         
-        data_filtered <- data_all %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
+# QUALITY (AUPCR)
+for (ppt in levels(data_groupsizb$proj_pref_type)){
+    for (mech in levels(data_groupsizb$mechanism)) {
+        
+        data_filtered <- data_groupsizb %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
         
         pretty_title = make_title(mech, ppt)
         
         plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = num_students)) +
                     geom_boxplot() +
                     # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(gsc_max ~ gsc_min) +
+                    facet_grid(gsc_max ~ gsc_min,
+                               labeller = labeller(gsc_max = ~ paste("u:", .),
+                                                   gsc_min = ~ paste("l:", .))
+                               ) +
                     ylim(0.5, 1) + 
                     labs(
                         title = make_title(mech, ppt),
@@ -118,38 +102,3 @@ for (ppt in levels(data_all$proj_pref_type)){
     }
 }
 ```
-
-## Using plotly
-```{r}
-
-library(plotly)
-
-plot_data <- function(data) {
-    fig <- plot_ly(data,
-            x = ~num_projects,
-            y = ~num_students,
-            z = ~(duration_ms / 1000),
-            color = ~as.factor(mechanism),
-            colors = colors_mechanism
-        ) %>%
-        add_markers(size=1) %>% 
-        layout(
-            scene = list(
-                xaxis = list(title = "# projects"),
-                yaxis = list(title = "# students"),
-                zaxis = list(title = "duration (sec)", type = "log"),
-                camera = list(projection = list(type = 'orthographic'))
-            ),
-            legend = list(orientation = "h")
-        )
-    
-    return(fig)
-}
-
-plot_data(data_all)
-plot_data(data_singleton)
-plot_data(data_p1)
-plot_data(data_p4)
-plot_data(data_r)
-```
-

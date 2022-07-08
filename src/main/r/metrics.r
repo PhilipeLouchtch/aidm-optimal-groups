@@ -18,6 +18,9 @@ worst_obtained_rank <- function(xa) {
 }
 
 calc_aupcr <- function(num_projs, num_slots, raw_profile) {
+    # if (is.na(raw_profile))
+    #     return (NA)
+    
     worst_rank <- worst_obtained_rank(raw_profile)
     
     profile <- profile_histo(raw_profile)
@@ -30,7 +33,7 @@ calc_aupcr <- function(num_projs, num_slots, raw_profile) {
     # because we set the "R" (ranks) to be the #projects in order to easily compare and compute AUPCR's between
     # generated dataset instances with same paramers
     AUPC <- sum(cumsum_upto_worst) + (num_projs - worst_rank) * cumsum_upto_worst[worst_rank]
-    aupcr <- AUPC / (num_projs * num_slots * num_studs)
+    aupcr <- AUPC / (num_projs * num_studs)
 }
 
 avg_rank <- function(raw_profile) {
@@ -52,5 +55,3 @@ avg_weighted_rank <- function(raw_profile) {
         unlist %>%
         sum
 }
-
-print((rank_profile("")))

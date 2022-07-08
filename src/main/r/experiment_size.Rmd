@@ -7,46 +7,16 @@ library(tidyverse)
 library(dplyr)
 
 source("metrics.r")
+source("common.r")
+source("experiment_data.r")
 
 ## Loading in the data
-exp_name = "size_exp_final1"
+exp_name <- "size_exp_final1"
 
-# root_dir = "D:\\Code\\Git repositories\\aidm-optimal-groups"
-root_dir = "C:\\Users\\Philipe\\Documents\\GitHub\\aidm-optimal-groups"
-data_dir = paste(root_dir, "\\results\\thesis", sep="")
+data_exps <- loadSizeExperimentData(exp_name)
 
-exp_files <- list.files(data_dir, pattern = paste0(exp_name, "_.*\\.csv"), full.names = TRUE)
-
-column_spec <- cols_only(
-    num_students = col_integer(),
-    num_projects = col_integer(),
-    num_slots = col_integer(),
-    proj_pref_type = col_factor(),
-    pregroup_type = col_factor(),
-    mechanism = col_factor(),
-    trial = col_integer(),
-    duration_ms = col_integer(),
-    profile_all = col_character()
-)
-
-
-mechanism_name_map = new.env()
-mechanism_name_map[["Chiarandini w Fair pregrouping owa - no_grouping"]] = "Fair"
-mechanism_name_map[["Fair (impr-eps) - owa - anyClique_softGrpEps"]] = "Fair"
-mechanism_name_map[["SDPC-S (project slots)"]] = "SDPC-S"
-mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
-mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
-
-
-data_exps <- map_dfr(exp_files, read_csv, col_types = column_spec)
-data_exps_aug <- data_exps %>%
-    mutate(
-        worst_rank = map(profile_all, worst_obtained_rank) %>% unlist,
-        aupcr = pmap(list(num_projects, num_slots, profile_all), calc_aupcr) %>% unlist,
-        mechanism_short = map(mechanism, ~ mechanism_name_map[[levels(mechanism)[.]]]) %>% unlist
-    )
-
-data_exps_aug$mechanism_short <- factor(data_exps_aug$mechanism_short, levels = c("BEPSys", "SDPC-S", "Chiarandini", "Fair"))
+# preprocess
+data_exps_aug <- data_exps |> augment_with_short_mechanism_name()
 
 make_title <- function(mechanism_name, proj_pref_type) {
     pretty_mechanism_name = mechanism_name_map[[mechanism_name]]
@@ -73,38 +43,6 @@ data_realistic <- data_all %>% filter(proj_pref_type == "realistic")
 # colors_mechanism = c("#7a5195", "#ffa600")
 ```
 
-## Some initial playing with scatterplot3d
-```{r}
-library(scatterplot3d)
-
-plot_scatter3d <- function(data) {
-    
-    #colors <- c("#003f5c", "#58508d", "#bc5090", "#ff6361", "#ffa600")
-    colors = c("#003f5c" ,"#7a5195" ,"#ef5675" ,"#ffa600")
-    colors_mechanism = c('#66c2a5','#fc8d62','#8da0cb','#e78ac3')
-    
-    shapes <- c(15, 16, 17, 18)
-    
-    scatterplot3d(
-        x = data$num_projects,
-        y = data$num_students,
-        z = data$duration_ms / 1000, 
-        pch = shapes[factor(data$proj_pref_type)],
-        color = colors_mechanism[factor(data$mechanism)]
-        #,zlim = c(0,15)
-    )
-    
-}
-
-plot_scatter3d(filter(data_all, num_slots == 1))
-
-plot_scatter3d(data_singleton)
-plot_scatter3d(data_p1)
-plot_scatter3d(data_p4)
-plot_scatter3d(data_rand)
-plot_scatter3d(data_realistic)
-
-```
 
 These are some other plots
 
@@ -152,34 +90,41 @@ library(tidyverse)
 ```
 
 
-```{r}
+```{r fig.width=13}
 # QUALITY (AUPCR)
-for (ppt in levels(data_all$proj_pref_type)){
-    for (mech in levels(data_all$mechanism)) {
+for (ppt in levels(data_exps_aug$proj_pref_type)){
+    # for (mech in levels(data_exps_aug$mechanism)) {
         
-        data_filtered <- data_all %>% filter(trial == 0 & mechanism == mech & proj_pref_type == ppt)
+        data_filtered <- data_exps_aug |>
+            filter(trial == 0 & 
+                   #mechanism == mech & 
+                   proj_pref_type == ppt)
         
         pretty_title = make_title(mech, ppt)
         
-        plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = num_students)) +
+        plot <- ggplot(data_filtered, aes(x = num_students, y = aupcr, group = interaction(num_students, mechanism), fill = mechanism, color = mechanism)) +
                     geom_boxplot() +
                     # geom_jitter(position=position_jitter(0.2)) +
-                    facet_wrap(~num_projects) +
-                    ylim(0.5, 1) + 
+                    facet_grid(~num_projects, space = "free", scales = "free_x", shrink = TRUE) +
+                    # ylim(0.5, 1) + 
+                    # coord_flip() + 
+                    scale_y_continuous() +
+                    scale_x_continuous(breaks = data_filtered$num_students |> unique() |> sort(), guide = guide_axis(angle = 90)) +
                     labs(
                         title = make_title(mech, ppt),
                         y = "AUPCR",
                         x = "# students"
-                    )
+                    ) + 
+                    theme(legend.position = "bottom", legend.direction = "horizontal")
         
         print(plot)
         
         path = paste("plots", "size_exp", "aupcr", ppt, sep = "/")
         filename <- paste(path, paste("aupcr_", pretty_title, ".png", sep = ""), sep ="/")
-        ggsave(filename,
-               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        )
-    }
+        # ggsave(filename,
+        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
+        # )
+    # }
 }
 ```
 
