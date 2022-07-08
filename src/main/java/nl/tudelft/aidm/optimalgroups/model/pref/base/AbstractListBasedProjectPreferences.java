@@ -1,9 +1,8 @@
 package nl.tudelft.aidm.optimalgroups.model.pref.base;
 
-import nl.tudelft.aidm.optimalgroups.metric.rank.RankInArray;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedCommonly;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedRandomly;
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
-import nl.tudelft.aidm.optimalgroups.model.pref.rank.PresentRankInPref;
-import nl.tudelft.aidm.optimalgroups.model.pref.rank.RankOfCompletelyIndifferentAgent;
 import nl.tudelft.aidm.optimalgroups.model.pref.rank.RankInPref;
 import nl.tudelft.aidm.optimalgroups.model.pref.rank.UnacceptableAlternativeRank;
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
@@ -33,8 +32,8 @@ import java.util.Objects;
  * Alternative behaviour can be achieved through using the following implementation:
  * {@link nl.tudelft.aidm.optimalgroups.model.pref.complete.ProjectPreferenceAugmentedWithMissingTiedLast} or alternatively,
  * if a whole datasetcontext needs to be changed such that missing projects in prefs are set to ties at the end:
- * the following are dataset-transformations: {@link nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenIndividually} and
- * {@link nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenCommonly}.
+ * the following are dataset-transformations: {@link DatasetContext_AugmentedPreferences_AppendedRandomly} and
+ * {@link DatasetContext_AugmentedPreferences_AppendedCommonly}.
  * </p>
  */
 public abstract class AbstractListBasedProjectPreferences implements ProjectPreference

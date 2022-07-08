@@ -2,7 +2,7 @@ package nl.tudelft.aidm.optimalgroups.experiment.agp;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
-import nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenIndividually;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedRandomly;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.NormallyDistributedProjectPreferencesGenerator;
@@ -169,7 +169,7 @@ public class Experiment_Chiarandini_etc_180221
 
 	private static Experiment experimentCE10(List<GroupProjectAlgorithm> algorithms)
 	{
-		DatasetContext dataContext = DatasetContextTiesBrokenIndividually.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
+		DatasetContext dataContext = DatasetContext_AugmentedPreferences_AppendedRandomly.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
 
 		var numSlots = 5;
 		var numProjects = dataContext.allProjects().count();

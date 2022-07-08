@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.dataset;
+package nl.tudelft.aidm.optimalgroups.dataset.transforms;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEdition;
@@ -12,12 +12,12 @@ import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
-public class DatasetContextPeerPrefsLimitedToMaxSizeCliques implements DatasetContext
+public class DatasetContext_GroupPreferences_OnlyMaxSizeCliques implements DatasetContext
 {
 	private final CourseEdition originalDatasetContext;
 	private final Agents agents;
 
-	public DatasetContextPeerPrefsLimitedToMaxSizeCliques(CourseEdition courseEdition)
+	public DatasetContext_GroupPreferences_OnlyMaxSizeCliques(CourseEdition courseEdition)
 	{
 		this.originalDatasetContext = courseEdition;
 		this.agents = onlyWithValidMaxCliquePeerPrefsOrNone(courseEdition.allAgents(), this);
@@ -38,17 +38,10 @@ public class DatasetContextPeerPrefsLimitedToMaxSizeCliques implements DatasetCo
 					if (agentsPeerPreferencesIsAValidMaxClique) {
 						return agent;
 					}
-					else {
-						return new SimpleAgent.AgentInDatacontext(agent.sequenceNumber(), agent.projectPreference(), GroupPreference.none(), currentContext);
-					}
+					
+					return new SimpleAgent.AgentInDatacontext(agent.sequenceNumber(), agent.projectPreference(), GroupPreference.none(), currentContext);
 				})
 				.collect(collectingAndThen(toList(), Agents::from));
-	}
-
-	@Override
-	public String identifier()
-	{
-		return originalDatasetContext.identifier() + "-maxcliquegroups";
 	}
 
 	@Override
@@ -70,8 +63,14 @@ public class DatasetContextPeerPrefsLimitedToMaxSizeCliques implements DatasetCo
 	}
 
 	@Override
+	public String identifier()
+	{
+		return originalDatasetContext.identifier() + "-grouppref_maxonly";
+	}
+
+	@Override
 	public String toString()
 	{
-		return originalDatasetContext.toString() + "-maxcliquegroups";
+		return originalDatasetContext.toString() + "-grouppref_maxonly";
 	}
 }

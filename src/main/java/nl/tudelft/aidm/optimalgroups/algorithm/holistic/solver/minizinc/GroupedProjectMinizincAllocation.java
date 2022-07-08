@@ -2,7 +2,7 @@ package nl.tudelft.aidm.optimalgroups.algorithm.holistic.solver.minizinc;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.solver.minizinc.model.SequentualDatasetContext;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.solver.minizinc.model.SequentualProjects;
-import nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenIndividually;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedRandomly;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.metric.matching.MatchingMetrics;
 import nl.tudelft.aidm.optimalgroups.metric.profile.StudentRankProfile;
@@ -131,7 +131,7 @@ public class GroupedProjectMinizincAllocation
 	{
 //		var ce = CourseEdition.fromLocalBepSysDbSnapshot(10);
 //		var ce = ThesisDatasets.CE10Like(500);
-		var ce = DatasetContextTiesBrokenIndividually.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
+		var ce = DatasetContext_AugmentedPreferences_AppendedRandomly.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
 
 		var seqDataset = SequentualDatasetContext.from(ce);
 		var data = new StudentGroupProjectMatchingInstanceData(seqDataset, 1);

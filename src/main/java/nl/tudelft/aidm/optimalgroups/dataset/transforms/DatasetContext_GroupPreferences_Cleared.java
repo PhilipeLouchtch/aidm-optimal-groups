@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.dataset;
+package nl.tudelft.aidm.optimalgroups.dataset.transforms;
 
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEdition;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
@@ -11,12 +11,12 @@ import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 
 import static java.util.stream.Collectors.*;
 
-public class DatasetContextWithoutPeerPrefs implements DatasetContext
+public class DatasetContext_GroupPreferences_Cleared implements DatasetContext
 {
 	private final CourseEdition originalDatasetContext;
 	private final Agents agents;
 
-	public DatasetContextWithoutPeerPrefs(CourseEdition courseEdition)
+	public DatasetContext_GroupPreferences_Cleared(CourseEdition courseEdition)
 	{
 		this.originalDatasetContext = courseEdition;
 		this.agents = withoutPeerPrefs(courseEdition.allAgents(), this);
@@ -30,12 +30,6 @@ public class DatasetContextWithoutPeerPrefs implements DatasetContext
 				return (Agent) modAgent;
 			})
 			.collect(collectingAndThen(toList(), Agents::from));
-	}
-
-	@Override
-	public String identifier()
-	{
-		return originalDatasetContext.identifier() + "-no_peer";
 	}
 
 	@Override
@@ -57,8 +51,14 @@ public class DatasetContextWithoutPeerPrefs implements DatasetContext
 	}
 
 	@Override
+	public String identifier()
+	{
+		return originalDatasetContext.identifier() + "-grouppref_cleared";
+	}
+
+	@Override
 	public String toString()
 	{
-		return originalDatasetContext.toString() + "-no_peer";
+		return originalDatasetContext.toString() + "-grouppref_cleared";
 	}
 }

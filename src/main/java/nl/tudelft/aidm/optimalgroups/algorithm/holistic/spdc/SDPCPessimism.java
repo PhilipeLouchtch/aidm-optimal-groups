@@ -4,7 +4,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.group.Group
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.pairing.MinQuorumRequirement;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.pairing.NumAgentsTillQuorum;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.pairing.WorstAmongBestProjectPairings;
-import nl.tudelft.aidm.optimalgroups.dataset.DatasetContextTiesBrokenCommonly;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedCommonly;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.metric.matching.MatchingMetrics;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
@@ -33,7 +33,7 @@ public class SDPCPessimism
 
 	public static void main(String[] args)
 	{
-		var ce = DatasetContextTiesBrokenCommonly.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
+		var ce = DatasetContext_AugmentedPreferences_AppendedCommonly.from(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
 //		var ce = CourseEdition.fromLocalBepSysDbSnapshot(10);
 
 		System.out.println(ce.identifier());

@@ -1,16 +1,17 @@
-package nl.tudelft.aidm.optimalgroups.dataset;
+package nl.tudelft.aidm.optimalgroups.dataset.transforms;
 
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.agent.SimpleAgent;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
+import nl.tudelft.aidm.optimalgroups.model.pref.GroupPreference;
 import nl.tudelft.aidm.optimalgroups.model.pref.complete.ProjectPreferenceAugmentedWithMissingAlternativesIndvdRnd;
 import nl.tudelft.aidm.optimalgroups.model.project.Projects;
 
 import java.util.stream.Collectors;
 
-public class DatasetContextTiesBrokenIndividually implements DatasetContext
+public class DatasetContext_AugmentedPreferences_AppendedRandomly implements DatasetContext
 {
 	private final DatasetContext originalDatasetContext;
 
@@ -18,9 +19,9 @@ public class DatasetContextTiesBrokenIndividually implements DatasetContext
 
 	public static DatasetContext from(DatasetContext datasetContext)
 	{
-		return new DatasetContextTiesBrokenIndividually(datasetContext);
+		return new DatasetContext_AugmentedPreferences_AppendedRandomly(datasetContext);
 	}
-	protected DatasetContextTiesBrokenIndividually(DatasetContext datasetContext)
+	protected DatasetContext_AugmentedPreferences_AppendedRandomly(DatasetContext datasetContext)
 	{
 		this.originalDatasetContext = datasetContext;
 		this.agents = tiesBrokenIndividually(datasetContext.allAgents(), datasetContext.allProjects(), this);
@@ -31,18 +32,20 @@ public class DatasetContextTiesBrokenIndividually implements DatasetContext
 		var agentsWithTiesBroken = agents.asCollection().stream()
 			.map(agent -> {
 				var origPrefs = agent.projectPreference();
-				var newPrefs = new ProjectPreferenceAugmentedWithMissingAlternativesIndvdRnd(origPrefs, projects, agent.sequenceNumber() * projects.hashCode());
-				return (Agent) new SimpleAgent.AgentInDatacontext(agent.sequenceNumber(), newPrefs, agent.groupPreference(), currentContext);
+				var newPrefs = new ProjectPreferenceAugmentedWithMissingAlternativesIndvdRnd(origPrefs, projects, (long) agent.sequenceNumber() * projects.hashCode());
+				
+				// Also have to remap group preferences as they refer to agent instances in the old datasetcontext
+				// Luckily, the new agents have the same seqIds so we can use the LazyGroupPreference impl to look up the
+				// new instances in the new datasetcontext
+				var oldGroupPrefs = agent.groupPreference();
+				var groupPrefAsSeqIds = oldGroupPrefs.asListOfAgents().stream().mapToInt(Agent::sequenceNumber).toArray();
+				var newGroupPrefs = new GroupPreference.LazyGroupPreference(currentContext, groupPrefAsSeqIds);
+				
+				return (Agent) new SimpleAgent.AgentInDatacontext(agent.sequenceNumber(), newPrefs, newGroupPrefs, currentContext);
 			})
 			.collect(Collectors.collectingAndThen(Collectors.toUnmodifiableList(), Agents::from));
 
 		return agentsWithTiesBroken;
-	}
-
-	@Override
-	public String identifier()
-	{
-		return originalDatasetContext.identifier() + "-ties_broken_indiv";
 	}
 
 	@Override
@@ -64,8 +67,14 @@ public class DatasetContextTiesBrokenIndividually implements DatasetContext
 	}
 
 	@Override
+	public String identifier()
+	{
+		return originalDatasetContext.identifier() + "-aug_random";
+	}
+
+	@Override
 	public String toString()
 	{
-		return originalDatasetContext.toString() + "-ties_broken_indiv";
+		return originalDatasetContext.toString() + "-aug_random";
 	}
 }

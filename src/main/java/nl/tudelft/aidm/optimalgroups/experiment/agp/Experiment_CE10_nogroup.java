@@ -1,7 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.agp;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
-import nl.tudelft.aidm.optimalgroups.dataset.DatasetContextWithoutPeerPrefs;
+import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_GroupPreferences_Cleared;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.experiment.agp.report.ExperimentReportInHtml;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
@@ -28,7 +28,7 @@ public class Experiment_CE10_nogroup
 		var groupSize = GroupSizeConstraint.manual(4, 5);
 
 		/* CE 10 */
-		DatasetContext dataContext = new DatasetContextWithoutPeerPrefs(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
+		DatasetContext dataContext = new DatasetContext_GroupPreferences_Cleared(CourseEditionFromDb.fromLocalBepSysDbSnapshot(10));
 
 		int numSlots = 5;
 		int numProjects = dataContext.allProjects().count();
