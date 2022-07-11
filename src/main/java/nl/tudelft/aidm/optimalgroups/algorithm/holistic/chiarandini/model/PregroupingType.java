@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Represents a pregrouping "variant" or "type":
@@ -110,6 +111,47 @@ public interface PregroupingType
 		return new NamedLambda(
 				"maxCliques_hardGrp",
 				(agents) -> new Pregrouping.sizedClique(agents, HardGroupingConstraint::new, agents.datasetContext.groupSizeConstraint().maxSize())
+		);
+	}
+	
+	static PregroupingType maxCliqueSoftGrouped()
+	{
+		return new NamedLambda(
+				"maxCliques_softGrp",
+				(agents) -> new Pregrouping.sizedClique(agents, SoftGroupConstraint::new, agents.datasetContext.groupSizeConstraint().maxSize())
+		);
+	}
+	
+	static PregroupingType maxCliqueSoftGroupedEps()
+	{
+		return new NamedLambda(
+				"maxCliques_softGrpEps",
+				(agents) -> new Pregrouping.sizedClique(agents, SoftGroupEpsilonConstraint::new, agents.datasetContext.groupSizeConstraint().maxSize())
+		);
+	}
+	
+	/// SIZED - ANY EXCEPT MAX-1 (e.g. if max = 5, then 2, 3 and 5 are allowed)
+	static PregroupingType exceptSubmaxCliqueSoftGrouped()
+	{
+		Function<Integer, Integer[]> determineAllowedSizes = (Integer maxSize) -> IntStream.rangeClosed(2, maxSize)
+		                                                                                   .filter(value -> value != maxSize - 1)
+		                                                                                   .boxed()
+		                                                                                   .toArray(Integer[]::new);
+		return new NamedLambda(
+				"exceptSubmaxCliques_softGrp",
+				(agents) -> new Pregrouping.sizedClique(agents, SoftGroupConstraint::new, determineAllowedSizes.apply(agents.datasetContext.groupSizeConstraint().maxSize()))
+		);
+	}
+	
+	static PregroupingType exceptSubmaxCliqueSoftEpsGrouped()
+	{
+		Function<Integer, Integer[]> determineAllowedSizes = (Integer maxSize) -> IntStream.rangeClosed(2, maxSize)
+		                                                                                   .filter(value -> value != maxSize - 1)
+		                                                                                   .boxed()
+		                                                                                   .toArray(Integer[]::new);
+		return new NamedLambda(
+				"exceptSubmaxCliques_softGrpEps",
+				(agents) -> new Pregrouping.sizedClique(agents, SoftGroupEpsilonConstraint::new, determineAllowedSizes.apply(agents.datasetContext.groupSizeConstraint().maxSize()))
 		);
 	}
 	
