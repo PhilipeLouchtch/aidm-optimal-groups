@@ -38,15 +38,25 @@ public class SoftGroupConstraint implements Constraint
 			// let this be 'g'
 			var violateGroupingDecVar = GrpLinkedDecisionVar.make(group, leaderId, model);
 			violateGroupingDecVars.add(violateGroupingDecVar);
-				
+			
+			
+			// For each acceptible project to the group, link the members' assignment decision variables
+			// (note: these preferences are aggregated from the individual members, double check the handling of unacceptible
+			// alternatives. If some members have deemed a project unacceptible and others acceptible, is the project acceptible
+			// or unacceptible in the aggregated preferences? Can a single student in a group veto a project? Where's the line?)
+			// TODO, incomplete preferences - unacceptible alternatives (see comment CliqueGroups#cliquesExtractedFrom)
 			projPrefs.forEach(((project, rank, __) -> {
 				project.slots().forEach(slot -> {
 					
 					// the x's (assignment decision var) of all agents in group for assignment to project slot 'slot'
-					var xToSlotVarsAgents = agents.stream().map(agent -> assignmentConstraints.xVars.of(agent, slot))
+					var xToSlotVarsAgents = agents.stream()
+                        .map(agent -> assignmentConstraints.xVars.of(agent, slot))
 						.flatMap(Optional::stream)
 						.map(AssignmentConstraints.X::asVar)
 						.collect(Collectors.toList());
+					
+					// It can occur that not all students of the group have added the project to their prefs
+					// use a strategy to handle the case
 					
 					Assert.that(xToSlotVarsAgents.size() == agents.size())
 						.orThrowMessage("Could not find all assignment vars for agents in clique to group together...");

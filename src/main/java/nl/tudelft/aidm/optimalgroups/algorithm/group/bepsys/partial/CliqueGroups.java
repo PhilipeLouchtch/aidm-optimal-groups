@@ -61,6 +61,11 @@ public class CliqueGroups extends Groups.ListBacked<Group.TentativeGroup>
 				var peers = student.groupPreference().asListOfAgents();
 				var proposedGroup = Agents.from(student).with(peers);
 
+				// TODO: Below is based on what BEPSys mechanism did: after making groups, the groups are matched to projects. Therefore, a group
+				//  must have a single preference over the projects. This preference can be created though many ways. BEPSys aggregated the preference
+				//  by ordering the projects by their Borda scores (basically a totally ordered preference list sorted by the average rank of projects).
+				//  The project preferences abstraction and the rest of the code-base has support for unacceptible alternatives but the below appoach
+				//  requires double checking (the aggregate preference is used for grouping constraints for the MILP/Gurobi approach)
 				var tentativeGroup = new Group.TentativeGroup(proposedGroup, AggregatedProjectPreference.usingGloballyConfiguredMethod(proposedGroup));
 				tentativelyFormed.add(tentativeGroup);
 

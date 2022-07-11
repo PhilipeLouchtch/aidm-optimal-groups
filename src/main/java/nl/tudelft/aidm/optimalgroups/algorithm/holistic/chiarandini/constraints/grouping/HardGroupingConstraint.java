@@ -30,6 +30,11 @@ public record HardGroupingConstraint(Groups<?> groups) implements Constraint
 				var agent1 = agents.get(i);
 				var agent2 = agents.get(i + 1);
 				
+				// For each acceptible project to the group, link the members' assignment decision variables
+				// (note: these preferences are aggregated from the individual members, double check the handling of unacceptible
+				// alternatives. If some members have deemed a project unacceptible and others acceptible, is the project acceptible
+				// or unacceptible in the aggregated preferences? Can a single student in a group veto a project? Where's the line?)
+				// TODO, incomplete preferences - unacceptible alternatives (see comment CliqueGroups#cliquesExtractedFrom)
 				projPrefs.forEach(((project, rank, __) -> {
 					project.slots().forEach(slot -> {
 						

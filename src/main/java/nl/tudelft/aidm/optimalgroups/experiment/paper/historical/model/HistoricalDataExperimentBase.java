@@ -12,14 +12,13 @@ import plouchtch.assertion.Assert;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * An experiment consisting of multiple datasets that are batched together as a single experiment.
  * Created for the purpose of bundling together experiments of generated datasets, more specifically,
  * generated datasets that are generated from the same parameters.
  */
-public abstract class HistoricalDataExperiment implements Experiment
+public abstract class HistoricalDataExperimentBase implements Experiment
 {
 	private static final String experimentDataLocation = "results/thesis/";
 	
@@ -30,7 +29,7 @@ public abstract class HistoricalDataExperiment implements Experiment
 	
 	private final int runs;
 	
-	public HistoricalDataExperiment(String identifier, List<DatasetContext> problemInstances, List<GroupProjectAlgorithm> algos, int runs)
+	public HistoricalDataExperimentBase(String identifier, List<DatasetContext> problemInstances, List<GroupProjectAlgorithm> algos, int runs)
 	{
 		this.identifier = identifier;
 		this.problemInstances = problemInstances;
@@ -62,6 +61,8 @@ public abstract class HistoricalDataExperiment implements Experiment
 		
 		try (var resultsCollector = newExperimentResultsCollector(resultsFileName("")))
 		{
+			if (resultsCollector.resultsCollectionCanBeSkipped())
+				return;
 			
 			for (var problemInstance : problemInstances)
 			{

@@ -2,12 +2,14 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.historical;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
+import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsCollector;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsFile;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.MinimumReqProjectAmount;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model.HistoricalDataExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model.HistoricalDataExperimentBase;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
+import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
@@ -15,6 +17,7 @@ import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.WeakHashMap;
 import java.util.stream.IntStream;
@@ -22,9 +25,9 @@ import java.util.stream.IntStream;
 import static java.util.stream.Collectors.joining;
 import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.serializeProfile;
 
-public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataExperiment
+public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
 {
-	public BepSys_PF_SDU_HistoricalInstancesExperiment(String identifier, List<DatasetContext> problemInstances, List<GroupProjectAlgorithm> algos, int runs)
+	public HistoricalDatasetExperiment(String identifier, List<DatasetContext> problemInstances, List<GroupProjectAlgorithm> algos, int runs)
 	{
 		super(identifier, problemInstances, algos, runs);
 	}
@@ -85,7 +88,6 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 					"profile_pregrouped",
 					"profile_unsatpregroup",
 					
-					"project_pressure",
 					"pregroup_proportion",
 					"pregroup_sizes_distribution",
 					
@@ -97,16 +99,20 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 		@Override
 		public List<Object> columnValues()
 		{
-			// Calc project pressure
-			var minReqProjectAmount = new MinimumReqProjectAmount(datasetContext.groupSizeConstraint(), datasetContext.allAgents().count());
-			var projectPressure = 1d * datasetContext.allProjects().count() * datasetContext.numMaxSlots() / minReqProjectAmount.asInt();
-			
 			// Calc proportion of pregrouping students
 			var pregroupings = currentPregrouping();
 			var pregroupProportion = 1d * pregroupings.asAgents().count() / datasetContext.allAgents().count();
 			
-			// Calc distribution of pregrouping sizes
-			var pregroupDist = IntStream.rangeClosed(2, datasetContext.groupSizeConstraint().maxSize())
+			// workaround for the SDU datasets because they have a per-project group size bounds
+			var maxAllowedGroupSize = datasetContext instanceof SDUDatasetContext sduDatasetContext ?
+				sduDatasetContext.allProjects().asCollection().stream()
+				                 .map(sduDatasetContext::groupSizeBoundsOf)
+				                 .mapToInt(GroupSizeConstraint::maxSize)
+				                 .max().getAsInt()
+                : datasetContext.groupSizeConstraint().maxSize();
+			
+	         // Calc distribution of pregrouping sizes
+	         var pregroupDist = IntStream.rangeClosed(2, maxAllowedGroupSize)
 			                            .mapToObj(i -> Integer.toString(pregroupings.ofSize(i).count() * i))
 			                            .collect(joining("|"));
 			
@@ -130,7 +136,6 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 					serializeProfile(profilePregrouped()),
 					serializeProfile(profileUnsatpregroup()),
 					
-					projectPressure,
 					pregroupProportion,
 					pregroupDist,
 					
@@ -139,21 +144,18 @@ public class BepSys_PF_SDU_HistoricalInstancesExperiment extends HistoricalDataE
 			);
 		}
 		
-		private final static WeakHashMap<DatasetContext, Groups<?>> pregroupingsCache = new WeakHashMap<>();
-		
-		private static synchronized Groups<?> pregroupingFor(DatasetContext datasetContext)
-		{
-			return pregroupingsCache.computeIfAbsent(datasetContext, d -> new CliqueGroups(d.allAgents()));
-		}
-		
+		private static final WeakHashMap<HistoricalInstanceResult, Groups<?>> currentPregrouping = new WeakHashMap<>();
 		private Groups<?> currentPregrouping()
 		{
-			return pregroupingFor(datasetContext);
-		}
-		
-		private int numPregroupsMax()
-		{
-			return currentPregrouping().count();
+			synchronized (currentPregrouping) {
+				var cached = currentPregrouping.get(this);
+				if (cached == null) {
+					cached = mechanism.pregroupingType().instantiateFor(datasetContext).groups();
+					currentPregrouping.put(this, cached);
+				}
+				
+				return cached;
+			}
 		}
 		
 		private Profile profileAllStudents()
