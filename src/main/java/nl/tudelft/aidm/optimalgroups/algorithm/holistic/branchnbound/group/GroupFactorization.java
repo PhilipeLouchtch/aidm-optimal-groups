@@ -48,8 +48,11 @@ public class GroupFactorization
 		
 	public boolean isFactorableIntoValidGroups(int numStudents)
 	{
-		// check cache
-		var cached = factorizations.get(numStudents);
+		// check cache - if numStudents is larger than largest index -> not in cache
+		var cached = numStudents > factorizations.size() + 1
+				             ? factorizations.get(numStudents)
+				             : null;
+		
 		if (cached != null)
 			return cached.isFactorable;
 		
@@ -59,6 +62,8 @@ public class GroupFactorization
 			return false;
 		}
 		
+		
+		// Compute
 		var numGroupsPerSize = new int[gsc.maxSize()+1];
 		var remainingStudents = numStudents;
 		
