@@ -3,6 +3,7 @@ package nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.Constraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.FixMatchingConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.UndominatedByProfileConstraint;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.UndominatedByProfileConstraintImproved;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.ObjectiveFunction;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
@@ -58,8 +59,8 @@ public class MILP_Mechanism_FairPregrouping
 				new ChiarandiniBaseModel(datasetContext, objectiveFunction, matchFixes).doIt()
 		);
 		
-		var profile = Profile.of(baselineMatching, singleStudents);
-		var paretoConstraint = new UndominatedByProfileConstraint(profile, singleStudents);
+		var singleStudentsOutcomeProfile = Profile.of(baselineMatching, singleStudents);
+		var paretoConstraint = new UndominatedByProfileConstraintImproved(singleStudentsOutcomeProfile, singleStudents);
 		
 		var groupingConstraint = pregrouping.constraint();
 		

@@ -12,4 +12,10 @@ public interface EpsilonConstraint extends Constraint
 	 * @param epsilon
 	 */
 	void setEpsilon(int epsilon);
+	
+	/**
+	 * Returns the current epsilon value. Use this for determining
+	 * the next epsilon value to use
+	 */
+	int getEpsilon();
 }

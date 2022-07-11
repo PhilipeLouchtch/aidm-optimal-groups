@@ -29,6 +29,7 @@ public class SoftGroupEpsilonConstraint implements EpsilonConstraint
 		this.groups = groups;
 		this.violateGroupingDecVars = new ArrayList<>();
 		
+		// Default value: all pregroups must be together together
 		this.epsionValue = groups.count();
 	}
 	
@@ -45,12 +46,17 @@ public class SoftGroupEpsilonConstraint implements EpsilonConstraint
 	}
 	
 	@Override
+	public int getEpsilon()
+	{
+		return epsionValue;
+	}
+	
+	@Override
 	public void apply(GRBModel model, AssignmentConstraints assignmentConstraints) throws GRBException
 	{
-		// Hacky workaround: if epsilon is 0, skip pregrouping constraints altogether because
-		// before settling on epsilon 0, we have already tried higher numbers.
-		// Motivation: During thesis experiments the cases have ocurred that even with epsilon 0,
-		// the gurobi model remained 'infeasible'. Perhaps a bug somewhere?
+		// Workaround: if epsilon got to 0, the model could still remain 'infeasible' which is odd.
+		// so if we reach epsilon = 0, don't apply any grouping constraints, they'd be useless
+		// anyway with epslon set to 0
 		if (epsionValue == 0)
 			return;
 		
@@ -62,7 +68,13 @@ public class SoftGroupEpsilonConstraint implements EpsilonConstraint
 			// let this be 'g'
 			var violateGroupingDecVar = GrpLinkedDecisionVar.make(group, leaderId, model);
 			violateGroupingDecVars.add(violateGroupingDecVar);
-				
+			
+			
+			// For each acceptible project to the group, link the members' assignment decision variables
+			// (note: these preferences are aggregated from the individual members, double check the handling of unacceptible
+			// alternatives. If some members have deemed a project unacceptible and others acceptible, is the project acceptible
+			// or unacceptible in the aggregated preferences? Can a single student in a group veto a project? Where's the line?)
+			// TODO, incomplete preferences - unacceptible alternatives (see comment CliqueGroups#cliquesExtractedFrom)
 			projPrefs.forEach(((project, rank, __) -> {
 				project.slots().forEach(slot -> {
 					
