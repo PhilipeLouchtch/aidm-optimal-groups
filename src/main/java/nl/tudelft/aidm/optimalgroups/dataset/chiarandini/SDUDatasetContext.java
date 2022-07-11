@@ -68,6 +68,12 @@ public class SDUDatasetContext implements DatasetContext
 	}
 	
 	@Override
+	public String toString()
+	{
+		return identifier();
+	}
+	
+	@Override
 	public Projects allProjects()
 	{
 		if (allProjects == null)
@@ -202,6 +208,12 @@ public class SDUDatasetContext implements DatasetContext
 		{
 			return SDUDatasetContext;
 		}
+		
+		@Override
+		public String toString()
+		{
+			return "SDUAgent_"+sequenceNum;
+		}
 	}
 	
 	private static class SDUProjectPreference extends MapBasedProjectPreferences
@@ -220,7 +232,8 @@ public class SDUDatasetContext implements DatasetContext
 			var prefsAsMap = rawPriorities.stream()
 					.filter(projectPriority -> {
 						var project = projects.findBy(projectPriority.projectId()).orElseThrow();
-						return compatibility.isCompatible(student, project);
+						var isCompatible = compatibility.isCompatible(student, project);
+						return isCompatible;
 					})
 					.collect(Collectors.toMap(
 							projectPriority -> (Project) projects.findBy(projectPriority.projectId()).orElseThrow(),
@@ -493,6 +506,12 @@ public class SDUDatasetContext implements DatasetContext
 		public String name()
 		{
 			return String.format("SDU_proj_%s(seq_%s)", projectId.asInt(), sequenceNum());
+		}
+		
+		@Override
+		public String toString()
+		{
+			return name();
 		}
 		
 		@Override
