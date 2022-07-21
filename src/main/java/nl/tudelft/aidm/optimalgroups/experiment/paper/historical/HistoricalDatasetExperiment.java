@@ -15,6 +15,7 @@ import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -112,9 +113,7 @@ public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
                 : datasetContext.groupSizeConstraint().maxSize();
 			
 	         // Calc distribution of pregrouping sizes
-	         var pregroupDist = IntStream.rangeClosed(2, maxAllowedGroupSize)
-			                            .mapToObj(i -> Integer.toString(pregroupings.ofSize(i).count() * i))
-			                            .collect(joining("|"));
+	         var pregroupDist = groupSizesDist(pregroupings, maxAllowedGroupSize);
 			
 			// Calc # pregroupings together
 			var numPregroupingsTogether = new NumberProposedGroupsTogether(matching, pregroupings);
@@ -205,5 +204,14 @@ public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
 			
 			return Profile.of(matchingPregroupedUnsatisfied);
 		}
+	}
+	
+	@NotNull
+	private static String groupSizesDist(Groups<?> pregroupings, int maxAllowedGroupSize)
+	{
+		return IntStream.rangeClosed(2, maxAllowedGroupSize)
+		                .mapToObj(i -> Integer.toString(pregroupings.ofSize(i)
+		                                                            .count() * i))
+		                .collect(joining("|"));
 	}
 }

@@ -26,7 +26,7 @@ public class FairnessEpsilonConstrEvaluationRunner
 		@Override
 		public String name()
 		{
-			return "Chiarandini w Fair pregrouping IMPR " + objectiveFunction.name() + " - " + pregroupingType.simpleName();
+			return "Chiarandini w Fair pregrouping IMPR " + objectiveFunction.name() + " - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -44,7 +44,7 @@ public class FairnessEpsilonConstrEvaluationRunner
 		@Override
 		public String name()
 		{
-			return "Chiarandini w Fair pregrouping IMPR " + objectiveFunction.name() + " - " + pregroupingType.simpleName();
+			return "Chiarandini w Fair pregrouping IMPR " + objectiveFunction.name() + " - " + pregroupingType.canonicalName();
 		}
 
 		@Override

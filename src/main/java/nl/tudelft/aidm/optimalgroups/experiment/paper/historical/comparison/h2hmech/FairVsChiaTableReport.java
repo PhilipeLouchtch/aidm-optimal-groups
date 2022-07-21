@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.fairness.report;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.h2hmech;
 
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @SuppressWarnings("DuplicatedCode")
-public class FairnessVsVanillaQualitySummaryTableReport
+public class FairVsChiaTableReport
 {
 	private final PregroupingType pregroupingType;
 	private final List<FairVsChiaComparisonTable.Result> resultsAll;
@@ -31,7 +31,7 @@ public class FairnessVsVanillaQualitySummaryTableReport
 	
 	private final StringBuffer doc;
 	
-	public FairnessVsVanillaQualitySummaryTableReport(
+	public FairVsChiaTableReport(
 			PregroupingType pregroupingType,
 			List<FairVsChiaComparisonTable.Result> resultsAll,
 			List<FairVsChiaComparisonTable.Result> resultsSingles,
@@ -54,7 +54,7 @@ public class FairnessVsVanillaQualitySummaryTableReport
 		heading("Fairness vs Vanilla comparison", 1);
 		
 			heading("Info",2);
-				text("Pregrouping type: '%s'\n".formatted(pregroupingType.canonicalName()));
+				text("Pregrouping type: '%s'\n\n".formatted(pregroupingType.canonicalName()));
 		
 			heading("All students", 2);
 				table(new FairVsChiaComparisonTable(resultsAll).asMarkdownTable());

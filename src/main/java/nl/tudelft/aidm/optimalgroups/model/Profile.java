@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -68,6 +67,11 @@ public interface Profile
 				// A profile is a sorted list of ranks
 				.map(match -> {
 				   var rank = match.from().projectPreference().rankOf(match.to());
+				   
+				   // HACK: remove me after data collection
+					if (!rank.isPresent())
+						return match.from().projectPreference().maxRank().getAsInt() + 1;
+				   
 				   Assert.that(rank.isPresent()).orThrowMessage("Rank not present, handle this case"); // should use RankInPref over integers in that case
 				   return rank.asInt();
 				})
@@ -100,6 +104,11 @@ public interface Profile
 	static Profile fromProfileArray(int... profileAsArray)
 	{
 		return new Simple(profileAsArray);
+	}
+	
+	static Profile empty()
+	{
+		return Profile.fromProfileArray();
 	}
 
 	

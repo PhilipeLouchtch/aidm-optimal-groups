@@ -5,11 +5,9 @@ import nl.tudelft.aidm.optimalgroups.Application;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.BepSysImprovedGroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.BepSysReworked;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.CombinedPreferencesGreedy;
-import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.HumbleMiniMaxWithClosuresSearch;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.*;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.ObjectiveFunction;
-import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.ilppp.ILPPPDeterminedMatching;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.branchnbound.WorstAmongBestHumblePairingsSearch;
@@ -22,7 +20,6 @@ import nl.tudelft.aidm.optimalgroups.algorithm.project.RandomizedSerialDictators
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
-import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.FormedGroupToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.pref.AggregatedProjectPreference;
@@ -455,7 +452,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini Utilitarian MinSum - Identity Weights - " + pregroupingType.simpleName();
+			return "Chiaranini Utilitarian MinSum - Identity Weights - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -478,7 +475,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini Utilitarian MinSum - Exp Weights - " + pregroupingType.simpleName();
+			return "Chiaranini Utilitarian MinSum - Exp Weights - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -501,7 +498,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini Stable Utilitarian MinSum - Identity Weights - " + pregroupingType.simpleName();
+			return "Chiaranini Stable Utilitarian MinSum - Identity Weights - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -524,7 +521,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini Stable Utilitarian MinSum - Exp Weights - " + pregroupingType.simpleName();
+			return "Chiaranini Stable Utilitarian MinSum - Exp Weights - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -547,7 +544,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini MiniMax-OWA - " + pregroupingType.simpleName();
+			return "Chiaranini MiniMax-OWA - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -570,7 +567,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiaranini Stable MiniMax-OWA - " + pregroupingType.simpleName();
+			return "Chiaranini Stable MiniMax-OWA - " + pregroupingType.canonicalName();
 		}
 
 		@Override
@@ -588,7 +585,7 @@ public interface GroupProjectAlgorithm extends Algorithm
 		@Override
 		public String name()
 		{
-			return "Chiarandini w Fair pregrouping " + objectiveFunction.name() + " - " + pregroupingType.simpleName();
+			return "Chiarandini w Fair pregrouping " + objectiveFunction.name() + " - " + pregroupingType.canonicalName();
 		}
 
 		@Override

@@ -17,6 +17,6 @@ public class MinimizeSumOfRanks implements ObjectiveFunction
 	@Override
 	public String name()
 	{
-		return "min sum of ranks";
+		return "sor";
 	}
 }

@@ -1,20 +1,13 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model;
 
-import gurobi.GRBException;
-import gurobi.GRBModel;
-import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.AssignmentConstraints;
-import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.Constraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.ConditionalGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.HardGroupingConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupConstraint;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.constraints.grouping.SoftGroupEpsilonConstraint;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
-import nl.tudelft.aidm.optimalgroups.model.group.Group;
-import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,7 +26,7 @@ import java.util.stream.IntStream;
  */
 public interface PregroupingType
 {
-	String simpleName();
+	String canonicalName();
 	
 	Pregrouping instantiateFor(Agents agents);
 	
@@ -167,7 +160,7 @@ public interface PregroupingType
 	}
 	
 	/* */
-	record NamedLambda(String simpleName, Function<Agents, Pregrouping> function) implements PregroupingType
+	record NamedLambda(String canonicalName, Function<Agents, Pregrouping> function) implements PregroupingType
 	{
 		@Override
 		public Pregrouping instantiateFor(Agents agents)

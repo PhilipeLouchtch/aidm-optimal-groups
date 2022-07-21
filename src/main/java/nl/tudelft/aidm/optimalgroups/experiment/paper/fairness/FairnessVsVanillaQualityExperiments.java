@@ -52,7 +52,7 @@ public class FairnessVsVanillaQualityExperiments
 			
 			var id = datasetContext instanceof CourseEdition ? ((CourseEdition) datasetContext).bepSysId().toString() : datasetContext.identifier();
 			
-			var fileName = String.format("fairness_%s_CE(%s)-%s", experimentsRunId, id, pregroupingType.simpleName());
+			var fileName = String.format("fairness_%s_CE(%s)-%s", experimentsRunId, id, pregroupingType.canonicalName());
 			
 			new FairnessVsVanillaQualityExperimentReport(datasetContext, pregrouping, results)
 					.writeAsHtmlToFile(new File("reports/thesis/" + fileName + ".html"));

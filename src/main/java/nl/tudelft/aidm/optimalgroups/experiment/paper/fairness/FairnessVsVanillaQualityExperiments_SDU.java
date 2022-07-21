@@ -50,7 +50,7 @@ public class FairnessVsVanillaQualityExperiments_SDU
 			
 			var id  = "SDU_" + datasetContext.year;
 			
-			var fileName = String.format("fairness_%s_%s-%s", experimentsRunId, id, pregroupingType.simpleName());
+			var fileName = String.format("fairness_%s_%s-%s", experimentsRunId, id, pregroupingType.canonicalName());
 			
 			new FairnessVsVanillaQualityExperimentReport(datasetContext, pregrouping, results)
 					.writeAsHtmlToFile(new File("reports/thesis/" + fileName + ".html"));

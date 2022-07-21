@@ -1,7 +1,6 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.group.GroupFormingAlgorithm;
-import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
@@ -100,7 +99,7 @@ public class BepSysReworked implements GroupFormingAlgorithm
         // because if we do that, we're going to do a sort of anyClique pregrouping, which is probably not what
         // the user who set the Pregrouping.none() type expected.
         // Also: brittle implementation with the name comparison... so take care with refactorings
-        if (!pregroupingType.simpleName().equals("no_grouping"))
+        if (!pregroupingType.canonicalName().equals("no_grouping"))
             bestMatchUngrouped();
 
         //System.out.println(System.currentTimeMillis() + ": Start merging groups (state 3/3)");

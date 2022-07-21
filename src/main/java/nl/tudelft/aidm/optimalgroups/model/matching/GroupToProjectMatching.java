@@ -22,13 +22,16 @@ public interface GroupToProjectMatching<G extends Group> extends Matching<G, Pro
 	 */
 //	Pregrouping pregrouping();
 	
+	/** Creates a GroupToProject matching by grouping agents in a most naive, circumstantial order
+	 */
 	static GroupToProjectMatching<Group.FormedGroup> byTriviallyPartitioning(AgentToProjectMatching agentToProjectMatching)
 	{
 		return FormedGroupToProjectMatching.byTriviallyPartitioning(agentToProjectMatching);
 	}
 	
 	/**
-	 * Filters the matching by groups that are supersets of the given groups
+	 * Filters the GroupToProject matching by keeping only groups that contain one of the given groups.
+	 * A group g in this-matching is kept if, for any g' in given groups, g' is a subset of g
 	 * @param groups The groups to filter by (subsets)
 	 * @return A matching holding holding only groups that are (super)sets of the given groups
 	 */

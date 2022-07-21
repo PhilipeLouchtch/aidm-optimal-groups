@@ -11,13 +11,17 @@ import java.util.function.Function;
 
 public final class SumOfRanks
 {
-	
 	private final Matching<? extends HasProjectPrefs, Project> matching;
 	private final RankToWeightFn rankToWeightFn;
 	
 	public SumOfRanks(Matching<? extends HasProjectPrefs, Project> matching)
 	{
 		this(matching, RankToWeightFn.simple(r -> r));
+	}
+	
+	public static SumOfRanks of(Matching<? extends HasProjectPrefs, Project> matching)
+	{
+		return new SumOfRanks(matching);
 	}
 	
 	public SumOfRanks(Matching<? extends HasProjectPrefs, Project> matching, RankToWeightFn rankToWeightFn)

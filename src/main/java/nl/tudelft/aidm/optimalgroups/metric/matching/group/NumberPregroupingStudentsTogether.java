@@ -3,20 +3,19 @@ package nl.tudelft.aidm.optimalgroups.metric.matching.group;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
-import nl.tudelft.aidm.optimalgroups.model.matching.Match;
 
-public class NumberProposedGroupsTogether
+public class NumberPregroupingStudentsTogether
 {
 	private final int asInt;
 	
-	public NumberProposedGroupsTogether(GroupToProjectMatching<?> matching, Groups<?> proposedGroups)
+	public NumberPregroupingStudentsTogether(GroupToProjectMatching<?> matching, Groups<?> proposedGroups)
 	{
-		// Note that an actual group may consist of 1 or more(!) proposed groups
-		var numProposedTogether = proposedGroups.asCollection().stream()
+		var numStudentsTogether = proposedGroups.asCollection().stream()
 				.filter(proposed -> isTogether(proposed, matching))
-				.count();
+				.mapToInt(proposed -> proposed.members().count())
+				.sum();
 		
-		this.asInt = (int) numProposedTogether;
+		this.asInt = (int) numStudentsTogether;
 	}
 	
 	private static Boolean isTogether(Group proposed, GroupToProjectMatching<? extends Group> matching)

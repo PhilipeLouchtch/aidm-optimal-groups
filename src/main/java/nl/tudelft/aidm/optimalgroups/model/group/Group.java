@@ -11,6 +11,11 @@ public interface Group extends HasProjectPrefs
 
 	@Override
 	ProjectPreference projectPreference();
+	
+	default boolean contains(Group other)
+	{
+		return members().containsAll(other.members());
+	}
 
 	abstract class AbstractGroup implements Group
 	{
