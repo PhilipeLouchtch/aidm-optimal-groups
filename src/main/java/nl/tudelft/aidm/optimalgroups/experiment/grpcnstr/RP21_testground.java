@@ -39,7 +39,7 @@ public class RP21_testground
 //
 //			var algo = new Chiarandini_Utilitarian_MinSum_IdentityScheme();
 		
-		var maxsizeCliques = new CliqueGroups(allAgents).ofSize(dataset.groupSizeConstraint().maxSize());
+		var maxsizeCliques = CliqueGroups.from(allAgents).ofSize(dataset.groupSizeConstraint().maxSize());
 		
 		// Indifferent agents don't care, don't include them in the profile as they consider any project to be equal.
 		var indifferentAgents = allAgents.asCollection().stream().filter(agent -> agent.projectPreference().isCompletelyIndifferent()).collect(collectingAndThen(toList(), Agents::from));

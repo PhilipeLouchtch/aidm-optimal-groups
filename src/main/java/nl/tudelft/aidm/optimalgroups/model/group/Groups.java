@@ -5,9 +5,8 @@ import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import plouchtch.assertion.Assert;
 
 import java.util.*;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.function.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.collectingAndThen;
@@ -106,6 +105,49 @@ public interface Groups<G extends Group>
 	
 	// ==================================================
 	
+	static <G extends Group> Collector<G> collector()
+	{
+		return new Collector<>();
+	}
+	
+	class Collector<G extends Group> implements java.util.stream.Collector<G, List<G>, Groups<G>>
+	{
+		@Override
+		public Supplier<List<G>> supplier()
+		{
+			return LinkedList::new;
+		}
+		
+		@Override
+		public BiConsumer<List<G>, G> accumulator()
+		{
+			return List::add;
+		}
+		
+		@Override
+		public BinaryOperator<List<G>> combiner()
+		{
+			return (agents, agents2) -> {
+				agents.addAll(agents2);
+				return agents;
+			};
+		}
+		
+		@Override
+		public Function<List<G>, Groups<G>> finisher()
+		{
+			return Groups::of;
+		}
+		
+		@Override
+		public Set<java.util.stream.Collector.Characteristics> characteristics()
+		{
+			return Set.of();
+		}
+	}
+	
+	// ==================================================
+	
 	/**
 	 * A Groups collection impl backed by a list
 	 * @param <G>
@@ -116,7 +158,7 @@ public interface Groups<G extends Group>
 
 		public ListBackedImpl(List<G> asList)
 		{
-			this.asList = asList;
+			this.asList = Collections.unmodifiableList(asList);
 		}
 
 		@Override

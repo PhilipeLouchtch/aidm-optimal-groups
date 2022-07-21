@@ -1,41 +1,33 @@
 package nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial;
 
-import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
+import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupGroups;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
+import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
-import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.pref.AggregatedProjectPreference;
 import nl.tudelft.aidm.optimalgroups.model.pref.GroupPreference;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CliqueGroups extends Groups.ListBacked<Group.TentativeGroup>
+public class CliqueGroups extends PregroupGroups<Group.TentativeGroup>
 {
-	private final Agents agents;
-	private List<Group.TentativeGroup> tentativeCliques;
-
-	public CliqueGroups(Agents agents)
+	public CliqueGroups(List<Group.TentativeGroup> asList)
 	{
-		this.agents = agents;
+		super(asList);
 	}
 	
 	public static CliqueGroups from(Agents agents)
 	{
-		return new CliqueGroups(agents);
+		var asList = cliquesExtractedFrom(agents);
+		return new CliqueGroups(asList);
 	}
-
-	@Override
-	protected List<Group.TentativeGroup> asList()
+	
+	public static CliqueGroups from(DatasetContext datasetContext)
 	{
-		if (tentativeCliques == null) {
-			tentativeCliques = cliquesExtractedFrom(agents);
-		}
-
-		return Collections.unmodifiableList(tentativeCliques);
+		return CliqueGroups.from(datasetContext.allAgents());
 	}
 
 	private static List<Group.TentativeGroup> cliquesExtractedFrom(Agents agents)

@@ -16,23 +16,23 @@ import java.util.function.Function;
 
 public interface Pregrouping
 {
-	Groups<Group.TentativeGroup> groups();
+	PregroupGroups<Group.TentativeGroup> groups();
 	
 	Constraint constraint();
 	
 	class anyClique implements Pregrouping
 	{
-		private final Groups<Group.TentativeGroup> groups;
+		private final PregroupGroups<Group.TentativeGroup> groups;
 		private final Constraint constraint;
 		
 		public anyClique(Agents agents, Function<Groups<?>, Constraint> groupingConstraintProvider)
 		{
-			this.groups = new CliqueGroups(agents);
+			this.groups = CliqueGroups.from(agents);
 			this.constraint = groupingConstraintProvider.apply(this.groups);
 		}
 		
 		@Override
-		public Groups<Group.TentativeGroup> groups()
+		public PregroupGroups<Group.TentativeGroup> groups()
 		{
 			return groups;
 		}
@@ -46,17 +46,17 @@ public interface Pregrouping
 	
 	class sizedClique implements Pregrouping
 	{
-		private final Groups<Group.TentativeGroup> groups;
+		private final PregroupGroups<Group.TentativeGroup> groups;
 		private final Constraint constraint;
 		
 		public sizedClique(Agents agents, Function<Groups<?>, Constraint> groupingConstraintProvider, Integer... sizes)
 		{
-			this.groups = new CliqueGroups(agents).ofSizes(sizes);
+			this.groups = (PregroupGroups<Group.TentativeGroup>) CliqueGroups.from(agents).ofSizes(sizes);
 			this.constraint = groupingConstraintProvider.apply(groups);
 		}
 		
 		@Override
-		public Groups<Group.TentativeGroup> groups()
+		public PregroupGroups<Group.TentativeGroup> groups()
 		{
 			return this.groups;
 		}
@@ -71,9 +71,9 @@ public interface Pregrouping
 	class None implements Pregrouping
 	{
 		@Override
-		public Groups<Group.TentativeGroup> groups()
+		public PregroupGroups<Group.TentativeGroup> groups()
 		{
-			return Groups.of(List.of());
+			return new PregroupGroups<>(List.of());
 		}
 		
 		@Override

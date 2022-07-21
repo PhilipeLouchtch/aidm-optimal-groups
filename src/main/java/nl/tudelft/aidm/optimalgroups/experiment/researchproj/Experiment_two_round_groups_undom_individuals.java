@@ -35,7 +35,7 @@ public class Experiment_two_round_groups_undom_individuals
 //
 //			var algo = new Chiarandini_Utilitarian_MinSum_IdentityScheme();
 		
-		var cliques = new CliqueGroups(allAgents);
+		var cliques = CliqueGroups.from(allAgents);
 		
 		var maxsizeCliques = cliques.asCollection().stream()
 			                     .filter(tentativeGroup -> tentativeGroup.members().count() == datasetContext.groupSizeConstraint().maxSize())

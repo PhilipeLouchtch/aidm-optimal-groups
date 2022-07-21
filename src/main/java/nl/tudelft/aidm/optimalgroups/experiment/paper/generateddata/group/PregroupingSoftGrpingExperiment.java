@@ -242,7 +242,7 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 		
 		private static synchronized Groups<?> pregroupingFor(DatasetContext datasetContext)
 		{
-			return pregroupingsCache.computeIfAbsent(datasetContext, d -> new CliqueGroups(d.allAgents()));
+			return pregroupingsCache.computeIfAbsent(datasetContext, CliqueGroups::from);
 		}
 		
 		private Groups<?> currentPregrouping()

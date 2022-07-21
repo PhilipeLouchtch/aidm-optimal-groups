@@ -46,7 +46,7 @@ public class Random_testground
 //
 //			var algo = new Chiarandini_Utilitarian_MinSum_IdentityScheme();
 		
-		var maxsizeCliques = new CliqueGroups(allAgents).ofSize(datasetContext.groupSizeConstraint().maxSize());
+		var maxsizeCliques = CliqueGroups.from(allAgents).ofSize(datasetContext.groupSizeConstraint().maxSize());
 		
 		// Indifferent agents don't care, don't include them in the profile as they consider any project to be equal.
 		var groupingAgents = maxsizeCliques.asAgents();
