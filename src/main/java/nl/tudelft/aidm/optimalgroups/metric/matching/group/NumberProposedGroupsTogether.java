@@ -28,4 +28,10 @@ public class NumberProposedGroupsTogether
 	{
 		return this.asInt;
 	}
+	
+	@Override
+	public String toString()
+	{
+		return String.valueOf(asInt());
+	}
 }

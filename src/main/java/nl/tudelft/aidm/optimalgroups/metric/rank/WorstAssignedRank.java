@@ -47,6 +47,12 @@ public interface WorstAssignedRank extends Comparable<WorstAssignedRank>
 
 			return worst;
 		}
+		
+		@Override
+		public String toString()
+		{
+			return String.valueOf(asInt());
+		}
 	}
 
 	class ProjectToStudents implements WorstAssignedRank
@@ -82,6 +88,12 @@ public interface WorstAssignedRank extends Comparable<WorstAssignedRank>
 				.orElse(0); // all are indifferent
 
 			return worst;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return String.valueOf(asInt());
 		}
 	}
 }

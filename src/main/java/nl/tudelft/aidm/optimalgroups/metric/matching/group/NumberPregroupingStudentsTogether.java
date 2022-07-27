@@ -27,4 +27,10 @@ public class NumberPregroupingStudentsTogether
 	{
 		return this.asInt;
 	}
+	
+	@Override
+	public String toString()
+	{
+		return String.valueOf(asInt());
+	}
 }

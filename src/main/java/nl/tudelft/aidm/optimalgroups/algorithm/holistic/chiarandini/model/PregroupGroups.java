@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A Groups type containing only groups that are pregroups. Thus are groups of students
@@ -46,7 +45,7 @@ public class PregroupGroups<G extends Group> extends Groups.ListBackedImpl<G>
 		return new PregroupGroups<>(list);
 	}
 	
-	public PregroupGroups<MatchedGroup> ofWhichSatisfied(GroupToProjectMatching<?> matching)
+	public PregroupGroups<MatchedGroup> ofWhichSatisfiedIn(GroupToProjectMatching<?> matching)
 	{
 //		var asList = this.asCollection().stream()
 //             .filter(pregroup -> matching.asList().stream().anyMatch(match -> match.from().contains(pregroup)))

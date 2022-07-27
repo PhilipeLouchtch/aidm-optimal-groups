@@ -1,15 +1,7 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.setting;
 
-import com.vladsch.flexmark.ext.tables.TablesExtension;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.util.ast.Document;
-import com.vladsch.flexmark.util.data.MutableDataSet;
-import net.steppschuh.markdowngenerator.Markdown;
-import net.steppschuh.markdowngenerator.table.Table;
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.SatisfiedPregroupingAgents;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.UnsatisifedPregroupingAgents;
 import nl.tudelft.aidm.optimalgroups.metric.group.NumGroupsPerGroupSizeDist;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberPregroupingStudentsTogether;
@@ -21,15 +13,16 @@ import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Properties;
 
 @SuppressWarnings("DuplicatedCode")
 public class AnyVsExceptVsMaxPregroupReport
@@ -51,135 +44,252 @@ public class AnyVsExceptVsMaxPregroupReport
 		this.doc = new StringBuffer();
 	}
 	
-	public String asMarkdownSource()
+	public String asHtmlSource()
 	{
-		var pregrouping = challenger.pregroupingType().instantiateFor(datasetContext);
-		var soloCohort = datasetContext.allAgents().without(pregrouping.groups().asAgents());
+		Properties p = new Properties();
+		p.setProperty("resource.loader", "class");
+		p.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+		p.setProperty("runtime.strict_mode.enable", "true");
+		
+		Velocity.init(p);
+		
+		var context = new VelocityContext();
+		
+		// put all kinds of things
+		context.put("title", report_title());
 		
 		var challengerResult = challenger.determineMatching(datasetContext);
+		var pregrouping = challenger.pregroupingType().instantiateFor(datasetContext);
 		
-		var challResultAgentProjectAll = AgentToProjectMatching.from(challengerResult);
-		var challengerMatchingOnlySoloStudents = challResultAgentProjectAll.filteredBy(soloCohort);
-		var satisfiedAgentsChall = pregrouping.groups().ofWhichSatisfied(challengerResult).asAgents();
-		var matchingChallengerSatisfiedPregroupers = challResultAgentProjectAll.filteredBy(satisfiedAgentsChall);
+		context.put("challenger", new ChallengerResultData(challengerResult, pregrouping));
 		
-		heading(1, "%s - %s".formatted(datasetId, simple_name(challenger)));
+		// add oppos
+		var opposData = opponents.stream().map((GroupProjectAlgorithm opponent) ->
+		{
+			var oppoResult = opponent.determineMatching(datasetContext);
+			var oppoData = new OppoResultData(simple_name(opponent), oppoResult, challengerResult, pregrouping);
+			return oppoData;
+		})
+        .toList();
 		
-			heading(2, "Challenger %s".formatted(simple_name(challenger)));
-			text("Pregrouping type: '%s'\n".formatted(challenger.pregroupingType().canonicalName()));
+		context.put("opponentsData", opposData);
+		
+		try
+		{
+			StringWriter sw = new StringWriter();
 			
-			heading(3, "solo");
-				projectStats(challengerMatchingOnlySoloStudents);
-				
-			heading(3, "pregrouping");
-				projectStats(matchingChallengerSatisfiedPregroupers);
-				togethernessStats(challengerResult, pregrouping);
-				
-				heading(4, "- unsatisfied:");
-					var unsatisfiedAgentsInChall = new UnsatisifedPregroupingAgents(challengerResult, pregrouping);
-					var matchingUnsatisfiedInChall = challResultAgentProjectAll.filteredBy(unsatisfiedAgentsInChall);
-					projectStats(matchingUnsatisfiedInChall);
-				
-			for (var oppo : opponents)
-			{
-				var oppoResult = oppo.determineMatching(datasetContext);
-				
-				var oppoResultAgentProjectAll = AgentToProjectMatching.from(oppoResult);
-				var oppoMatchingOnlySoloStudents = oppoResultAgentProjectAll.filteredBy(soloCohort);
-				
-				heading(2, "Oppo %s".formatted(simple_name(oppo)));
-				
-				// Absolute metrics per cohort
-				heading(3, "solo");
-					// Project outcomes only
-					// - relative profile
-					// - absolute profile
-					projectStatsWithRelative(oppoMatchingOnlySoloStudents, challengerMatchingOnlySoloStudents);
-					
-				heading(3, "pregrouping");
-					// Pregroup grouping info:
-					// - number of pregroup groups together / of max
-					// - number of pregroup students together / of max
-					togethernessStatsWithRelative(oppoResult, challengerResult, pregrouping);
-					
-					// Project outcome for the pregrouping students
-					// - relative profile
-					// - absolute profile
-					var satisfiedAgentsOppo = new SatisfiedPregroupingAgents(oppoResult, pregrouping);
-					projectStatsWithRelative(oppoResultAgentProjectAll.filteredBy(satisfiedAgentsOppo), matchingChallengerSatisfiedPregroupers);
-				
-					// of which unsatisifed, so lets look at their project outcome
-					heading(4, "of which unsatisfied:");
-						// Project outcome for the pregrouping students
-						// - relative profile
-						// - absolute profile
-						var unsatisfiedAgentsOppo = new UnsatisifedPregroupingAgents(oppoResult, pregrouping);
-						final var matchingUnsatisfiedInOppo = oppoResultAgentProjectAll.filteredBy(unsatisfiedAgentsOppo);
-						projectStatsWithRelative(matchingUnsatisfiedInOppo, matchingUnsatisfiedInChall);
-			}
+			Velocity.mergeTemplate("AnyVsExceptVsMaxReportTemplate.vm", RuntimeConstants.ENCODING_DEFAULT, context, sw);
 			
-		return doc.toString();
+			return sw.toString();
+		}
+		catch (Exception exception)
+		{
+			throw new RuntimeException(exception);
+		}
 	}
 	
-	public void togethernessStats(GroupToProjectMatching<?> matching, Pregrouping pregrouping)
+	private String report_title()
 	{
-		// - number of pregroup groups together / of max
-		// - number of pregroup students together / of max
-		NumberProposedGroupsTogether groupsTogether = new NumberProposedGroupsTogether(matching, pregrouping.groups());
-		NumberPregroupingStudentsTogether studentsTogether = new NumberPregroupingStudentsTogether(matching, pregrouping.groups());
-		
-		var satisfiedPregroupGroups = pregrouping.groups().ofWhichSatisfied(matching);
-		
-		text("Groups together: %s / %s\n\n".formatted(groupsTogether.asInt(), pregrouping.groups().count()));
-		text("Students together: %s / %s\n\n".formatted(studentsTogether.asInt(), pregrouping.groups().asAgents().count()));
-		text("Dist (groups per size) %s\n\n".formatted(new NumGroupsPerGroupSizeDist(satisfiedPregroupGroups, matching.datasetContext().groupSizeConstraint().maxSize()).toString()));
-		
-		text("Profile project rank: \n\n" + Profile.of(AgentToProjectMatching.from(matching).filteredBy(satisfiedPregroupGroups.asAgents())).toString());
+		return "%s - %s".formatted(datasetId, simple_name(challenger));
 	}
 	
-	public void togethernessStatsWithRelative(GroupToProjectMatching matching, GroupToProjectMatching relative, Pregrouping pregrouping)
+	public record ChallengerResultData(GroupToProjectMatching matching, Pregrouping pregrouping)
 	{
-		// - number of pregroup groups together / of max
-		// - number of pregroup students together / of max
-		var groupsTogether = new NumberProposedGroupsTogether(matching, pregrouping.groups());
-		var studentsTogether = new NumberPregroupingStudentsTogether(matching, pregrouping.groups());
+		public NumGroupsPerGroupSizeDist pregroupDists()
+		{
+			return new NumGroupsPerGroupSizeDist(pregrouping.groups(), matching.datasetContext().groupSizeConstraint().maxSize());
+		}
 		
-		text("Groups together: %s / %s  (%s) \n\n".formatted(
-				groupsTogether.asInt(),
-				pregrouping.groups().count(),
-				new NumberProposedGroupsTogether(relative, pregrouping.groups()).asInt() - groupsTogether.asInt()
-		     )
-		);
+		public ProjectStats soloProjectStats()
+		{
+			var soloCohort = matching.datasetContext().allAgents().without(pregrouping.groups().asAgents());
+			var matchingAgentsToProjects = AgentToProjectMatching.from(matching);
+			return ProjectStats.from(matchingAgentsToProjects.filteredBy(soloCohort));
+		}
 		
-		var studentsTogetherOther = new NumberPregroupingStudentsTogether(relative, pregrouping.groups());
-		text("Students together: %s / %s  (%s) \n\n".formatted(
-				studentsTogether.asInt(),
-				pregrouping.groups().asAgents().count(),
-				studentsTogether.asInt() - studentsTogetherOther.asInt()
-		));
+		public ProjectStats satisfiedProjectStats()
+		{
+			var satisfiedPregroupingAgents = pregrouping.groups().ofWhichSatisfiedIn(matching).asAgents();
+			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(satisfiedPregroupingAgents));
+		}
+		
+		public TogethernessStats satisfiedPregroupStats()
+		{
+			return TogethernessStats.from(matching, pregrouping);
+		}
+		
+		public ProjectStats unsatisfiedProjectStats()
+		{
+			var unsatisfiedPregroupingAgents = new UnsatisifedPregroupingAgents(matching, pregrouping);
+			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(unsatisfiedPregroupingAgents));
+		}
+		
+		public int countUnsatisfied()
+		{
+			return new UnsatisifedPregroupingAgents(matching, pregrouping).count();
+		}
 	}
 	
-	public void projectStats(AgentToProjectMatching matching)
+	public record OppoResultData(String title, GroupToProjectMatching matching, GroupToProjectMatching challengerMatching, Pregrouping pregrouping)
 	{
-		// todo: pareto better check
-		text("%s [%s]\n\n".formatted(SumOfRanks.of(matching).asInt(), WorstAssignedRank.ProjectToStudents.in(matching).asInt()));
-		text("%s\n\n".formatted(Profile.of(matching).toString()));
+		public NumGroupsPerGroupSizeDist pregroupDists()
+		{
+			return new NumGroupsPerGroupSizeDist(pregrouping.groups(), matching.datasetContext().groupSizeConstraint().maxSize());
+		}
+		
+		public ProjectStatsWithDelta soloProjectStats()
+		{
+			var soloCohort = matching.datasetContext().allAgents().without(pregrouping.groups().asAgents());
+			var matchingAgentsToProjects = AgentToProjectMatching.from(matching);
+			
+			return ProjectStats.from(matchingAgentsToProjects.filteredBy(soloCohort))
+			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(soloCohort));
+		}
+		
+		public ProjectStatsWithDelta satisfiedProjectStats()
+		{
+			var satisfiedPregroupingAgentsThis = pregrouping.groups().ofWhichSatisfiedIn(matching).asAgents();
+			var satisfiedPregroupingAgentsChall = pregrouping.groups().ofWhichSatisfiedIn(challengerMatching).asAgents();
+			
+			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(satisfiedPregroupingAgentsThis))
+			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(satisfiedPregroupingAgentsChall));
+		}
+		
+		public TogethernessStatsWithDelta satisfiedPregroupStats()
+		{
+			return TogethernessStats.from(matching, pregrouping)
+					       .withDeltasTo(challengerMatching);
+		}
+		
+		public ProjectStatsWithDelta unsatisfiedProjectStats()
+		{
+			var unsatisfiedPregroupingAgents = new UnsatisifedPregroupingAgents(matching, pregrouping);
+			var unsatisfiedInChall = new UnsatisifedPregroupingAgents(challengerMatching, pregrouping);
+			
+			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(unsatisfiedPregroupingAgents))
+			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(unsatisfiedInChall));
+		}
+		
+		public int countUnsatisfied()
+		{
+			return new UnsatisifedPregroupingAgents(matching, pregrouping).count();
+		}
 	}
 	
-	public void projectStatsWithRelative(AgentToProjectMatching matching, AgentToProjectMatching matchingRel)
+	public record TogethernessStats(Pregrouping pregrouping,
+							 NumberProposedGroupsTogether groupsTogether, int numTotalPregroups,
+	                         NumberPregroupingStudentsTogether studentsTogether, int numTotalPregroupingStudents,
+	                         NumGroupsPerGroupSizeDist numGroupsTogetherPerSize,
+	                         Profile profileOnlySatisfiedPregroupers
+	) {
+		static TogethernessStats from(GroupToProjectMatching<?> matching, Pregrouping pregrouping)
+		{
+			// - number of pregroup groups together / of max
+			// - number of pregroup students together / of max
+			var groupsTogether = new NumberProposedGroupsTogether(matching, pregrouping.groups());
+			var studentsTogether = new NumberPregroupingStudentsTogether(matching, pregrouping.groups());
+			
+			var satisfiedPregroupGroups = pregrouping.groups().ofWhichSatisfiedIn(matching);
+			var numGroupsPerGroupSizeDist = new NumGroupsPerGroupSizeDist(satisfiedPregroupGroups, matching.datasetContext().groupSizeConstraint().maxSize());
+			
+			var onlySatisfiedPregroupingStudentsMatchings = AgentToProjectMatching.from(matching).filteredBy(satisfiedPregroupGroups.asAgents());
+			var profileOnlySatisfiedPregroupers = Profile.of(onlySatisfiedPregroupingStudentsMatchings);
+			
+			return new TogethernessStats(pregrouping, groupsTogether, pregrouping.groups().count(), studentsTogether, pregrouping.groups().asAgents().count(), numGroupsPerGroupSizeDist, profileOnlySatisfiedPregroupers);
+		}
+		
+		public TogethernessStatsWithDelta withDeltasTo(GroupToProjectMatching otherMatching)
+		{
+			var other = TogethernessStats.from(otherMatching, pregrouping);
+			
+			var delta = new TogethernessStatsDelta(this.groupsTogether.asInt() - other.groupsTogether.asInt(),
+			                                  this.studentsTogether.asInt() - other.studentsTogether.asInt(),
+			                                  profileOnlySatisfiedPregroupers.differenceTo(other.profileOnlySatisfiedPregroupers));
+			
+			return new TogethernessStatsWithDelta(pregrouping,
+			                                      groupsTogether, numTotalPregroups,
+			                                      studentsTogether, numTotalPregroupingStudents,
+			                                      numGroupsTogetherPerSize,
+			                                      profileOnlySatisfiedPregroupers,
+			                                      delta);
+		}
+	}
+	
+	public record TogethernessStatsWithDelta(Pregrouping pregrouping,
+							 NumberProposedGroupsTogether groupsTogether, int numTotalPregroups,
+	                         NumberPregroupingStudentsTogether studentsTogether, int numTotalPregroupingStudents,
+	                         NumGroupsPerGroupSizeDist numGroupsTogetherPerSize,
+	                         Profile profileOnlySatisfiedPregroupers,
+                             TogethernessStatsDelta delta)
 	{
-		// todo: pareto better check
-		text("%s (%s) - [%s (%s)]\n\n".formatted(
-				SumOfRanks.of(matching).asInt(),
-				SumOfRanks.of(matching).asInt() - SumOfRanks.of(matchingRel).asInt(),
-				WorstAssignedRank.ProjectToStudents.in(matching).asInt(),
-				WorstAssignedRank.ProjectToStudents.in(matching).asInt() - WorstAssignedRank.ProjectToStudents.in(matchingRel).asInt()
-		));
+	}
+	
+	public record TogethernessStatsDelta(int groupsTogetherDelta,
+	                              int studentsTogetherDelta,
+	                              Profile profileDelta)
+	{
+		public int groupsTogether()
+		{
+			return groupsTogetherDelta;
+		}
 		
-		var profileThis = Profile.of(matching);
+		public int studentsTogether()
+		{
+			return studentsTogetherDelta;
+		}
+	}
+	
+	public record ProjectStats(SumOfRanks sumOfRanks, WorstAssignedRank worstAssignedRank, Profile profile)
+	{
+		public static ProjectStats from(AgentToProjectMatching matching)
+		{
+			return new ProjectStats(SumOfRanks.of(matching), WorstAssignedRank.ProjectToStudents.in(matching), Profile.of(matching));
+		}
 		
-		text("Profile delta: %s\n\n".formatted(profileThis.subtracted(Profile.of(matchingRel)).toString()));
-		text("profile full:  %s\n\n".formatted(profileThis.toString()));
+		public ProjectStatsWithDelta withDelta(AgentToProjectMatching otherMatching)
+		{
+			var other = ProjectStats.from(otherMatching);
+			return new ProjectStatsWithDelta(this, this.deltaBetween(otherMatching));
+		}
+		
+		private ProjectStatsDelta deltaBetween(AgentToProjectMatching otherMatching)
+		{
+			var other = ProjectStats.from(otherMatching);
+			
+			return new ProjectStatsDelta(
+					this.sumOfRanks.asInt() - other.sumOfRanks.asInt(),
+					this.worstAssignedRank.asInt() - other.worstAssignedRank.asInt(),
+					profile.differenceTo(Profile.of(otherMatching))
+			);
+		}
+		
+		
+	}
+	
+	public record ProjectStatsWithDelta(SumOfRanks sumOfRanks, WorstAssignedRank worstAssignedRank, Profile profile, ProjectStatsDelta delta)
+	{
+		ProjectStatsWithDelta(ProjectStats stats, ProjectStatsDelta delta)
+		{
+			this(stats.sumOfRanks, stats.worstAssignedRank, stats.profile, delta);
+		}
+	}
+	
+	public record ProjectStatsDelta(int sorDelta, int worstDelta, Profile.ProfileDelta profileDelta)
+	{
+		public int sumOfRanks()
+		{
+			return sorDelta;
+		}
+		
+		public int worstAssignedRank()
+		{
+			return worstDelta;
+		}
+	
+		public Profile.ProfileDelta profile()
+		{
+			return profileDelta;
+		}
 	}
 	
 	public String simple_name(GroupProjectAlgorithm algorithm)
@@ -191,11 +301,11 @@ public class AnyVsExceptVsMaxPregroupReport
 			if (canonical.contains("any"))
 				return "FAIR - ANY";
 			
-			if (canonical.contains("max"))
-				return "FAIR - MAX";
-			
 			if (canonical.contains("except"))
 				return "FAIR - EXCEPT";
+			
+			if (canonical.contains("max"))
+				return "FAIR - MAX";
 			
 			throw new RuntimeException("Cant determine short name for '%s'".formatted(canonical));
 		}
@@ -205,11 +315,11 @@ public class AnyVsExceptVsMaxPregroupReport
 			if (canonical.contains("any"))
 				return "CHIA - ANY";
 			
-			if (canonical.contains("max"))
-				return "CHIA - MAX";
-			
 			if (canonical.contains("except"))
 				return "CHIA - EXCEPT";
+			
+			if (canonical.contains("max"))
+				return "CHIA - MAX";
 		}
 		
 		throw new RuntimeException("Cant determine short name for '%s'".formatted(canonical));
@@ -218,62 +328,14 @@ public class AnyVsExceptVsMaxPregroupReport
 	public void writeAsHtmlToFile(File file)
 	{
 		var html = this.asHtmlSource();
-		var htmlStyled = htmlWithCss(html);
+//		var htmlStyled = htmlWithCss(html);
 
 		try (var writer = new BufferedWriter(new FileWriter(file.getAbsoluteFile(), false))) {
-			writer.write(htmlStyled);
+			writer.write(html);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-	
-	public String asHtmlSource()
-	{
-		var markdownSrc = this.asMarkdownSource();
-		
-		/* Markdown to Html stuff */
-		MutableDataSet options = new MutableDataSet();
-		options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
-
-		Parser parser = Parser.builder(options).build();
-		HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-		Document parsed = parser.parse(markdownSrc);
-		var asHtmlSource = renderer.render(parsed);
-
-		return asHtmlSource;
-	}
-	
-	
-	private void heading(int level, String value)
-	{
-		doc.append(Markdown.heading(value, level)).append("\n\n");
-	}
-	
-	private void unorderedList(String... items)
-	{
-		doc.append(Markdown.unorderedList((Object[]) items)).append("\n\n\n");
-	}
-	
-	private void text(String text)
-	{
-		doc.append(Markdown.text(text));
-	}
-	
-	private void text(String format, Object... args)
-	{
-		text(String.format(format, args));
-	}
-	
-	private void image(JFreeChart chart)
-	{
-		doc.append(Markdown.image(embed(chart))).append("\n\n");
-	}
-	
-	private void table(Table table)
-	{
-		doc.append(table).append("\n\n");
 	}
 
 	private String embed(JFreeChart chart)
@@ -287,27 +349,21 @@ public class AnyVsExceptVsMaxPregroupReport
 		}
 	}
 	
-	private void horizontalLine()
-	{
-		doc.append(Markdown.rule())
-			.append("\n");
-	}
-	
-	static String htmlWithCss(String html)
-	{
-		try
-		{
-			var css = new String(Thread.currentThread().getContextClassLoader().getResourceAsStream("markdown.css").readAllBytes(), StandardCharsets.UTF_8);
-
-			return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">\n" +
-				"<style type=\"text/css\">" + css + "</style>" +
-				"</head><body>" + html + "\n" +
-				"</body></html>";
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-
-	}
+//	static String htmlWithCss(String html)
+//	{
+//		try
+//		{
+//			var css = new String(Thread.currentThread().getContextClassLoader().getResourceAsStream("markdown.css").readAllBytes(), StandardCharsets.UTF_8);
+//
+//			return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">\n" +
+//				"<style type=\"text/css\">" + css + "</style>" +
+//				"</head><body>" + html + "\n" +
+//				"</body></html>";
+//		}
+//		catch (IOException e)
+//		{
+//			throw new RuntimeException(e);
+//		}
+//
+//	}
 }

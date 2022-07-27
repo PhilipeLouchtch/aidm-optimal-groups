@@ -2,7 +2,6 @@ package nl.tudelft.aidm.optimalgroups.experiment.viz;
 
 import net.steppschuh.markdowngenerator.table.Table;
 import net.steppschuh.markdowngenerator.table.TableRow;
-import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEdition;
 import nl.tudelft.aidm.optimalgroups.metric.rank.SumOfRanks;
 import nl.tudelft.aidm.optimalgroups.metric.rank.WorstAssignedRank;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
@@ -96,7 +95,7 @@ public class FairVsChiaComparisonTable
 			var paretoOutcome = new ParetoComperator().compare(profileOfFairResult, profileOfChiarandiniResult);
 			
 			return switch (paretoOutcome) {
-				case BETTER, WORSE, NONE -> profileOfFairResult.subtracted(profileOfChiarandiniResult)
+				case BETTER, WORSE, NONE -> profileOfFairResult.differenceTo(profileOfChiarandiniResult)
 				                                               .toString();
 				case SAME -> Profile.empty().toString();
 			};

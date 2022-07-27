@@ -79,8 +79,7 @@ public final class SumOfRanks
 	@Override
 	public String toString()
 	{
-		return "SumOfRanks[" +
-				"matching=" + matching + ']';
+		return String.valueOf(asInt());
 	}
 	
 }

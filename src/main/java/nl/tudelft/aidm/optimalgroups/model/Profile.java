@@ -39,7 +39,7 @@ public interface Profile
 	 */
 	int maxRank();
 	
-	default Profile subtracted(Profile other)
+	default ProfileDelta differenceTo(Profile other)
 	{
 		var maxRank = Math.max(this.maxRank(), other.maxRank());
 		var profileDelta = new int[maxRank+1];
@@ -49,7 +49,7 @@ public interface Profile
 			profileDelta[i] = this.numAgentsWithRank(i) - other.numAgentsWithRank(i);
 		}
 		
-		return new Simple(profileDelta);
+		return new ProfileDelta(profileDelta);
 	}
 	
 	/* Factory methods  */
@@ -122,9 +122,9 @@ public interface Profile
 	/* Implementations */
 	class Simple implements Profile
 	{
-		private final int maxRank;
-		private final int numStudentsInProfile;
-		private final int[] numStudentsByRank;
+		protected final int maxRank;
+		protected final int numStudentsInProfile;
+		protected final int[] numStudentsByRank;
 		
 		/**
 		 * Initializes this Array-backed Profile implementation from the given array
@@ -181,15 +181,10 @@ public interface Profile
 		@Override
 		public String toString()
 		{
-			Function<Integer, String> int2string = value -> {
-				if (value == 0) return " " + value;
-				else if (value < 0) return Integer.toString(value);
-				else return "+" + value;
-			};
 			
 			return Arrays.stream(numStudentsByRank)
 			             .skip(1) // skip element at index 0
-			             .mapToObj(int2string::apply)
+			             .mapToObj(String::valueOf)
 			             .collect(Collectors.joining(" ", "[", "]"));
 		}
 		
@@ -208,6 +203,29 @@ public interface Profile
 		public int hashCode()
 		{
 			return Arrays.hashCode(numStudentsByRank);
+		}
+	}
+	
+	class ProfileDelta extends Profile.Simple
+	{
+		public ProfileDelta(int[] numStudentsByRank)
+		{
+			super(numStudentsByRank);
+		}
+		
+		@Override
+		public String toString()
+		{
+			Function<Integer, String> int2string = value -> {
+				if (value == 0) return " " + value;
+				else if (value < 0) return Integer.toString(value);
+				else return "+" + value;
+			};
+			
+			return Arrays.stream(numStudentsByRank)
+			             .skip(1) // skip element at index 0
+			             .mapToObj(int2string::apply)
+			             .collect(Collectors.joining(" ", "[", "]"));
 		}
 	}
 }
