@@ -133,15 +133,15 @@ loadHistoricalExperimentData <- function(exp_prefix) {
         profile_pregrouped = col_character(),
         profile_unsatpregroup = col_character(),
         
-        project_pressure = col_factor(),
-        pregroup_proportion = col_integer(),
+        pregroup_proportion = col_double(),
         pregroup_sizes_distribution = col_character(),
         
         num_pregroups_fully_together = col_integer(),
         num_pregroups_max = col_integer()
     )
     
-    d <- map_dfr(exp_files, read_csv, col_types = column_spec)
+    d <- map_dfr(exp_files, read_csv, col_types = column_spec) |>
+        augment_with_short_mechanism_name()
     
     return(d)
 }

@@ -9,10 +9,12 @@ library(ggh4x)
 
 source("experiment_data.r")
 source("common.r")
+source("metrics.r")
 
-historical_data_tu <- loadHistoricalExperimentData("Historical_TUD") |>
-    augment_with_short_mechanism_name()
+historical_data_tu <- loadHistoricalExperimentData("Historical_TUD_2_max")
+```
 
+```{r}
 # runtimes
 plot <- ggplot(historical_data_tu, aes(x = id, y = duration_ms / 1000, group = interaction(id, mechanism_short), color = mechanism_short)) +
     
@@ -39,31 +41,6 @@ print(plot)
 
 ```{r fig.width=13}
 # Quality - plot metric per student type - per mechanism (facet)
-
-
-
-z <- historical_data_tu |>
-                mutate(
-                    profile_all = profile_all,
-                    profile_solo = profile_singles,
-                    profile_pregrouped = profile_pregrouped,
-                    profile_unsatisfied = profile_unsatpregroup,
-                    profile_singles = NULL,
-                    profile_unsatpregroup = NULL,
-                ) |>
-    
-                pivot_longer(
-                    cols = starts_with("profile"),
-                    names_to = "student_type",
-                    names_prefix = "profile_",
-                    values_to = "rank"
-                )
-z |>
-                mutate(student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")))
-
-zz <- z |> mutate(
-            aupcr = list(num_projects, num_slots, rank) |> pmap(calc_aupcr) |> unlist()
-        )
 
 qweqwe <- historical_data_tu |>
                 filter(trial == 0) |>
@@ -122,69 +99,47 @@ qweqwe <- historical_data_tu |>
         theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
 
 print(plot)
+```
 
+```{r}
 
-historical_data_tu |>
-                filter(trial == 0) |>
-                mutate(
-                    profile_all = profile_all,
-                    profile_solo = profile_singles,
-                    profile_pregrouped = profile_pregrouped,
-                    profile_unsatisfied = profile_unsatpregroup,
-                    profile_singles = NULL,
-                    profile_unsatpregroup = NULL,
-                ) |>
-                pivot_longer(
-                    cols = starts_with("profile"),
-                    names_to = "student_type",
-                    names_prefix = "profile_",
-                    values_to = "rank"
-                ) |>
-                filter(!is.na(rank)) |>
-                mutate(
-                    ranks = map(rank, rank_profile)
-                ) |>
-                mutate(
-                    student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")),
-                    aupcr = pmap(list(num_projects, num_slots, rank), calc_aupcr) |> unlist(),
-                    sum_ranks_norm = ranks |> map(~ sum(.) / length(.)) |> unlist()
-                ) |>
-                select(
-                    id, student_type, mechanism_short, aupcr, sum_ranks_norm
-                )
+transform_hist_data <- function(data) {
+    data |>
+        filter(trial == 1) |>
+        mutate(
+            profile_all = profile_all,
+            profile_solo = profile_singles,
+            profile_pregrouped = profile_pregrouped,
+            profile_unsatisfied = profile_unsatpregroup,
+            profile_singles = NULL,
+            profile_unsatpregroup = NULL,
+        ) |>
+        pivot_longer(
+            cols = starts_with("profile"),
+            names_to = "student_type",
+            names_prefix = "profile_",
+            values_to = "rank"
+        ) |>
+        filter(!is.na(rank)) |>
+        mutate(
+            rank = map(rank, rank_profile),
+            student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied"))
+        )
+}
 
-    plot <- ggplot(
-                zzzzzz <- historical_data_tu |>
-                    filter(trial == 0) |>
-                    mutate(
-                        profile_all = profile_all,
-                        profile_solo = profile_singles,
-                        profile_pregrouped = profile_pregrouped,
-                        profile_unsatisfied = profile_unsatpregroup,
-                        profile_singles = NULL,
-                        profile_unsatpregroup = NULL,
-                    ) |>
-                    pivot_longer(
-                        cols = starts_with("profile"),
-                        names_to = "student_type",
-                        names_prefix = "profile_",
-                        values_to = "rank"
-                    ) |>
-                    filter(!is.na(rank)) |>
-                    mutate(
-                        rank = map(rank, rank_profile)
-                    ) |>
-                    mutate(
-                        student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied"))
-                    ) |>
-                    unchop(rank),
-                
+```
+
+```{r fig.width=15, fig.height=28}
+
+plot_historical_ranksboxplot <- function(type, data) {
+
+    plot <- ggplot(transform_hist_data(data) |> unchop(rank),
                 aes(x = student_type, y = rank, group = interaction(mechanism_short, student_type), fill = mechanism_short)
             ) +
     
-        geom_boxplot() + 
+        geom_boxplot() +
 
-        facet_wrap(vars(id), nrow = 2) +
+        facet_wrap(vars(id), scales = "free_y", ncol = 3) + #, nrow = 2) +
         
         # facetted_pos_scales(y = list(
         #     scale_y_continuous(limits = c(0,5)),
@@ -195,7 +150,7 @@ historical_data_tu |>
 
         scale_x_discrete(guide = guide_axis(angle = 30)) +
         labs(
-            title = "Runtimes - no pre-grouping",
+            title = type,
             y = "Avg rank",
             x = "Mechanism",
             color = "# slots"
@@ -204,10 +159,451 @@ historical_data_tu |>
         
         theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
 
-print(plot)
+    print(plot)
     
-# }
+    # filename <- paste("plots/thesis/", paste(paste("grouped-soft_", studs, ppt, pressure, preg_dist, sep = "_"), ".png", sep = ""), sep = "")
+    # ggsave(filename,
+    #        device = "png", width = 300, height = 160, units = "mm", pointsize = 100
+    # )
+}
+
+plot_historical_ranksboxplot("Max-only", loadHistoricalExperimentData("Historical_TUD_2_max") |> filter(mechanism_short != "Fair") )
+
+# plot_historical_ranksboxplot("Any", loadHistoricalExperimentData("Historical_TUD_any") )
+# plot_historical_ranksboxplot("Except max-1", loadHistoricalExperimentData("Historical_TUD_except") )
+
+
+```
+
+```{r fig.height=8, fig.width=15}
+
+plot_historical_bepsys_vs_chia <- function(type, data) {
+
+    plot <- ggplot(transform_hist_data(data) |> unchop(rank),
+                aes(x = student_type, y = rank, group = interaction(mechanism_short, student_type), fill = mechanism_short)
+            ) +
+    
+        geom_boxplot() +
+
+        facet_wrap(vars(id), scales = "free_y", nrow = 1, drop = FALSE) +
+        
+        facetted_pos_scales(y = list(
+            scale_y_continuous(breaks = 1:7, minor_breaks = 1:7),
+            scale_y_continuous(breaks = 1:9, minor_breaks = 1:9),
+            scale_y_continuous(breaks = c(1,3,6,9,12,16,20,25), minor_breaks = 1:27),
+            scale_y_continuous(breaks = append(c(1, 3), seq(5,55,5)), minor_breaks = 1:55) #append(c(1, 3), seq(5,55,5))
+        )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = type,
+            y = "Rank",
+            x = "Student grouping outcome",
+            fill = "Mechanism"
+        ) +
+        # coord_cartesian(ylim = c(0.7, 1)) +
+        
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+
+    return (plot)
+}
+
+combined_historical_tu <- bind_rows(list(any = loadHistoricalExperimentData("Historical_TUD_2_any"),
+                                         max = loadHistoricalExperimentData("Historical_TUD_2_max"),
+                                         except = loadHistoricalExperimentData("Historical_TUD_2_except")
+                                         ),
+                                    .id = "setting")
+
+plot <- plot_historical_bepsys_vs_chia(
+    "BEPSys vs Chiarandini (OWA) - selected instances - max-size pregrouping only",
+    combined_historical_tu |>
+        filter(id %in% c("CE4", "CE11", "CE10", "CE45") & mechanism_short != "Fair" & setting == "max")
+    |> mutate( id = factor(id, c("CE4", "CE11", "CE10", "CE45")) )
+)
+
+save_plot_png(plot, "plots/thesis", "bepsys_vs_chia_quality_eps", 250, 130)
+    
+    
+# unique(loadHistoricalExperimentData("Historical_TUD_except")$mechanism)
 
 # Max pregrouping only vs All pregroupings vs All (except for max-1)
 
+```
+
+
+```{r fig.height=18, fig.width=25}
+
+plot_historical_bepsys_vs_chia <- function(type, data) {
+
+    plot <- ggplot(transform_hist_data(data) |> unchop(rank),
+                aes(x = student_type, y = rank, group = interaction(mechanism_short, student_type), fill = mechanism_short)
+            ) +
+    
+        geom_violin(scale = "count", kernel = "rectangular", bw = 0.1) +
+
+        facet_wrap(vars(id), scales = "free_y", drop = FALSE) +
+        
+        # facetted_pos_scales(y = list(
+        #     scale_y_continuous(breaks = 1:7, minor_breaks = 1:7),
+        #     scale_y_continuous(breaks = 1:9, minor_breaks = 1:9),
+        #     scale_y_continuous(breaks = c(1,3,6,9,12,16,20,25), minor_breaks = 1:27),
+        #     scale_y_continuous(breaks = append(c(1, 3), seq(5,55,5)), minor_breaks = 1:55) #append(c(1, 3), seq(5,55,5))
+        # )) +
+
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(
+            title = type,
+            y = "Rank",
+            x = "Student grouping outcome",
+            fill = "Mechanism"
+        ) +
+        # coord_cartesian(ylim = c(0.7, 1)) +
+        
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+
+    return (plot)
+}
+
+plot <- plot_historical_bepsys_vs_chia(
+    "Chiarandini vs Fair - selected instances - max-size pregrouping only",
+    combined_historical_tu |>
+        filter(mechanism_short != "BEPSys" & setting == "max")
+) |> print()
+
+```
+
+
+```{r fig.height=5, fig.width = 8}
+
+
+chia_vs_fair_histoflip <- function(data, ce, type) {
+    
+    data <- transform_hist_data(data) |> filter(student_type == type)
+    
+    fair_subset <- subset(data, mechanism_short == 'Fair') |> unchop(rank)
+    chia_subset <- subset(data, mechanism_short == 'Chiarandini') |> unchop(rank)
+    
+    # if (nrow(xxx) == 0)
+    #     next
+    # 
+    # br <- seq(0, max(data$rank), by = 5)
+    # br[1] = 1
+
+    # br <- unique(data$rank);
+    # xxx <- data |> unchop(rank)
+    # br <- pretty(xxx);
+    # 
+    # if (br[1] > 1)
+    #     br <- prepend(br, 1)
+    # else
+    #     br[1] <- 1
+    
+    worst_rank <- max(max(fair_subset$rank), max(chia_subset$rank))
+    counts <- data |> group_by()
+    
+    # br <- seq(0, max(max(fair_subset$rank),max(chia_subset$rank)), by = 5)
+    uniq_x <- unique(append(fair_subset$rank, chia_subset$rank))
+    num_uniq_x <- length(unique(append(fair_subset$rank, chia_subset$rank)))
+    # 
+    br_x <- scales::extended_breaks(n = ifelse(num_uniq_x < 4, num_uniq_x, 8), Q = c(1, 5, 2, 4, 3))(uniq_x)
+    br_x[1] = 1
+    
+    #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+    plot <- ggplot() +
+        
+        geom_bar(
+            data = fair_subset,
+            aes(x = rank, fill = mechanism_short)
+        ) +
+        
+        geom_bar(
+            data = chia_subset,
+            aes(x = rank, y = -after_stat(count), fill = mechanism_short)
+        ) +
+        
+        geom_hline(yintercept=0, color="black", size=.5) +
+        
+        facet_grid2(student_type ~ id, scales = "free", space = "free", shrink = TRUE, independent = TRUE) +
+        
+        labs(
+            title = ce,
+            y = "# students with rank",
+            x = "rank",
+            fill = "Mechanism:"
+        ) +
+        
+        scale_x_continuous(breaks = br_x, minor_breaks = \(lims)(round(lims[1]):round(lims[2]))) +
+        scale_y_continuous(breaks = scales::extended_breaks(n = 14, Q = c(1, 5, 2, 4, 3, 10)), minor_breaks = -300:300, labels = function(x) { abs(x) }) +
+        
+        # coord_trans(y = trans_sqrt_fix) +
+        # scale_y_continuous(labels = percent_abs) +
+        # "solo", "preg", "unsat"
+        # "#F8766D" "#00BA38" "#619CFF"
+        # "#0bd000", "#619CFF", "#ffea19"
+        # scale_fill_manual(drop = FALSE, values = c(solo = "#0fb783", pregrouped = "#FBAE04", unsatisfied = "#AE04FB", all = "#FFFFFF") ) +
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+    
+    print(plot)
+}
+
+# for (ce in c("CE3", "CE10", "CE11", "CE45")) {
+    chia_vs_fair_histoflip(data_chia_vs_fair |> filter(id %in% c("CE3", "CE10", "CE11", "CE45")), sprintf("Fair vs Chiarandini - choice datasets"), "solo") |>
+        save_plot_png("plots/thesis", paste("chia_vs_fair_ranks", "choice_solo", sep="_"), 150, 120)
+    
+        chia_vs_fair_histoflip(data_chia_vs_fair |> filter(id %in% c("CE3", "CE10", "CE11", "CE45")), sprintf("Fair vs Chiarandini - choice datasets"), "pregrouped") |>
+        save_plot_png("plots/thesis", paste("chia_vs_fair_ranks", "choice_preg", sep="_"), 150, 50)
+# }
+
+ce = "CE4"
+data_chia_vs_fair <- combined_historical_tu |> filter(setting == "max")
+
+for (ce in levels(data_chia_vs_fair$id)) {
+    chia_vs_fair_histoflip(data_chia_vs_fair |> filter(id == ce), ce) |>
+        save_plot_png("plots/thesis", paste("chia_vs_fair_ranks", ce, sep="_"), 250, 130)
+}
+
+```
+
+
+```{r fig.height=5, fig.width = 15}
+
+
+chia_vs_fair_histo_sbs <- function(data, ce) {
+    
+    data <- transform_hist_data(data) |>
+        filter(mechanism_short %in% c("Fair", "Chiarandini")) |>
+        unchop(rank)
+    
+    # if (nrow(xxx) == 0)
+    #     next
+    # 
+    # br <- seq(0, max(data$rank), by = 5)
+    # br[1] = 1
+
+    # br <- unique(data$rank);
+    # xxx <- data |> unchop(rank)
+    # br <- pretty(xxx);
+    # 
+    # if (br[1] > 1)
+    #     br <- prepend(br, 1)
+    # else
+    #     br[1] <- 1
+    
+    worst_rank <- max(data$rank)
+    
+    # br <- seq(0, max(max(fair_subset$rank),max(chia_subset$rank)), by = 5)
+    uniq_x <- unique(data$rank)
+    num_uniq_x <- length(uniq_x)
+    # 
+    br_x <- scales::extended_breaks(n = ifelse(worst_rank <= 4, num_uniq_x, 8), Q = c(1, 5, 2, 4, 3))(uniq_x)
+    br_x[1] = 1
+    
+    #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+    plot <- ggplot(data) +
+        
+        geom_bar(
+            aes(x = rank, fill = mechanism_short), position = position_dodge2(preserve = "single")
+        ) +
+        
+        # geom_bar(
+        #     data = chia_subset,
+        #     aes(x = rank, y = -after_stat(count), fill = mechanism_short)
+        # ) +
+        # 
+        # geom_hline(yintercept=0, color="black", size=.5) +
+        
+        facet_wrap(vars(student_type), scales = "free", ncol = 4, drop = TRUE) +
+        
+        labs(
+            title = ce,
+            y = "# students with rank",
+            x = "rank"
+        ) +
+        
+        scale_x_continuous(breaks = br_x, minor_breaks = 1:worst_rank) +
+        scale_y_continuous(breaks = scales::extended_breaks(n = 8, Q = c(1, 5, 2, 4, 3)), minor_breaks = 1:300) +
+        
+        # coord_trans(y = trans_sqrt_fix) +
+        # scale_y_continuous(labels = percent_abs) +
+        # "solo", "preg", "unsat"
+        # "#F8766D" "#00BA38" "#619CFF"
+        # "#0bd000", "#619CFF", "#ffea19"
+        # scale_fill_manual(drop = FALSE, values = c(solo = "#0fb783", pregrouped = "#FBAE04", unsatisfied = "#AE04FB", all = "#FFFFFF") ) +
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+    
+    print(plot)
+}
+
+chia_vs_fair_histo_sbs(data_chia_vs_fair |> filter(id == ce), ce)
+
+transform_hist_data(data_chia_vs_fair) |>
+        filter(mechanism_short %in% c("Fair", "Chiarandini"))
+
+ce = "CE3"
+data_chia_vs_fair <- combined_historical_tu |> filter(setting == "max")
+for (ce in levels(data_chia_vs_fair$id)) {
+    
+    data <- data_chia_vs_fair |> filter(id == ce)
+    
+    chia_vs_fair_histo_sbs(data, ce) |>
+        save_plot_png("plots/thesis", paste("chia_vs_fair_quality_sbs", ce, sep="_"), 250, 130)
+}
+
+
+```
+
+```{r fig.height=12, fig.width = 15}
+
+
+chia_vs_fair_histo_sbs_choice <- function(data, ce) {
+    
+    data <- transform_hist_data(data) |>
+        filter(mechanism_short %in% c("Fair", "Chiarandini") & student_type != "all") |>
+        unchop(rank)
+    
+    worst_rank <- max(data$rank)
+    
+    uniq_x <- unique(data$rank)
+    num_uniq_x <- length(uniq_x)
+    # 
+    br_x <- 1:worst_rank
+    
+    #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+    plot <- ggplot(data) +
+        
+        geom_bar(
+            aes(x = rank, fill = mechanism_short), position = position_dodge2(preserve = "single")
+        ) +
+        
+        # geom_bar(
+        #     data = chia_subset,
+        #     aes(x = rank, y = -after_stat(count), fill = mechanism_short)
+        # ) +
+        # 
+        # geom_hline(yintercept=0, color="black", size=.5) +
+        
+        facet_grid2(id ~ student_type, scales = "free", space = "free", independent = TRUE, drop = TRUE) +
+        
+        labs(
+            title = "Fair vs Chiaranini - choice instances",
+            y = "# students with rank",
+            x = "rank",
+            fill = "Mechanism:"
+        ) +
+        
+        scale_x_continuous(breaks = br_x, minor_breaks = 1:worst_rank) +
+        scale_y_continuous(breaks = scales::extended_breaks(n = 8, Q = c(1, 5, 2, 4, 3)), minor_breaks = 1:300) +
+        
+        # coord_trans(y = trans_sqrt_fix) +
+        # scale_y_continuous(labels = percent_abs) +
+        # "solo", "preg", "unsat"
+        # "#F8766D" "#00BA38" "#619CFF"
+        # "#0bd000", "#619CFF", "#ffea19"
+        # scale_fill_manual(drop = FALSE, values = c(solo = "#0fb783", pregrouped = "#FBAE04", unsatisfied = "#AE04FB", all = "#FFFFFF") ) +
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+    
+    print(plot)
+}
+
+data_chia_vs_fair <- combined_historical_tu |> filter(setting == "max")
+data_chia_vs_fair_choice <- data_chia_vs_fair |> filter(id %in% c("CE3", "CE10", "CE11", "CE45"))
+
+# chia_vs_fair_histo_sbs_choice(data_chia_vs_fair |> filter(id == ce), ce)
+
+# transform_hist_data(data_chia_vs_fair) |>
+        # filter(mechanism_short %in% c("Fair", "Chiarandini"))
+
+ce = "CE3"
+for (ce in levels(data_chia_vs_fair$id)) {
+    
+    data <- data_chia_vs_fair_choice #|> filter(id == ce)
+    chia_vs_fair_histo_sbs_choice(data_chia_vs_fair_choice |> filter(id %in% c("CE3", "CE10", "CE11", "CE45")), ce) |> save_plot_png("plots/thesis", paste("chia_vs_fair_quality_sbs_choice", ce, sep="_"), 300, 240)
+    # chia_vs_fair_histo_sbs_choice(data_chia_vs_fair_choice |> filter(id %in% c("CE11", "CE45")), ce)
+}
+
+
+```
+
+
+#All vs Except vs Max comparison
+```{r}
+
+# problem: would like to compare Fair x Chia in Any/Except vs Fair x Chia in Any/Except/Max
+# problem++: student types are relative to the challenger
+single_mechanism_setting_comparison <- function(data) {
+    
+    data <- transform_hist_data(data) |>
+        filter(student_type != "all" & mechanism_short %in% c("Fair", "Chiarandini")) |> #mechanism_short == mechanism & 
+        unchop(rank)
+    
+    worst_rank <- max(data$rank)
+    
+    uniq_x <- unique(data$rank)
+    num_uniq_x <- length(uniq_x)
+    # 
+    br_x <- 1:worst_rank
+    
+    #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+    plot <- ggplot(data) +
+        
+        geom_bar(
+            aes(x = rank, fill = student_type), position = "stack"
+        ) +
+        
+        # geom_bar(
+        #     data = chia_subset,
+        #     aes(x = rank, y = -after_stat(count), fill = mechanism_short)
+        # ) +
+        # 
+        # geom_hline(yintercept=0, color="black", size=.5) +
+        
+        facet_grid2(id ~ setting + mechanism_short, scales = "free_x") + #, scales = "free", space = "free", independent = TRUE, drop = TRUE) +
+        
+        labs(
+            title = paste("mechanism", "Any vs Except vs Max setting comparison"),
+            y = "# students with rank",
+            x = "rank",
+            fill = "Student type:"
+        ) +
+        
+        scale_x_continuous(breaks = br_x, minor_breaks = 1:worst_rank) +
+        scale_y_continuous(breaks = scales::extended_breaks(n = 8, Q = c(1, 5, 2, 4, 3)), minor_breaks = 1:300) +
+        
+        # coord_trans(y = trans_sqrt_fix) +
+        # scale_y_continuous(labels = percent_abs) +
+        # "solo", "preg", "unsat"
+        # "#F8766D" "#00BA38" "#619CFF"
+        # "#0bd000", "#619CFF", "#ffea19"
+        # scale_fill_manual(drop = FALSE, values = c(solo = "#0fb783", pregrouped = "#FBAE04", unsatisfied = "#AE04FB", all = "#FFFFFF") ) +
+        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+    
+    print(plot)
+}
+
+# data_chia_vs_fair <- combined_historical_tu |> filter(setting == "max")
+
+single_mechanism_setting_comparison(combined_historical_tu)
+
+
+```
+
+
+# SDU Datasets
+```{r}
+
+sdu_data_ana <- loadHistoricalExperimentData("Historical_SDU") |>
+    # filter(mechanism_short %in% c("Chiarandini")) |>
+    # filter(mechanism_short %in% c("Fair")) |>
+    filter(mechanism_short %in% c("Chiarandini", "Fair")) |>
+    transform_hist_data() |>
+    filter(student_type %in% c("solo", "pregrouped")) |>
+    mutate(student_type = student_type |> droplevels()) |>
+    select(rank, student_type, mechanism_short, id) |>
+    unchop(rank)
+
+m <- lm(rank ~ student_type:mechanism_short, sdu_data_ana)
+
+plot(m)
+               
+summary(m)
 ```

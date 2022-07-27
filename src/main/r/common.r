@@ -1,13 +1,28 @@
 mechanism_name_map = new.env()
+
+mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
+mechanism_name_map[["SDPC-S (project slots)"]] = "SDPC-S"
+
 mechanism_name_map[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] = "Fair"
 mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrp"]] = "Fair"
 mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrpEps"]] = "Fair"
-mechanism_name_map[["Fair (impr-eps) - owa - anyClique_softGrpEps"]] = "Fair"
-mechanism_name_map[["BepSys (reworked) - Borda"]] = "BEPSys"
+
 mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
 mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chiarandini"
 mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chiarandini"
-mechanism_name_map[["SDPC-S (project slots)"]] = "SDPC-S"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrpEps"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrp"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrpEps"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrp"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrpEps"]] = "Chiarandini"
+
+mechanism_name_map[["Fair (impr-eps) - owa - anyClique_softGrpEps"]] = "Fair"
+mechanism_name_map[["Fair (impr-eps) - owa - maxCliques_softGrpEps"]] = "Fair"
+mechanism_name_map[["Fair (impr-eps) - owa - exceptSubmaxCliques_softGrpEps"]] = "Fair"
+mechanism_name_map[["Chiarandini w Fair pregrouping owa - anyClique_softGrpEps"]] = "Fair"
+mechanism_name_map[["Chiarandini w Fair pregrouping owa - maxCliques_softGrpEps"]] = "Fair"
+mechanism_name_map[["Chiarandini w Fair pregrouping owa - exceptSubmaxCliques_softGrpEps"]] = "Fair"
+
 
 mechanism_name_map_short = new.env()
 mechanism_name_map_short[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] = "Fair (soft)"
@@ -52,4 +67,11 @@ augment_with_nice_projectpref_name <- function(data) {
 fix_pressure_levels <- function(data) {
     data$project_pressure <- factor(data$project_pressure, levels = c("TIGHT", "MID", "LOOSE"))
     data
+}
+
+save_plot_png <- function(plot, dir, filename, width, height) {
+    path <- paste(dir, "/", filename, ".png", sep = "")
+    ggsave(plot = plot, path,
+           device = "png", width = width, height = height, units = "mm", pointsize = 100
+    )
 }
