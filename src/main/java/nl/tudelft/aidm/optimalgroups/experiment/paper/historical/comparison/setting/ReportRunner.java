@@ -56,6 +56,44 @@ public class ReportRunner
 	
 	public static void main(String[] args)
 	{
+		runSingleTable(args);
+	}
+	
+	public static void runSingleTable(String[] args)
+	{
+		var experimentsRunId = Instant.now().getEpochSecond();
+		
+		var datasets = TUDInstances();
+		
+		// For the experiment, we assume the following pregrouping-type ('except', 'any') to be true
+		// and compare the results of running a mechanism with this model with the results of the mechanisms
+		// if we were to assume so other model. Thus, we can look at the outcomes for pregrouping students
+		// that would like to work, e.g. in a pair under a model where we actually know there are these
+		// pregroupers and compare that to the outcome of a model where we choose to ignore this information
+		// (strict business rule, or if the 'lesser' model is determined to have a better overal outcome)
+//		var assumedTruePregroupingModel = PregroupingType.anyCliqueSoftGroupedEpsilon();
+		
+		// The combinations mechanisms x pregrouping setting we would like to evaluate
+		List<GroupProjectAlgorithm> algos = List.of(
+			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.anyCliqueSoftGroupedEpsilon()),
+			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.anyCliqueSoftGroupedEpsilon()),
+			
+			// EXCEPT model - comment out if except is a challenger
+			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
+			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
+			
+			// MAX model
+			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.maxCliqueSoftGroupedEps()),
+			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.maxCliqueSoftGroupedEps())
+		);
+		
+		var fileName = String.format("any_except_max_report_tud-all_%s", experimentsRunId);
+		var report = new AnyVsExceptVsMaxPregroupSingleTableReport(datasets, algos);
+		report.writeAsHtmlToFile(new File("reports/thesis/" + fileName + ".html"));
+	}
+	
+	public static void runComparison(String[] args)
+	{
 		var experimentsRunId = Instant.now().getEpochSecond();
 		
 		var datasets = TUDInstances();

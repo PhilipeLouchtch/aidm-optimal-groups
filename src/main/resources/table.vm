@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Table test</title>
+
+    #macro( metric $stats )
+        $stats.sumOfRanks() [$stats.worstAssignedRank()]
+    #end
+
+    #macro( metric_delta $stats )
+        #sign($stats.sumOfRanks()) [#sign($stats.worstAssignedRank())]
+    #end
+
+    #macro( fraction $numerator $denominator )
+        $numerator &sol; $denominator
+    #end
+
+    #macro( sign $value )#if($value > 0)+#end$value#end
+
+</head>
+<body>
+
+##        #macro( makeRow $data $rowNum $niceDatasetId )
+##            <tr>
+##                #if ( $rowNum == 1)
+##                <td	rowspan="6">$niceDatasetId</td>
+##                #end
+##                <td>$data.mechanismPregroupId())</td>
+##                <td>
+##                    Metric: #metric( $data.soloProjectStats() )<br>
+##                    Profile: $data.soloProjectStats().profile()
+##                </td>
+##                <td>
+##                    Metric: #metric( $data.satisfiedPregroupStats() )<br>
+##                    Profile: $data.satisfiedPregroupStats().profile()
+##                </td>
+##                <td>
+##                    #set( $d = $data.satisfiedPregroupStats() )
+##                    students: #fraction( $d.groupsTogether(), $d.numTotalPregroups() )<br>
+##                    groups: #fraction( $d.studentsTogether(), $d.numTotalPregroupingStudents() )
+##                </td>
+##                <td>
+##                    Metric: #metric( $data.unsatisfiedProjectStats() )<br>
+##                    Profile: $data.unsatisfiedProjectStats().profile()
+##                </td>
+##            </tr>
+##        #end
+        <table>
+            <thead>
+                <tr>
+                    <th>Edition</th>
+                    <th>Mechanism</th>
+                    <th>Solo</th>
+                    <th>Pregrouped</th>
+                    <th>Togetherness</th>
+                    <th>Unsatisfied</th>
+                </tr>
+            </thead>
+
+            #foreach( $result in $resultsForAllDatasets )
+                #set( $rowNum = 1 )
+
+
+                    #foreach ( $algoResult in $result.algoResults() )
+                    <tr>
+                        #if ( $rowNum == 1)
+                            <td	rowspan="6">$result.niceDatasetId()</td>
+                        #end
+                        <td>$algoResult.mechanismPregroupId()</td>
+                        <td>
+                            Metric: #metric( $algoResult.soloProjectStats() )<br>
+                            Profile: $algoResult.soloProjectStats().profile()
+                        </td>
+                        <td>
+                            Metric: #metric( $algoResult.satisfiedProjectStats() )<br>
+                            Profile: $algoResult.satisfiedProjectStats().profile()
+                        </td>
+                        <td>
+                            #set( $d = $algoResult.satisfiedPregroupStats() )
+                            students: #fraction( $d.groupsTogether(), $d.numTotalPregroups() )<br>
+                            groups: #fraction( $d.studentsTogether(), $d.numTotalPregroupingStudents() )
+                        </td>
+                        <td>
+                            Metric: #metric( $algoResult.unsatisfiedProjectStats() )<br>
+                            Profile: $algoResult.unsatisfiedProjectStats().profile()
+                        </td>
+                    </tr>
+                    #set( $rowNum = $rowNum + 1 )
+                    #end
+
+                #* add space *#
+                <tr style="display: block; padding-top: 1em;"></tr>
+            #end
+
+        </table>
+</body>
+<style>
+body {
+    margin: 0 auto;
+    background-color:white;
+
+    /*	--------- FONT FAMILY --------
+         following are some optional font families. Usually a family
+        is safer to choose than a specific font,
+        which may not be on the users computer		*/
+    font-family:Georgia, Palatino, serif;
+    /*    font-family:"Book Antiqua", Palatino, serif;
+    //    font-family:Arial, Helvetica, sans-serif;
+    //    font-family:Tahoma, Verdana, Geneva, sans-serif;
+    //    font-family:Courier, monospace;
+    //    font-family:"Times New Roman", Times, serif;*/
+
+    /*	-------------- COLOR OPTIONS ------------
+         following are additional color options for base font
+        you could uncomment another one to easily change the base color
+        or add one to a specific element style below         */
+    color: #333333; /* dark gray not black */
+
+    line-height: 1;
+    /*    max-width: 960px;*/
+    /*max-width: 800px;*/
+    padding: 30px;
+    /* font-size: 18px; */
+}
+
+.chal_result {
+}
+
+.oppo_result {
+    margin-right: 30px;
+}
+
+.container {
+    flex-direction: row;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+}
+
+p {
+    line-height: 150%;
+    /*max-width: 960px;*/
+    font-weight: 400;
+    color: #333333
+}
+
+
+h1, h2, h3, h4 {
+    color: #111111;
+    font-weight: 600;
+}
+
+h2, h3, h4, h5, p {
+    margin-bottom: 25px;
+    padding: 0;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 28px;
+    padding: 0px;
+    font-weight: 800;
+}
+
+h2 {
+    font-size: 20px;
+    margin: 24px 0 6px;
+    font-weight: 600;
+}
+
+h3 {
+    font-size:120%;
+    margin-top: 40px;
+    font-weight: 600;
+}
+h4 {
+    font-size:100%;
+}
+h5 {
+    font-size:80%;
+    font-weight: 100;
+}
+
+h6 {
+    font-size:80%;
+    font-weight: 100;
+    color:red;
+    font-variant:small-caps;
+}
+a {
+    color: grey;
+    margin: 0;
+    padding: 0;
+    vertical-align: baseline;
+}
+a:hover {
+    text-decoration: blink;
+    color: green;
+}
+a:visited {
+    color: black;
+}
+ul, ol {
+    padding: 0;
+    margin: 2em 0px 2em 50px;
+}
+ul {
+    list-style-type: square;
+    list-style-position: inside;
+
+}
+
+li {
+    line-height:150%
+}
+li ul, li ul {
+    margin-left: 24px;
+}
+
+pre {
+    padding: 0px 24px;
+    max-width: 800px;
+    white-space: pre-wrap;
+}
+code {
+    font-family: Consolas, Monaco, Andale Mono, monospace;
+    line-height: 1.5;
+    font-size: 13px;
+}
+aside {
+    display: block;
+    float: right;
+    width: 390px;
+}
+blockquote {
+    border-left:.5em solid #eee;
+    padding: 0 1em;
+    margin-left:0;
+    max-width: 476px;
+}
+blockquote  cite {
+    font-size:14px;
+    line-height:20px;
+    color:#bfbfbf;
+}
+blockquote cite:before {
+    content: '\2014 \00A0';
+}
+
+blockquote p {
+    color: #666;
+    max-width: 460px;
+}
+hr {
+    width: 100%;
+    margin: 2em 0 3em 0;
+    color: #999;
+}
+img {
+    width: 100%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+table {
+     margin-left: auto;
+     margin-right: auto;
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+     border:1px solid #583030;
+ }
+table thead th {
+    /*width: 50%;*/
+    background-color:rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    border-bottom: 1px solid black;
+}
+table td {
+    padding-right: 10px;
+    padding-top: 10px;
+    line-height: 1.5;
+}
+</style>
+</html>
