@@ -28,7 +28,11 @@
             <h2>Challenger: $title</h2>
             <p>
 ##                Pregrouping type: $challenger.pregrouping().canonicalName()<br>
-                Pregrouping dists: $challenger.pregroupDists()
+                Pregrouping dists: $challenger.pregroupDists()<br>
+                Num students (all): $numStudentsAll<br>
+                #set($numStudentsSolo = $numStudentsAll - $challenger.pregroupDists().countStudents())
+                Num students (solo): $numStudentsSolo<br>
+                Num students (preg): $challenger.pregroupDists().countStudents()
             </p>
 
             <h3>solo</h3>

@@ -57,6 +57,7 @@ public class AnyVsExceptVsMaxPregroupReport
 		
 		// put all kinds of things
 		context.put("title", report_title());
+		context.put("numStudentsAll", datasetContext.allAgents().count());
 		
 		var challengerResult = challenger.determineMatching(datasetContext);
 		var pregrouping = challenger.pregroupingType().instantiateFor(datasetContext);

@@ -17,4 +17,9 @@ public record NumGroupsPerGroupSizeDist(Groups<?> pregroupings, int maxAllowedGr
 		         .map(pair -> "%s: %s".formatted(pair.getKey(), pair.getValue()))
 		         .collect(joining(", "));
 	}
+	
+	public int countStudents()
+	{
+		return pregroupings.asAgents().count();
+	}
 }

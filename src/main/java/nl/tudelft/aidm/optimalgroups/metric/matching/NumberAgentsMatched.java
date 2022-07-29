@@ -10,7 +10,7 @@ public class NumberAgentsMatched
 	private final int asInt;
 	private final Matching matching;
 
-	public NumberAgentsMatched(int numberOfStudents, Matching matching)
+	private NumberAgentsMatched(int numberOfStudents, Matching matching)
 	{
 		this.asInt = numberOfStudents;
 		this.matching = matching;
