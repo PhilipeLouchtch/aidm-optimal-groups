@@ -73,23 +73,38 @@ public class ReportRunner
 		// (strict business rule, or if the 'lesser' model is determined to have a better overal outcome)
 //		var assumedTruePregroupingModel = PregroupingType.anyCliqueSoftGroupedEpsilon();
 		
+		enum Scenario {
+			ANY(PregroupingType.anyCliqueSoftGroupedEpsilon()),
+			EXCEPT(PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
+			MAX(PregroupingType.maxCliqueSoftGroupedEps());
+			
+			public final PregroupingType pregroupingType;
+			
+			Scenario(PregroupingType pregroupingType) {
+				this.pregroupingType = pregroupingType;
+			}
+		}
+	
+		
 		// The combinations mechanisms x pregrouping setting we would like to evaluate
-		List<GroupProjectAlgorithm> algos = List.of(
-			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.anyCliqueSoftGroupedEpsilon()),
-			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.anyCliqueSoftGroupedEpsilon()),
-			
-			// EXCEPT model - comment out if except is a challenger
-			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
-			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
-			
-			// MAX model
-			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), PregroupingType.maxCliqueSoftGroupedEps()),
-			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(PregroupingType.maxCliqueSoftGroupedEps())
+		var scenarios = List.of(
+				Scenario.ANY,
+				Scenario.EXCEPT,
+				Scenario.MAX
 		);
 		
-		var fileName = String.format("any_except_max_report_tud-all_%s", experimentsRunId);
-		var report = new AnyVsExceptVsMaxPregroupSingleTableReport(datasets, algos);
-		report.writeAsHtmlToFile(new File("reports/thesis/" + fileName + ".html"));
+		for (var scenario : scenarios)
+		{
+			List<GroupProjectAlgorithm> algos = List.of(
+				new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), scenario.pregroupingType),
+				new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(scenario.pregroupingType)
+			);
+			
+			var fileName = String.format("pregroupscenario_%s_report_tud_%s", scenario.name(), experimentsRunId);
+			var report = new AnyVsExceptVsMaxPregroupSingleTableReport(datasets, algos);
+			report.writeAsHtmlToFile(new File("reports/thesis/" + fileName + ".html"));
+		}
+		
 	}
 	
 	public static void runComparison(String[] args)

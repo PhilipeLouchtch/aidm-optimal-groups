@@ -15,12 +15,13 @@ public class NumberPregroupingStudentsTogether
 				.mapToInt(proposed -> proposed.members().count())
 				.sum();
 		
-		this.asInt = (int) numStudentsTogether;
+		this.asInt = numStudentsTogether;
 	}
 	
 	private static Boolean isTogether(Group proposed, GroupToProjectMatching<? extends Group> matching)
 	{
-		return matching.asList().stream().anyMatch(actual -> actual.from().members().containsAll(proposed.members()));
+		return matching.asList().stream()
+		               .anyMatch(actual -> actual.from().contains(proposed));
 	}
 	
 	public int asInt()

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Table test</title>
+	<title>Any vs Except vs Max pregrouping scenario results table</title>
 
     #macro( metric $stats )
         $stats.sumOfRanks() [$stats.worstAssignedRank()]
@@ -59,28 +59,33 @@
             </thead>
 
             #foreach( $result in $resultsForAllDatasets )
-                #set( $rowNum = 1 )
 
+                #set( $rowNum = 1 )
 
                     #foreach ( $algoResult in $result.algoResults() )
                     <tr>
                         #if ( $rowNum == 1)
-                            <td	rowspan="6">$result.niceDatasetId()</td>
+                            <td	rowspan="$result.algoResults().size()">$result.niceDatasetId()</td>
                         #end
+
                         <td>$algoResult.mechanismPregroupId()</td>
+
                         <td>
                             Metric: #metric( $algoResult.soloProjectStats() )<br>
                             Profile: $algoResult.soloProjectStats().profile()
                         </td>
+
                         <td>
                             Metric: #metric( $algoResult.satisfiedProjectStats() )<br>
                             Profile: $algoResult.satisfiedProjectStats().profile()
                         </td>
+
                         <td>
                             #set( $d = $algoResult.satisfiedPregroupStats() )
-                            students: #fraction( $d.groupsTogether(), $d.numTotalPregroups() )<br>
-                            groups: #fraction( $d.studentsTogether(), $d.numTotalPregroupingStudents() )
+                            students: #fraction( $d.studentsTogether(), $d.numTotalPregroupingStudents() )<br>
+                            groups: #fraction( $d.groupsTogether(), $d.numTotalPregroups() )
                         </td>
+
                         <td>
                             Metric: #metric( $algoResult.unsatisfiedProjectStats() )<br>
                             Profile: $algoResult.unsatisfiedProjectStats().profile()
@@ -91,6 +96,7 @@
 
                 #* add space *#
                 <tr style="display: block; padding-top: 1em;"></tr>
+
             #end
 
         </table>

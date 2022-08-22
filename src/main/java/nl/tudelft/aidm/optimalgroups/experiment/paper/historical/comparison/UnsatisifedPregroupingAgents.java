@@ -19,17 +19,15 @@ public class UnsatisifedPregroupingAgents extends Agents
 	@NotNull
 	private static LinkedHashSet<Agent> unsatAsSet(GroupToProjectMatching matching, Pregrouping pregrouping)
 	{
-		var preformedGroups = pregrouping.groups();
-		var agentsPregrouping = pregrouping.groups()
-		                                   .asAgents();
+		var pregroupings = pregrouping.groups();
+		var pregroupingAgents = pregroupings.asAgents();
 		
-		var matchingPregroupedSatisfied = AgentToProjectMatching.from(matching.filteredBySubsets(preformedGroups))
-		                                                        .filteredBy(agentsPregrouping);
+		var satisfiedPregroups = pregrouping.groups().ofWhichSatisfiedIn(matching);
 		
-		var pregroupingStudentsSatisfied = matchingPregroupedSatisfied.agents();
-		var pregroupingStudentsUnsatisfied = agentsPregrouping.without(pregroupingStudentsSatisfied);
+		var satisfiedAgents = satisfiedPregroups.asAgents();
+		var unsatisfiedAgents = pregroupingAgents.without(satisfiedAgents);
 		
-		var unsatAsSet = new LinkedHashSet<>(pregroupingStudentsUnsatisfied.asCollection());
+		var unsatAsSet = new LinkedHashSet<>(unsatisfiedAgents.asCollection());
 		return unsatAsSet;
 	}
 }

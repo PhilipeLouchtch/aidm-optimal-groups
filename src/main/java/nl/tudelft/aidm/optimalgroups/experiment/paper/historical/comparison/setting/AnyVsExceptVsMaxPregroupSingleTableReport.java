@@ -27,7 +27,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("DuplicatedCode")
@@ -36,11 +35,13 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 	private final List<DatasetContext> datasets;
 	
 	private final List<GroupProjectAlgorithm> algos;
+//	private String pregroupingType;
 	
 	public AnyVsExceptVsMaxPregroupSingleTableReport(List<DatasetContext> datasets, List<GroupProjectAlgorithm> algos)
 	{
 		this.datasets = datasets;
 		this.algos = algos;
+//		this.pregroupingType = pregroupingType;
 	}
 	
 	public record ResultsForDatasetContext(DatasetContext datasetContext, List<ChallengerResultData> algoResults)
@@ -50,6 +51,17 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 			Assert.that(datasetContext().identifier().contains("CourseEdition")).orThrowMessage("Implement for non course edition / TUD datasets");
 			
 			return datasetContext.identifier().replaceAll("^CourseEdition\\[(\\d+)].+$", "CE$1");
+		}
+		
+		public List<ChallengerResultData> onlyOfPregroupingType(String type)
+		{
+			var pregroupTypeRequested = type.toUpperCase();
+			Assert.that(List.of("ANY", "EXCEPT", "MAX").contains(pregroupTypeRequested))
+			      .orThrowMessage("Unsupported pregroup-type, requested: %s".formatted(pregroupTypeRequested));
+			
+			return algoResults.stream()
+			                  .filter(algoResult -> algoResult.mechanismPregroupId.contains(pregroupTypeRequested))
+			                  .toList();
 		}
 	}
 	
@@ -63,6 +75,8 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 		Velocity.init(p);
 		
 		var context = new VelocityContext();
+		
+//		context.put("pregroupingType", pregroupingType);
 		
 		// put all kinds of things
 //		context.put("title", report_title());
@@ -139,52 +153,6 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 		{
 			var unsatisfiedPregroupingAgents = new UnsatisifedPregroupingAgents(matching, pregrouping);
 			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(unsatisfiedPregroupingAgents));
-		}
-		
-		public int countUnsatisfied()
-		{
-			return new UnsatisifedPregroupingAgents(matching, pregrouping).count();
-		}
-	}
-	
-	public record OppoResultData(String title, GroupToProjectMatching matching, GroupToProjectMatching challengerMatching, Pregrouping pregrouping)
-	{
-		public NumGroupsPerGroupSizeDist pregroupDists()
-		{
-			return new NumGroupsPerGroupSizeDist(pregrouping.groups(), matching.datasetContext().groupSizeConstraint().maxSize());
-		}
-		
-		public ProjectStatsWithDelta soloProjectStats()
-		{
-			var soloCohort = matching.datasetContext().allAgents().without(pregrouping.groups().asAgents());
-			var matchingAgentsToProjects = AgentToProjectMatching.from(matching);
-			
-			return ProjectStats.from(matchingAgentsToProjects.filteredBy(soloCohort))
-			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(soloCohort));
-		}
-		
-		public ProjectStatsWithDelta satisfiedProjectStats()
-		{
-			var satisfiedPregroupingAgentsThis = pregrouping.groups().ofWhichSatisfiedIn(matching).asAgents();
-			var satisfiedPregroupingAgentsChall = pregrouping.groups().ofWhichSatisfiedIn(challengerMatching).asAgents();
-			
-			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(satisfiedPregroupingAgentsThis))
-			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(satisfiedPregroupingAgentsChall));
-		}
-		
-		public TogethernessStatsWithDelta satisfiedPregroupStats()
-		{
-			return TogethernessStats.from(matching, pregrouping)
-			                        .withDeltasTo(challengerMatching);
-		}
-		
-		public ProjectStatsWithDelta unsatisfiedProjectStats()
-		{
-			var unsatisfiedPregroupingAgents = new UnsatisifedPregroupingAgents(matching, pregrouping);
-			var unsatisfiedInChall = new UnsatisifedPregroupingAgents(challengerMatching, pregrouping);
-			
-			return ProjectStats.from(AgentToProjectMatching.from(matching).filteredBy(unsatisfiedPregroupingAgents))
-			                   .withDelta(AgentToProjectMatching.from(challengerMatching).filteredBy(unsatisfiedInChall));
 		}
 		
 		public int countUnsatisfied()
