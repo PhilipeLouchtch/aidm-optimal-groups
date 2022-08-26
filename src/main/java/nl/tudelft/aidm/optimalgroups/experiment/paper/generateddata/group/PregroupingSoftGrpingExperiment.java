@@ -52,7 +52,8 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 		
 		// max size dominant, tapers towards pairs
 		MAX_TAPERED(0.1, 0.2, 0, 0.7),
-		// most people are full team or pair
+		
+		// most people are full team or pair - TODO: don't call realistic! It's PairOrMaxDominant
 		REALISTIC(0.4, 0.2, 0, 0.4),
 		
 		// pair size dominant, tapers towards max-size pref,

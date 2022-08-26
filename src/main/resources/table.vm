@@ -62,7 +62,7 @@
 
                 #set( $rowNum = 1 )
 
-                    #foreach ( $algoResult in $result.algoResults() )
+                #foreach ( $algoResult in $result.algoResults() )
                     <tr>
                         #if ( $rowNum == 1)
                             <td	rowspan="$result.algoResults().size()">$result.niceDatasetId()</td>
@@ -92,7 +92,7 @@
                         </td>
                     </tr>
                     #set( $rowNum = $rowNum + 1 )
-                    #end
+                #end
 
                 #* add space *#
                 <tr style="display: block; padding-top: 1em;"></tr>

@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.h2hmech;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.fairVsChia;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
@@ -60,8 +60,8 @@ public class FairVsChiaComparisonExperiment
 		var datasets = TUDInstances();
 		
 		for (var params : List.of(
-				new ExperimentRunParams("TUD-any", PregroupingType.anyCliqueSoftGroupedEpsilon()),
-                new ExperimentRunParams("TUD-except", PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
+//				new ExperimentRunParams("TUD-any", PregroupingType.anyCliqueSoftGroupedEpsilon()),
+//                new ExperimentRunParams("TUD-except", PregroupingType.exceptSubmaxCliqueSoftEpsGrouped()),
 				new ExperimentRunParams("TUD-max", PregroupingType.maxCliqueSoftGroupedEps()) ) )
 		{
 			runExperiment(experimentsRunId, params.id(), params.pregroupingType(), datasets);

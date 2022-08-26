@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.h2hmech;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.fairVsChia;
 
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;

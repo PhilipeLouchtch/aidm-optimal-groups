@@ -47,10 +47,6 @@ public class PregroupGroups<G extends Group> extends Groups.ListBackedImpl<G>
 	
 	public PregroupGroups<MatchedGroup> ofWhichSatisfiedIn(GroupToProjectMatching<?> matching)
 	{
-//		var asList = this.asCollection().stream()
-//             .filter(pregroup -> matching.asList().stream().anyMatch(match -> match.from().contains(pregroup)))
-//             .collect(Collectors.toList());
-		
 		var asList = new LinkedList<MatchedGroup>();
 		for (G pregroup : this.asCollection())
 		{

@@ -2,8 +2,10 @@ package nl.tudelft.aidm.optimalgroups.model.group;
 
 import nl.tudelft.aidm.optimalgroups.model.HasProjectPrefs;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
+import nl.tudelft.aidm.optimalgroups.model.matching.Matching;
 import nl.tudelft.aidm.optimalgroups.model.pref.AggregatedProjectPreference;
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
+import nl.tudelft.aidm.optimalgroups.model.project.Project;
 
 public interface Group extends HasProjectPrefs
 {
@@ -15,6 +17,11 @@ public interface Group extends HasProjectPrefs
 	default boolean contains(Group other)
 	{
 		return members().containsAll(other.members());
+	}
+	
+	default boolean isTogetherIn(Matching<? extends Group, Project> matching)
+	{
+		return matching.asList().stream().anyMatch(match -> match.from().contains(this));
 	}
 
 	abstract class AbstractGroup implements Group
