@@ -10,8 +10,8 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 
-sourceCompatibility = JavaVersion.VERSION_16
-targetCompatibility = JavaVersion.VERSION_16
+sourceCompatibility = JavaVersion.VERSION_18
+targetCompatibility = JavaVersion.VERSION_18
 
 applicationDefaultJvmArgs = ["-Djava.library.path=lib"]
 
@@ -25,25 +25,18 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     implementation group: 'commons-codec', name: 'commons-codec', version: '1.14'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
-    implementation group: 'org.apache.velocity', name: 'velocity-engine-core', version: '2.3'
 
-    implementation 'org.jfree:jfreechart:1.5.0'
-
-    /* GOOGLE-OR TOOLS Stuff */
-    implementation 'com.google.protobuf:protobuf-java:3.0.0'
-    implementation files('lib/jniortools.dll')
-    implementation files('lib/ortools.lib')
-    implementation files('lib/com.google.ortools.jar')
-    implementation files('lib/protobuf.jar')
+    /* GOOGLE-OR TOOLS */
+    implementation 'com.google.ortools:ortools-java:9.4.1874'
 
     /* GUROBI LIB*/
     implementation gurobi()
 
-
+    /* Generated reports */
     implementation 'net.steppschuh.markdowngenerator:markdowngenerator:1.3.1.1'
     implementation 'com.vladsch.flexmark:flexmark-all:0.64.0'
-
-//    implementation 'edu.princeton.cs:algs4:1.0.4'
+    implementation 'org.apache.velocity:velocity-engine-core:2.3'
+    implementation 'org.jfree:jfreechart:1.5.0'
 
     implementation 'org.sql2o:sql2o:1.6.0'
     implementation 'mysql:mysql-connector-java:8.0.16'
@@ -53,7 +46,7 @@ dependencies {
 }
 
 wrapper {
-    gradleVersion = '7.1.1'
+    gradleVersion = '7.5.1'
 }
 
 compileJava {
