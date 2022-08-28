@@ -19,6 +19,7 @@ import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -92,77 +93,103 @@ public class AnyExceptMaxCsvReport
 		var sizesMax = Set.of(dataset.groupSizeConstraint().maxSize());
 		var sizesSubmax = Set.of(dataset.groupSizeConstraint().maxSize() - 1);
 		
-		var sizesSmall = IntStream.rangeClosed(dataset.groupSizeConstraint().minSize(), dataset.groupSizeConstraint().maxSize()).boxed().collect(Collectors.toSet());
+		var sizesSmall = IntStream.rangeClosed(2, dataset.groupSizeConstraint().maxSize()).boxed().collect(Collectors.toSet());
+		
 		sizesSmall.removeAll(sizesMax);
 		sizesSmall.removeAll(sizesSubmax);
 		
+		var datasetId =  dataset.identifier().replaceAll("^CourseEdition\\[(\\d+)].+$", "CE$1");
+		System.out.printf("Running dataset %s on mechanism %s...", datasetId, mechanism.name());
+		
 		var matching = mechanism.determineMatching(dataset);
 		
-		var datasetId =  dataset.identifier().replaceAll("^CourseEdition\\[(\\d+)].+$", "CE$1");
-		
-		return new Result(datasetId, mechanism.name(),
+		var result = new Result(datasetId, mechanism.name(),
 		                  Profile.of(AgentToProjectMatching.from(matching).filteredBy(soloStudents)),
 		                  new PregroupClassStats(matching, keepOfClass(pregrouping, sizesMax)),
 		                  new PregroupClassStats(matching, keepOfClass(pregrouping, sizesSmall)),
 		                  new PregroupClassStats(matching, keepOfClass(pregrouping, sizesSubmax))
 		);
+		
+		System.out.println("done");
+		
+		return result;
 	}
 	
-	record Result(String edition, String mechanismName, Profile solo, PregroupClassStats max, PregroupClassStats small, PregroupClassStats submax) { }
+	record Result(String edition, String mechanismName, Profile solo, PregroupClassStats max, PregroupClassStats small, PregroupClassStats submax)
+	{
+		public String mechanism_name_simple()
+		{
+			var canonical = mechanismName.toLowerCase();
+			
+			if (canonical.contains("fair"))
+			{
+				return "FAIR";
+			}
+			
+			if (canonical.contains("chiarandini") || canonical.contains("chiaranini"))
+			{
+				return "CHIA";
+			}
+			
+			throw new RuntimeException("Cant determine short name for '%s'".formatted(canonical));
+		}
+		
+		public String pregroup_scenario()
+		{
+			var canonical = mechanismName.toLowerCase();
+			
+			if (canonical.contains("any"))
+				return "ANY";
+				
+			if (canonical.contains("except"))
+				return "EXCEPT";
+			
+			if (canonical.contains("max"))
+				return "MAX";
+				
+			throw new RuntimeException("Cant determine pregrouping scenario in '%s'".formatted(canonical));
+		}
+	}
 	
 	public static void write(List<Result> results, File file)
 	{
 		var headers =
-				List.of("edition", "mechanism", "solo_profile",
-				        "max_profile_sat", "max_profile_unsat", "max_together", "max_count",
-				        "small_profile_sat", "small_profile_unsat", "small_together", "small_count",
-				        "submax_profile_sat", "submax_profile_unsat", "submax_together", "submax_count");
+				List.of("edition", "mechanism", "scenario", "profile_solo_sat",
+				        "profile_max_sat", "profile_max_unsat", "max_together", "max_count",
+				        "profile_small_sat", "profile_small_unsat", "small_together", "small_count",
+				        "profile_submax_sat", "profile_submax_unsat", "submax_together", "submax_count");
 		
 		
 		try (var writer = new FileWriter(file))
 		{
-			for (var header : headers)
-			{
-				writer.write(header);
-				writer.write(",");
-			}
-			writer.write("\n");
+			var headersAsLine = headers.stream().collect(Collectors.joining(",", "","\n"));
+			writer.write(headersAsLine);
 			
 			for (Result result : results)
 			{
-				writer.write(result.edition);
-				writer.write(",");
-				writer.write(result.mechanismName);
-				writer.write(",");
-				writer.write(ExperimentSubResult.serializeProfile(result.solo));
-				writer.write(",");
-				
-				writer.write(ExperimentSubResult.serializeProfile(result.max.satisfied()));
-				writer.write(",");
-				writer.write(ExperimentSubResult.serializeProfile(result.max.unsatisfied()));
-				writer.write(",");
-				writer.write(result.max.together().asInt());
-				writer.write(",");
-				writer.write(result.max.count());
-				writer.write(",");
-				
-				writer.write(ExperimentSubResult.serializeProfile(result.small.satisfied()));
-				writer.write(",");
-				writer.write(ExperimentSubResult.serializeProfile(result.small.unsatisfied()));
-				writer.write(",");
-				writer.write(result.small.together().asInt());
-				writer.write(",");
-				writer.write(result.small.count());
-				writer.write(",");
-				
-				writer.write(ExperimentSubResult.serializeProfile(result.submax.satisfied()));
-				writer.write(",");
-				writer.write(ExperimentSubResult.serializeProfile(result.submax.unsatisfied()));
-				writer.write(",");
-				writer.write(result.submax.together().asInt());
-				writer.write(",");
-				writer.write(result.submax.count());
-				writer.write("\n");
+				writeUsing(writer,
+						   
+				           result.edition,
+				           result.mechanism_name_simple(),
+				           result.pregroup_scenario(),
+						   
+				           ExperimentSubResult.serializeProfile(result.solo),
+							
+				           ExperimentSubResult.serializeProfile(result.max.satisfied()),
+				           ExperimentSubResult.serializeProfile(result.max.unsatisfied()),
+				           result.max.together().toString(),
+				           result.max.count().toString(),
+							
+				           ExperimentSubResult.serializeProfile(result.small.satisfied()),
+				           ExperimentSubResult.serializeProfile(result.small.unsatisfied()),
+				           result.small.together().toString(),
+				           result.small.count().toString(),
+							
+				           ExperimentSubResult.serializeProfile(result.submax.satisfied()),
+				           ExperimentSubResult.serializeProfile(result.submax.unsatisfied()),
+				           result.submax.together().toString(),
+				           result.submax.count().toString()
+				);
 			}
 		}
 		catch (IOException ex)
@@ -196,7 +223,7 @@ public class AnyExceptMaxCsvReport
 			return new NumberPregroupingStudentsTogether(matching, pregroupClass.groups());
 		}
 		
-		public int count()
+		public Integer count()
 		{
 			return pregroupClass.groups.asAgents().count();
 		}
@@ -220,6 +247,20 @@ public class AnyExceptMaxCsvReport
 		{
 			var unsatisfiedAgents = pregroupClass.groups().asAgents().without(satisfiedAgents());
 			return Profile.of(AgentToProjectMatching.from(matching).filteredBy(unsatisfiedAgents));
+		}
+	}
+	
+	public static void writeUsing(Writer writer, String... fields) throws IOException
+	{
+		for (int i = 0; i < fields.length; i++)
+		{
+			var field = fields[i];
+			writer.write(field);
+			
+			if (i < fields.length-1)
+				writer.write(",");
+			else
+				writer.write("\n");
 		}
 	}
 }

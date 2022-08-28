@@ -1,0 +1,45 @@
+```{r echo=FALSE, render=FLASE}
+library(tidyverse)
+
+source("experiment_data.r")
+source("metrics.r")
+```
+
+
+# Any vs Except vs Max-only pregrouping settings comparisons
+```{r}
+data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\reports\\anyexcept_tud.csv", show_col_types = FALSE)
+
+data_longer <- data |>
+    pivot_longer(
+        cols = starts_with("profile_"),
+        names_pattern = "profile_(.+)_(.+)",
+        names_to = c("class", "satisfaction"),
+        values_to = "profile"
+    ) |>
+    mutate(
+        across(contains(c("together", "count")), \(x) (NULL)),
+        worst_rank = profile |> map(worst_obtained_rank) |> unlist()
+    ) |>
+    
+    # worst rank in-class for rAUPCR
+    group_by(
+        edition, class, satisfaction
+    ) |> mutate(
+        worst_rank__grp = max(worst_rank)
+    ) |> ungroup() |>
+    
+    # calc relative-AUPCR (max-rank is the worst rank within group)
+    mutate(
+        r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), 1, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
+    )
+    
+
+# plot all as boxplots to get a general picture
+p <- ggplot(data_longer) +
+    geom_boxplot(aes(x = interaction(mechanism, scenario), y = r_aupcr)) +
+    facet_wrap(vars(class, satisfaction))
+
+plot(p)
+
+```
