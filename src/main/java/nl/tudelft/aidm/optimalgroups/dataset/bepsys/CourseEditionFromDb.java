@@ -193,6 +193,7 @@ public class CourseEditionFromDb extends CourseEdition
 		{
 			case "COOLICER-DESK":
 			case "PHILIPE-DESK":
+			case "BAP-PF3XFB0B":
 				return new GenericDatasource("jdbc:mysql://localhost:3306/adim_new", "henk", "henk");
 			case "PHILIPE-LAPTOP":
 				return new GenericDatasource("jdbc:mysql://localhost:3306/test", "henk", "henk");
