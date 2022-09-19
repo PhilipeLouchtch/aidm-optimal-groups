@@ -2,7 +2,7 @@ profile_histo <- function(cell) {
     if (is.na(cell))
         cell <- ""
     
-    as.integer(unlist(scan(text = cell, what = "integer", sep = "|", quiet = TRUE)))
+    as.double(unlist(scan(text = cell, what = "double", sep = "|", quiet = TRUE)))
 }
 
 rank_profile <- function(cell) {

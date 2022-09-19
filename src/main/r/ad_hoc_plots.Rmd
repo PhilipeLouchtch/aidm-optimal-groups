@@ -1,5 +1,6 @@
 ```{r echo=FALSE, render=FLASE}
 library(tidyverse)
+library(ggh4x)
 
 source("experiment_data.r")
 source("metrics.r")
@@ -7,39 +8,266 @@ source("metrics.r")
 
 
 # Any vs Except vs Max-only pregrouping settings comparisons
-```{r}
+```{r fig.height = 8}
 data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\reports\\anyexcept_tud.csv", show_col_types = FALSE)
 
 data_longer <- data |>
     pivot_longer(
         cols = starts_with("profile_"),
         names_pattern = "profile_(.+)_(.+)",
-        names_to = c("class", "satisfaction"),
+        names_to = c("grouping_class", "satisfaction"),
         values_to = "profile"
     ) |>
+    
     mutate(
         across(contains(c("together", "count")), \(x) (NULL)),
-        worst_rank = profile |> map(worst_obtained_rank) |> unlist()
+        
+        worst_rank = profile |> map(worst_obtained_rank) |> unlist(),
+        
+        grouping_class = factor(grouping_class, ordered = T,
+                                levels = c("solo", "max", "small", "submax"),
+                                labels = c("'Solo' students",
+                                           "'Maximal pregroups' students",
+                                           "'Small pregroups' students",
+                                           "'Submax pregroups' students")
+                         ),
+        
+        scenario = factor(scenario, ordered = T,
+                          levels = c("MAX", "EXCEPT", "ANY")
+                   ),
+        
+        edition = factor(edition, ordered = T,
+                         levels = c("CE3","CE4","CE10","CE11","CE14","CE17","CE18","CE23","CE39","CE42","CE45")
+                  ),
+        
+        satisfaction = factor(satisfaction, ordered = T,
+                   levels = c("sat", "unsat"),
+                   labels = c("together", "not together"))
     ) |>
     
-    # worst rank in-class for rAUPCR
-    group_by(
-        edition, class, satisfaction
-    ) |> mutate(
-        worst_rank__grp = max(worst_rank)
-    ) |> ungroup() |>
+    # CE, max/small/submax, sat/unsat
+    group_by( edition, grouping_class, satisfaction ) |>
     
-    # calc relative-AUPCR (max-rank is the worst rank within group)
+        # worst rank within the grouping for the relative part of 'relative'-AUPCR
+        mutate( worst_rank__grp = max(worst_rank) ) |>
+    
+    ungroup() |>
+    
+    # calc relative-AUPCR (max-rank is the "worst rank within grouping")
+    # if the grouping is empty (then set AUPCR to 1 - this only makes sense for unsat group)
     mutate(
-        r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), 1, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
+        r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
     )
     
+# Taken from the 12 color scheme at http://tsitsul.in/blog/coloropt/
+palette_11 <- c('#ebac23', '#b80058', '#008cf9', '#006e00', '#00bbad', '#d163e6', '#b24502', '#ff9287', '#5954d6', '#00c6f8', '#878500', '#00a76c')
 
-# plot all as boxplots to get a general picture
-p <- ggplot(data_longer) +
-    geom_boxplot(aes(x = interaction(mechanism, scenario), y = r_aupcr)) +
-    facet_wrap(vars(class, satisfaction))
+p_raupcr <- ggplot(data_longer,
+        aes(x = interaction(mechanism, scenario),
+            y = r_aupcr,
+            group = interaction(scenario, mechanism)
+        )
+    ) +
+    
+    geom_boxplot(
+        outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
+        alpha = 0,
+        color = "#00000020"
+    ) +
+    
+    # geom_violin(
+    #     scale = "count"
+    # ) +
+    geom_point(
+        mapping	= aes(color = edition),
+        position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
+    ) +
+    
+    facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
+    scale_color_manual(values = palette_11) +
+    
+    guides(x = "axis_nested") +
+    
+    labs(x = "Mechanism x Scenario combination",
+         y = "relative-AUPCR",
+         color = "Course edition"
+    )
 
-plot(p)
+plot(p_raupcr)
+
+ggsave(plot = p_raupcr,
+       filename = "plots/thesis/historical_anyexceptmax_raupcr.png",
+       device = "png", width = 300, height = 160, units = "mm", dpi = "print"
+)
+
+# TODO: improve facet labels, export plot
+# TODO: make plot for num together - or overlay somehow...
 
 ```
+
+Two questions:
+    Is Any/Except a better scenario? Regardless of the mechanism (pick best)
+    Is Fair better than Chia in the scenarios?l
+
+More importantly, need to finish the viz for inclusion in the document. So:
+   - rAUPCR must be tested
+   - the AUPCR plots must be finalized, and:
+   - the togetherness counts plotted to augment the AUPCR plots.
+
+
+```{r fig.height = 8}
+ # togetherness
+
+data_togetherness <- data |>
+    
+    pivot_longer(
+        cols = ends_with("_together") | ends_with("_count"),
+        names_pattern = "(.+)_(.+)",
+        names_to = c("grouping_class", "status"),
+        values_to = "count"
+    ) |>
+    
+    mutate(
+        status = case_when(
+            status == 'together' ~ 'together',
+            status == 'count' ~ 'max'
+        )
+    ) |> 
+    
+    pivot_wider(
+        names_from = status, values_from = count
+    ) |> 
+    
+    select(edition, mechanism, scenario, grouping_class, together, max) |>
+    
+    mutate(
+        proportion_sat = ifelse(max == 0, NA, together / max),
+        # Don't plot "0 unsatisfied if all are together and handle case max = 0
+        proportion_unsat = ifelse(together == max, NA, 1 - (together / max) ),
+        together = NULL,
+        max = NULL
+    ) |> 
+    
+    pivot_longer(
+        cols = starts_with("proportion"),
+        names_to = "satisfaction",
+        names_prefix = "proportion_",
+        values_to = "proportion"
+    ) |> 
+    
+    mutate(
+        grouping_class = factor(grouping_class, ordered = TRUE,
+                                levels = c("solo", "max", "small", "submax"),
+                                labels = c("'Solo' students",
+                                           "'Maximal pregroups' students",
+                                           "'Small pregroups' students",
+                                           "'Submax pregroups' students")
+                         ),
+        
+        scenario = factor(scenario, ordered = TRUE,
+                          levels = c("MAX", "EXCEPT", "ANY")
+                   ),
+        
+        edition = factor(edition, ordered = TRUE,
+                         levels = c("CE3","CE4","CE10","CE11","CE14","CE17","CE18","CE23","CE39","CE42","CE45")
+                  ),
+        
+        satisfaction = factor(satisfaction, ordered = T,
+                              levels = c("sat", "unsat"),
+                              labels = c("together", "not together")
+                       )
+    )
+
+p_together <- ggplot(data_togetherness,
+       aes(x = interaction(mechanism, scenario),
+            y = proportion,
+            group = interaction(scenario, mechanism)
+        )
+    ) +
+    
+    geom_boxplot(
+        outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
+        alpha = 0,
+        color = "#00000020"
+    ) +
+    
+    # geom_violin(
+    #     scale = "count"
+    # ) +
+    geom_point(
+        mapping	= aes(color = edition),
+        position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
+    ) +
+    
+    facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
+    scale_color_manual(values = palette_11) +
+    
+    guides(x = "axis_nested") +
+    
+    labs(x = "Mechanism x Scenario combination",
+         y = "Proportion students (not) together",
+         color = "Course edition"
+    )
+    
+print(p_together)
+ggsave(plot = p_together,
+       filename = "plots/thesis/historical_anyexceptmax_together.png",
+       device = "png", width = 300, height = 160, units = "mm", dpi = "print"
+)
+
+```
+
+   
+   TODO: export png's and put into thesis.
+   
+   
+## Testing the relative-AUPCR:
+
+
+```{r}
+
+scale_factors <- c(10, 3, 2.3)
+
+# take the same profile
+profile <- "3|0|2|2|0|0|1"
+worst <- worst_obtained_rank(profile)
+
+profile_parsed <- profile_histo(profile)
+scaled_profile <- vector()
+
+for (scale_factor in scale_factors) {
+    
+    scaled_profile <- profile_parsed * scale_factor
+    scaled_profile[4] <- scaled_profile[4] + 1
+    
+    scaled_profile_serialized <- paste(scaled_profile, collapse  = "|")
+    
+    print(paste("Scale factor: ", scale_factor))
+    
+    print(paste("Base:     ", calc_aupcr(worst, 1, profile)))
+    print(paste("Scaled   :", calc_aupcr(worst, 1, scaled_profile_serialized)))
+    
+    
+    sum_base <- sum(profile_parsed)
+    
+    
+    sum_scaled <- sum(scaled_profile)
+    
+    scaled_profile_add_norm_ser <- paste(scaled_profile / sum_scaled , collapse  = "|")
+    profile_norm_ser <- paste(profile_parsed / sum_base, collapse = "|")
+    
+    
+    print(paste("Base-norm:", calc_aupcr(worst, 1, profile_norm_ser)))
+    print(paste("Scaled-nm:", calc_aupcr(worst, 1, scaled_profile_add_norm_ser)))
+    
+}
+
+
+bbbbb <- "0.37037037037037|0|0.246913580246914|0.259259259259259|0|0|0.123456790123457"
+
+
+
+```
+
+Relative AUPCR results in the same value for all tested scalings of the profile. But what if the number of students change? Then tough luck?
+
