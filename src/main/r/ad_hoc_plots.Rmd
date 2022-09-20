@@ -1,6 +1,7 @@
 ```{r echo=FALSE, render=FLASE}
 library(tidyverse)
 library(ggh4x)
+library(ggbeeswarm)
 
 source("experiment_data.r")
 source("metrics.r")
@@ -78,9 +79,12 @@ p_raupcr <- ggplot(data_longer,
     # geom_violin(
     #     scale = "count"
     # ) +
-    geom_point(
+    geom_beeswarm(
         mapping	= aes(color = edition),
-        position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
+        varwidth = TRUE,
+        cex = 2,
+        method = "center",
+        priority = "none"
     ) +
     
     facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
@@ -194,9 +198,16 @@ p_together <- ggplot(data_togetherness,
     # geom_violin(
     #     scale = "count"
     # ) +
-    geom_point(
+    geom_beeswarm(
         mapping	= aes(color = edition),
-        position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
+        varwidth = TRUE,
+        cex = 1.1,
+        method = "center",
+        priority = "none",
+        corral = "wrap",
+        corral.width = 0.1,
+        groupOnX = T
+        #position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
     ) +
     
     facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
