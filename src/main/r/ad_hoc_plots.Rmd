@@ -47,7 +47,7 @@ data_longer <- data |>
     ) |>
     
     # CE, max/small/submax, sat/unsat
-    group_by( edition, grouping_class, satisfaction ) |>
+    group_by( edition ) |>
     
         # worst rank within the grouping for the relative part of 'relative'-AUPCR
         mutate( worst_rank__grp = max(worst_rank) ) |>
