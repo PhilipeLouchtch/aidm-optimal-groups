@@ -100,7 +100,7 @@ p_raupcr <- ggplot(data_longer,
 plot(p_raupcr)
 
 ggsave(plot = p_raupcr,
-       filename = "plots/thesis/historical_anyexceptmax_raupcr.png",
+       filename = "plots/thesis/historical_anyexceptmax_raupcr_o.png",
        device = "png", width = 300, height = 160, units = "mm", dpi = "print"
 )
 
@@ -282,3 +282,42 @@ bbbbb <- "0.37037037037037|0|0.246913580246914|0.259259259259259|0|0|0.123456790
 
 Relative AUPCR results in the same value for all tested scalings of the profile. But what if the number of students change? Then tough luck?
 
+
+
+## Project prefs generator viz for thesis
+
+```{r}
+
+
+prefs_data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\results\\gen_prefs_export.csv", show_col_types = FALSE) |> 
+    mutate(
+        project = paste(pref_gen_name, num_students, project, sep = "_"),
+        pref_gen_name = factor(pref_gen_name, ordered = T,
+                               levels = c("singleton", "linear_perturbed_1", "linear_perturbed_4", "realistic", "random"),
+                               labels = c("identical", "nearly identical", "mostly identical", "3-peaked", "Random")
+                        ),
+        num_students = factor(num_students, ordered = T,
+                              levels = c(50, 200, 600),
+                              labels = "50 students", "200 students", "600 students"
+                       )
+    )
+
+
+p <- ggplot(prefs_data) +
+    geom_boxplot(aes(
+        x = with(prefs_data, reorder(project, rank, median)),
+        y = rank
+    )) +
+    
+    facet_grid2(rows = vars(pref_gen_name), cols = vars(num_students),
+               shrink = T, scales = "free", drop = T, independent = T) +
+    
+    # TODO: free space and constom x scale widths to improve the look of the plots
+    force_panelsizes(cols = c(2, 3, 5)) +
+    
+    scale_x_discrete(labels = NULL, name = "Project") +
+    scale_y_continuous(labels = NULL, name = "Rank")
+
+print(p)
+
+```
