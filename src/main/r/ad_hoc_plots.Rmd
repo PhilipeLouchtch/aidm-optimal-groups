@@ -10,102 +10,137 @@ source("metrics.r")
 
 # Any vs Except vs Max-only pregrouping settings comparisons
 ```{r fig.height = 8}
-data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\reports\\anyexcept_tud.csv", show_col_types = FALSE)
+# Taken from the 12 color scheme at http://tsitsul.in/blog/coloropt/
+palette_11 <- c('#b80058', '#ebac23', '#008cf9',
+                '#00bbad', '#006e00', '#d163e6',
+                '#b24502', '#ff9287', '#5954d6',
+                '#00c6f8', '#878500', '#00a76c')
 
-data_longer <- data |>
-    pivot_longer(
-        cols = starts_with("profile_"),
-        names_pattern = "profile_(.+)_(.+)",
-        names_to = c("grouping_class", "satisfaction"),
-        values_to = "profile"
-    ) |>
-    
+color_scale_ce <- function() {
+    mapping <- setNames(palette_11, levels(data$edition))
+    print(mapping)
+    ggplot2::scale_color_manual(values = mapping, limits = force)
+}
+
+data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\reports\\anyexcept_tud.csv", show_col_types = FALSE) |> 
     mutate(
-        across(contains(c("together", "count")), \(x) (NULL)),
-        
-        worst_rank = profile |> map(worst_obtained_rank) |> unlist(),
-        
-        grouping_class = factor(grouping_class, ordered = T,
-                                levels = c("solo", "max", "small", "submax"),
-                                labels = c("'Solo' students",
-                                           "'Maximal pregroups' students",
-                                           "'Small pregroups' students",
-                                           "'Submax pregroups' students")
-                         ),
-        
-        scenario = factor(scenario, ordered = T,
-                          levels = c("MAX", "EXCEPT", "ANY")
-                   ),
-        
         edition = factor(edition, ordered = T,
                          levels = c("CE3","CE4","CE10","CE11","CE14","CE17","CE18","CE23","CE39","CE42","CE45")
                   ),
+    )
+
+
+
+plot_raupcr_for_editions <- function(editions) {
+    
+    if (is.null(editions)) {
+        editions <- unique(data$edition)
+    }
+
+    data_longer <- data |>
         
-        satisfaction = factor(satisfaction, ordered = T,
-                   levels = c("sat", "unsat"),
-                   labels = c("together", "not together"))
-    ) |>
-    
-    # CE, max/small/submax, sat/unsat
-    group_by( edition ) |>
-    
-        # worst rank within the grouping for the relative part of 'relative'-AUPCR
-        mutate( worst_rank__grp = max(worst_rank) ) |>
-    
-    ungroup() |>
-    
-    # calc relative-AUPCR (max-rank is the "worst rank within grouping")
-    # if the grouping is empty (then set AUPCR to 1 - this only makes sense for unsat group)
-    mutate(
-        r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
-    )
-    
-# Taken from the 12 color scheme at http://tsitsul.in/blog/coloropt/
-palette_11 <- c('#ebac23', '#b80058', '#008cf9', '#006e00', '#00bbad', '#d163e6', '#b24502', '#ff9287', '#5954d6', '#00c6f8', '#878500', '#00a76c')
-
-p_raupcr <- ggplot(data_longer,
-        aes(x = interaction(mechanism, scenario),
-            y = r_aupcr,
-            group = interaction(scenario, mechanism)
+        filter(edition %in% editions) |> 
+        
+        pivot_longer(
+            cols = starts_with("profile_"),
+            names_pattern = "profile_(.+)_(.+)",
+            names_to = c("grouping_class", "satisfaction"),
+            values_to = "profile"
+        ) |>
+        
+        mutate(
+            across(contains(c("together", "count")), \(x) (NULL)),
+            
+            worst_rank = profile |> map(worst_obtained_rank) |> unlist(),
+            
+            grouping_class = factor(grouping_class, ordered = T,
+                                    levels = c("solo", "max", "small", "submax"),
+                                    labels = c("'Solo' students",
+                                               "'Maximal pregroups' students",
+                                               "'Small pregroups' students",
+                                               "'Submax pregroups' students")
+                             ),
+            
+            scenario = factor(scenario, ordered = T,
+                              levels = c("MAX", "EXCEPT", "ANY")
+                       ),
+            
+            satisfaction = factor(satisfaction, ordered = T,
+                       levels = c("sat", "unsat"),
+                       labels = c("together", "not together"))
+        ) |>
+        
+        # CE, max/small/submax, sat/unsat
+        group_by( edition ) |>
+        
+            # worst rank within the grouping for the relative part of 'relative'-AUPCR
+            mutate( worst_rank__grp = max(worst_rank) ) |>
+        
+        ungroup() |>
+        
+        # calc relative-AUPCR (max-rank is the "worst rank within grouping")
+        # if the grouping is empty (then set AUPCR to 1 - this only makes sense for unsat group)
+        mutate(
+            r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
         )
-    ) +
-    
-    geom_boxplot(
-        outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
-        alpha = 0,
-        color = "#00000020"
-    ) +
-    
-    # geom_violin(
-    #     scale = "count"
-    # ) +
-    geom_beeswarm(
-        mapping	= aes(color = edition),
-        varwidth = TRUE,
-        cex = 2,
-        method = "center",
-        priority = "none"
-    ) +
-    
-    facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
-    scale_color_manual(values = palette_11) +
-    
-    guides(x = "axis_nested") +
-    
-    labs(x = "Mechanism x Scenario combination",
-         y = "relative-AUPCR",
-         color = "Course edition"
-    )
 
-plot(p_raupcr)
+    p_raupcr <- ggplot(data_longer,
+            aes(x = interaction(mechanism, scenario),
+                y = r_aupcr,
+                group = interaction(scenario, mechanism)
+            )
+        ) +
+        
+        geom_boxplot(
+            outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
+            alpha = 0,
+            color = "#00000020"
+        ) +
+        
+        # geom_violin(
+        #     scale = "count"
+        # ) +
+        geom_beeswarm(
+            mapping	= aes(color = edition),
+            varwidth = TRUE,
+            cex = 2,
+            method = "center",
+            priority = "none"
+        ) +
+        #rows = vars(satisfaction)
+        facet_grid(cols = vars(grouping_class)) +
+        color_scale_ce() +
+        
+        guides(x = "axis_nested") +
+        
+        labs(x = "Mechanism x Scenario combination",
+             y = "relative-AUPCR",
+             color = "Course edition"
+        )
+    
+    # plot(p_raupcr)
+    return(p_raupcr)
+}
 
-ggsave(plot = p_raupcr,
-       filename = "plots/thesis/historical_anyexceptmax_raupcr_o.png",
-       device = "png", width = 300, height = 160, units = "mm", dpi = "print"
+# Editions with all classes of pregroupings -> small, submax and max
+plot_all_classes <- plot_raupcr_for_editions(c("CE4", "CE10", "CE11", "CE18"))
+ggsave(plot = plot_all_classes,
+       filename = "plots/thesis/historical_anyexceptmax_raupcr_ALL_CLASSES-groupingcombined.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
 )
 
-# TODO: improve facet labels, export plot
-# TODO: make plot for num together - or overlay somehow...
+plot_max_small <- plot_raupcr_for_editions(c("CE23", "CE39", "CE45"))
+ggsave(plot = plot_max_small,
+       filename = "plots/thesis/historical_anyexceptmax_raupcr_MAX_SMALL-groupingcombined.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
+)
+
+
+plot_all <- plot_raupcr_for_editions(NULL)
+ggsave(plot = plot_all,
+       filename = "plots/thesis/historical_anyexceptmax_raupcr_o-groupingcombined.png",
+       device = "png", width = 300, height = 160, units = "mm", dpi = "print"
+)
 
 ```
 
@@ -172,10 +207,6 @@ data_togetherness <- data |>
                           levels = c("MAX", "EXCEPT", "ANY")
                    ),
         
-        edition = factor(edition, ordered = TRUE,
-                         levels = c("CE3","CE4","CE10","CE11","CE14","CE17","CE18","CE23","CE39","CE42","CE45")
-                  ),
-        
         satisfaction = factor(satisfaction, ordered = T,
                               levels = c("sat", "unsat"),
                               labels = c("together", "not together")
@@ -211,7 +242,7 @@ p_together <- ggplot(data_togetherness,
     ) +
     
     facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
-    scale_color_manual(values = palette_11) +
+    color_scale_ce() +
     
     guides(x = "axis_nested") +
     
@@ -304,10 +335,10 @@ prefs_data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\results\\gen_pref
 
 
 p <- ggplot(prefs_data) +
-    geom_boxplot(aes(
+    geom_violin(aes(
         x = with(prefs_data, reorder(project, rank, median)),
         y = rank
-    )) +
+    ), color = "white", fill = "darkgreen") +
     
     facet_grid2(rows = vars(pref_gen_name), cols = vars(num_students),
                shrink = T, scales = "free", drop = T, independent = T) +
