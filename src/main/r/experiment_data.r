@@ -150,9 +150,9 @@ loadHistoricalExperimentData <- function(exp_prefix) {
 read_experiment <- function(exp_name) {
     
     root_dir_desktop = "D:\\Code\\Git repositories\\aidm-optimal-groups"
-    root_dir_laptop = "C:\\Users\\Philipe\\Documents\\GitHub\\aidm-optimal-groups"
+    root_dir_laptop = "C:\\Work\\thesis\\aidm-optimal-groups"
     
-    root_dir = root_dir_desktop
+    root_dir = root_dir_laptop
     data_dir = paste(root_dir, "\\results\\thesis", sep="")
     
     exp_files <- list.files(data_dir, pattern = paste0(exp_name, "_.*\\.csv"), full.names = TRUE)

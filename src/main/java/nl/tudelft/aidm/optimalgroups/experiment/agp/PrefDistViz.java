@@ -77,7 +77,6 @@ public class PrefDistViz
 	{
 		var headers = List.of("num_students", "pref_gen_name", "project", "rank");
 
-
 		try (var writer = new FileWriter(file))
 		{
 			var headersAsLine = headers.stream().collect(Collectors.joining(",", "","\n"));

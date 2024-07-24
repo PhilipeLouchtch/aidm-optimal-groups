@@ -76,10 +76,18 @@ data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
     augment_with_nice_projectpref_name()
 
 
-plot <- ggplot(data_slots, aes(x = mechanism_short, y = duration_ms / 1000, group = interaction(mechanism_short, num_slots), color = num_slots)) +
+plot <- ggplot(data_slots,
+               aes(x = mechanism_short,
+                   y = duration_ms / 1000,
+                   group = interaction(mechanism_short, num_slots),
+                   color = num_slots)
+               ) +
         geom_boxplot() + 
 
-        facet_grid(num_students + project_pressure ~ projectpref_short, scale = "free_y", labeller = partial(label_value, multi_line = FALSE)) +
+        facet_grid(num_students + project_pressure ~ projectpref_short,
+                   scale = "free_y",
+                   labeller = partial(label_value, multi_line = FALSE)
+                   ) +
         facetted_pos_scales(y = list(
             scale_y_continuous(limits = c(0,5)),
             scale_y_continuous(limits = c(0,15)),
@@ -186,33 +194,48 @@ ggsave(filename,
 
 ```
 
-# GSB - runtimes
+# Group size bounds
+## runtimes
 ```{r}
 
 data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1")
 
-plot <- ggplot(data_groupsizb %>% filter(num_students != 50),
+for (pref_scenario in unique(data_groupsizb$proj_pref_type)) {
+    
+    plot <- ggplot(data_groupsizb %>%
+                       filter(num_students != 50) %>%
+                       filter(proj_pref_type == pref_scenario),
+                   
                aes(x = factor(num_students),
                    y = ceiling(duration_ms / 1000),
                    group = interaction(mechanism, num_students),
                    color = mechanism_short)
             ) +
+        
             geom_boxplot() +
+        
             facet_grid(gsc_max ~ gsc_min,
                        labeller = labeller(gsc_max = ~ paste("u:", .),
                                            gsc_min = ~ paste("l:", .))
                        ) +
+        
             scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
                                labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
                                ) + 
             scale_x_discrete() +
+        
             labs(
-                title = "Group size bounds scaling - runtime",
+                # title = "Group size bounds scaling - runtime",
+                title = pref_scenario,
                 y = "Duration (sec)",
                 x = "# students",
                 color = "Mechanism: "
             ) +
+        
             theme(legend.position = "bottom", legend.direction = "horizontal")
+
+    print(plot)
+}
 
 print(plot)
 

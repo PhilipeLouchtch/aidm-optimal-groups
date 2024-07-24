@@ -31,12 +31,12 @@ public class AssignmentConstraints
 	public static AssignmentConstraints createInModel(GRBModel model, DatasetContext datasetContext) throws GRBException
 	{
 		// Hack to support SDU/Chirandini datasets
-		Function<Project, GroupSizeConstraint> gscProvider;
-		if (datasetContext instanceof SDUDatasetContext) {
-			gscProvider = ((SDUDatasetContext) datasetContext)::groupSizeBoundsOf;
-		} else {
-			gscProvider = __ -> datasetContext.groupSizeConstraint();
-		}
+		Function<Project, GroupSizeConstraint> gscProvider =
+				switch (datasetContext)
+				{
+                     case SDUDatasetContext sdu -> sdu::groupSizeBoundsOf;
+                     default -> p -> datasetContext.groupSizeConstraint();
+                };
 		
 		var agents = datasetContext.allAgents();
 		var projects = datasetContext.allProjects();
