@@ -10,9 +10,6 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 
-sourceCompatibility = JavaVersion.VERSION_18
-targetCompatibility = JavaVersion.VERSION_18
-
 applicationDefaultJvmArgs = ["-Djava.library.path=lib"]
 
 dependencies {
@@ -46,15 +43,14 @@ dependencies {
 }
 
 wrapper {
-    gradleVersion = '7.5.1'
+    gradleVersion = '8.10.2'
 }
 
-compileJava {
-    options.compilerArgs << '--enable-preview'
-}
-
-compileTestJava {
-    options.compilerArgs << '--enable-preview'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
 }
 
 static def gurobiLibsDir() {
