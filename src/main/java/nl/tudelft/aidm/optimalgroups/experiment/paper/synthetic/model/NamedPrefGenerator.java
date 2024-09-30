@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model;
 
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferenceGenerator;
 import nl.tudelft.aidm.optimalgroups.model.project.Projects;

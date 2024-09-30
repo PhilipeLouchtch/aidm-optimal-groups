@@ -1,13 +1,12 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.nogroup;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.nogroup;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.Experiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.WarmupExperiment;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public class NoPregroupExperimentsRunner implements Experiment
 {

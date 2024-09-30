@@ -1,11 +1,11 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.nogroup;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.nogroup;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.GeneratedDataExperiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.GeneratedDataExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.*;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -17,7 +17,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.*;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.*;
 
 public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScalingExperiment.SlotsScalingDatasetParams>
 {

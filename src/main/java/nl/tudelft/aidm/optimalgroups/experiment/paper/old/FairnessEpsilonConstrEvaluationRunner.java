@@ -5,8 +5,8 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.MILP_Mechani
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.ObjectiveFunction;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group.PregroupingSoftGrpingExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.WarmupExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.group.PregroupingSoftGrpingExperiment;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Group;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;

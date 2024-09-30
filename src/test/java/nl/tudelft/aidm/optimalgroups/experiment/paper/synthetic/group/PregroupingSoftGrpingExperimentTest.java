@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.group;
 
 import org.junit.jupiter.api.Test;
 

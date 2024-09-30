@@ -1,10 +1,10 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef;
 
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ExponentiallyDistributedProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.NormallyDistributedProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.UniformProjectPreferencesGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.NamedPrefGenerator;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.NamedPrefGenerator;
 import nl.tudelft.aidm.optimalgroups.model.pref.base.ListBasedProjectPreferences;
 
 import java.util.ArrayList;

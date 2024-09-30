@@ -4,18 +4,13 @@ import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEdition;
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.MinimumReqProjectAmount;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.MinimumReqProjectAmount;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
-import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 

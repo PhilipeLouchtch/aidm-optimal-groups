@@ -1,12 +1,10 @@
 package nl.tudelft.aidm.optimalgroups.experiment.paper.historical;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
-import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
 import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsCollector;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsFile;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.MinimumReqProjectAmount;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentResultsCollector;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentResultsFile;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model.HistoricalDataExperimentBase;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
@@ -18,13 +16,12 @@ import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.List;
 import java.util.WeakHashMap;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.serializeProfile;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.serializeProfile;
 
 public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
 {

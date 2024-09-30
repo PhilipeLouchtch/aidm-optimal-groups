@@ -3,18 +3,12 @@ package nl.tudelft.aidm.optimalgroups.experiment.agp;
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
-import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferenceGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.agp.report.ExperimentReportInHtml;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.MinimumReqProjectAmount;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.setting.AnyExceptMaxCsvReport;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.MinimumReqProjectAmount;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.pref.ProjectPreference;
 import nl.tudelft.aidm.optimalgroups.model.project.Projects;
-import plouchtch.functional.actions.Rethrow;
-import plouchtch.util.Try;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -24,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations.*;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef.ProjPrefVariations.*;
 
 public class PrefDistViz
 {

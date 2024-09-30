@@ -1,11 +1,11 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.nogroup;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.nogroup;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.GeneratedDataContext;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.pregroupprefs.PregroupingGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.GeneratedDataExperiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.GeneratedDataExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.*;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -17,7 +17,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.serializeProfile;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.serializeProfile;
 
 public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSizeBoundsExperiment.DatasetParams>
 {
@@ -91,14 +91,14 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 	}
 	
 	@Override
-	protected nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult newExperimentSubResult(
+	protected nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult newExperimentSubResult(
 			DatasetParams params, DatasetContext datasetContext, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum)
 	{
 		return new ExperimentSubResult(params, mechanism, matching, runtime, trialRunNum);
 	}
 	
 	
-	public record DatasetParams(Integer numStudents, Integer numProjects, Integer numSlotsPerProj, GroupSizeConstraint gsc, NamedPrefGenerator prefGenerator, NamedPregroupingGenerator pregroupingGenerator, PROJ_PRESSURE proj_pressure) implements nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.DatasetParams
+	public record DatasetParams(Integer numStudents, Integer numProjects, Integer numSlotsPerProj, GroupSizeConstraint gsc, NamedPrefGenerator prefGenerator, NamedPregroupingGenerator pregroupingGenerator, PROJ_PRESSURE proj_pressure) implements nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.DatasetParams
 	{
 		@Override
 		public DatasetContext intoNewlyGeneratedDataset()
@@ -126,7 +126,7 @@ public class GroupSizeBoundsExperiment extends GeneratedDataExperiment<GroupSize
 	}
 	
 	
-	record ExperimentSubResult(DatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum) implements nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult
+	record ExperimentSubResult(DatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum) implements nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult
 	{
 		@Override
 		public List<Object> columnHeaders()

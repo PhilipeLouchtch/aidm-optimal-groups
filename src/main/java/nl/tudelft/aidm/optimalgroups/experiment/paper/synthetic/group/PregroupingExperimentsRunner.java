@@ -1,10 +1,10 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.group;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.PregroupingType;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.OWAObjective;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.Experiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.WarmupExperiment;
 
 import java.util.List;
 

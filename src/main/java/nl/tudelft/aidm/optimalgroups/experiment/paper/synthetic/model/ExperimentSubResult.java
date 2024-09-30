@@ -1,11 +1,7 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model;
 
-import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
-import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
-import java.io.Serializable;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;

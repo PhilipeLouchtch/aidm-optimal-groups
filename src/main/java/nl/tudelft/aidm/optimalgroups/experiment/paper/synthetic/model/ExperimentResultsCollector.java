@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model;
 
 public interface ExperimentResultsCollector extends AutoCloseable
 {

@@ -1,15 +1,14 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.util.List;
 
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.*;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.*;
 
 public record SizeExperimentSubResult(SimpleDatasetParams params, GroupProjectAlgorithm mechanism, GroupToProjectMatching<?> matching, Duration runtime, Integer trialRunNum) implements ExperimentSubResult
 {

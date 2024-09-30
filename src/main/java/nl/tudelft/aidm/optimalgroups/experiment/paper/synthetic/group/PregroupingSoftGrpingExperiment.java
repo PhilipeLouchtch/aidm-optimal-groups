@@ -1,4 +1,4 @@
-package nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group;
+package nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.group;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.group.bepsys.partial.CliqueGroups;
@@ -7,9 +7,9 @@ import nl.tudelft.aidm.optimalgroups.dataset.generated.agents.*;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.MultiTypeProjectPreferencesGenerator.Type;
 import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferenceGenerator;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.GeneratedDataExperiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.*;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.predef.ProjPrefVariations;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.GeneratedDataExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.*;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef.ProjPrefVariations;
 import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
@@ -28,8 +28,8 @@ import java.util.WeakHashMap;
 import java.util.stream.Stream;
 
 import static nl.tudelft.aidm.optimalgroups.dataset.generated.agents.ProportionalAgentGenerator.*;
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.group.PregroupingSoftGrpingExperiment.PREGROUP_SIZES_DISTRIBUTION.*;
-import static nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult.serializeProfile;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.group.PregroupingSoftGrpingExperiment.PREGROUP_SIZES_DISTRIBUTION.*;
+import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.serializeProfile;
 
 public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<PregroupingSoftGrpingExperiment.MaxPregroupingsDatasetParams>
 {

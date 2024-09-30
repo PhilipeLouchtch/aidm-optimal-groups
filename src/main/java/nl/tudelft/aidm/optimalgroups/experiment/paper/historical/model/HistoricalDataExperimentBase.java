@@ -2,8 +2,8 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.Experiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentResultsCollector;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.model.ExperimentSubResult;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentResultsCollector;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;

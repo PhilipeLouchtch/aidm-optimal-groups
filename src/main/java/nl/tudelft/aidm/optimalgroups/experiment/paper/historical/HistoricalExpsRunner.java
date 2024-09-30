@@ -7,7 +7,7 @@ import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
 import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedTied;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.Experiment;
-import nl.tudelft.aidm.optimalgroups.experiment.paper.generateddata.WarmupExperiment;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.WarmupExperiment;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 
 import java.util.List;
