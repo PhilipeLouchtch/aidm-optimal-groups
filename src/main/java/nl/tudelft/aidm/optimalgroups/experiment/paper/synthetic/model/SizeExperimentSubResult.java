@@ -21,17 +21,17 @@ public record SizeExperimentSubResult(SimpleDatasetParams params, GroupProjectAl
 	
 	public Profile profileSingles()
 	{
-		return Profile.fromProfileArray();
+		return Profile.empty();
 	}
 	
 	public Profile profilePregrouped()
 	{
-		return Profile.fromProfileArray();
+		return Profile.empty();
 	}
 	
 	public Profile profileUnsatpregroup()
 	{
-		return Profile.fromProfileArray();
+		return Profile.empty();
 	}
 	
 	@Override

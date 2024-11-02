@@ -20,7 +20,6 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 
@@ -205,7 +204,7 @@ public class AnyVsExceptVsMaxPregroupReport
 			
 			var delta = new TogethernessStatsDelta(this.groupsTogether.asInt() - other.groupsTogether.asInt(),
 			                                  this.studentsTogether.asInt() - other.studentsTogether.asInt(),
-			                                  profileOnlySatisfiedPregroupers.differenceTo(other.profileOnlySatisfiedPregroupers));
+			                                  profileOnlySatisfiedPregroupers.minus(other.profileOnlySatisfiedPregroupers));
 			
 			return new TogethernessStatsWithDelta(pregrouping,
 			                                      groupsTogether, numTotalPregroups,
@@ -260,7 +259,7 @@ public class AnyVsExceptVsMaxPregroupReport
 			return new ProjectStatsDelta(
 					this.sumOfRanks.asInt() - other.sumOfRanks.asInt(),
 					this.worstAssignedRank.asInt() - other.worstAssignedRank.asInt(),
-					profile.differenceTo(Profile.of(otherMatching))
+					profile.minus(Profile.of(otherMatching))
 			);
 		}
 		

@@ -189,7 +189,7 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 			
 			var delta = new TogethernessStatsDelta(this.groupsTogether.asInt() - other.groupsTogether.asInt(),
 			                                  this.studentsTogether.asInt() - other.studentsTogether.asInt(),
-			                                  profileOnlySatisfiedPregroupers.differenceTo(other.profileOnlySatisfiedPregroupers));
+			                                  profileOnlySatisfiedPregroupers.minus(other.profileOnlySatisfiedPregroupers));
 			
 			return new TogethernessStatsWithDelta(pregrouping,
 			                                      groupsTogether, numTotalPregroups,
@@ -244,7 +244,7 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 			return new ProjectStatsDelta(
 					this.sumOfRanks.asInt() - other.sumOfRanks.asInt(),
 					this.worstAssignedRank.asInt() - other.worstAssignedRank.asInt(),
-					profile.differenceTo(Profile.of(otherMatching))
+					profile.minus(Profile.of(otherMatching))
 			);
 		}
 		

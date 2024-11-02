@@ -172,17 +172,19 @@ public class SlotsScalingExperiment extends GeneratedDataExperiment<SlotsScaling
 		
 		public Profile profileSingles()
 		{
-			return Profile.fromProfileArray();
+			return profileAllStudents();
 		}
 		
 		public Profile profilePregrouped()
 		{
-			return Profile.fromProfileArray();
+			// empty
+			return Profile.empty();
 		}
 		
 		public Profile profileUnsatpregroup()
 		{
-			return Profile.fromProfileArray();
+			// empty
+			return Profile.empty();
 		}
 	}
 }

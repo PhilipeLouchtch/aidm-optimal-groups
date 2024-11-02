@@ -6,7 +6,7 @@ import nl.tudelft.aidm.optimalgroups.metric.rank.SumOfRanks;
 import nl.tudelft.aidm.optimalgroups.metric.rank.WorstAssignedRank;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agent;
-import nl.tudelft.aidm.optimalgroups.model.comparison.ParetoComperator;
+import nl.tudelft.aidm.optimalgroups.model.comparison.ParetoComparator;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.matching.Matching;
 import nl.tudelft.aidm.optimalgroups.model.project.Project;
@@ -92,10 +92,10 @@ public class FairVsChiaComparisonTable
 		{
 			var profileOfFairResult = fairness.profile();
 			var profileOfChiarandiniResult = chiarandini.profile();
-			var paretoOutcome = new ParetoComperator().compare(profileOfFairResult, profileOfChiarandiniResult);
+			var paretoOutcome = new ParetoComparator().compare(profileOfFairResult, profileOfChiarandiniResult);
 			
 			return switch (paretoOutcome) {
-				case BETTER, WORSE, NONE -> profileOfFairResult.differenceTo(profileOfChiarandiniResult)
+				case BETTER, WORSE, NONE -> profileOfFairResult.minus(profileOfChiarandiniResult)
 				                                               .toString();
 				case SAME -> Profile.empty().toString();
 			};
@@ -116,7 +116,7 @@ public class FairVsChiaComparisonTable
 			var profileThis = outcomeOne.profile();
 			var profileThat = outcomeTwo.profile();
 			
-			var paretoOutcome = new ParetoComperator().compare(profileThis, profileThat);
+			var paretoOutcome = new ParetoComparator().compare(profileThis, profileThat);
 			
 			return switch (paretoOutcome) {
 				case BETTER -> asStringIfParetoBetter(outcomeOne, outcomeTwo);
@@ -195,7 +195,7 @@ public class FairVsChiaComparisonTable
 			var fairnessProfile = Profile.of(fairness);
 			var vanillaProfile = Profile.of(chiarandini);
 			
-			var outcome = new ParetoComperator().compare(fairnessProfile, vanillaProfile);
+			var outcome = new ParetoComparator().compare(fairnessProfile, vanillaProfile);
 			
 			return switch (outcome) {
 				case BETTER -> ParetoComparisonOutcome.FAIRNESS;

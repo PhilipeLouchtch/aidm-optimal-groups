@@ -35,11 +35,11 @@ public interface Profile
 	int numAgents();
 
 	/**
-	 *	The higest rank contained in the profile. Returns 0 if profile is empty
+	 *	The highest rank contained in the profile. Returns 0 if profile is empty
 	 */
 	int maxRank();
 	
-	default ProfileDelta differenceTo(Profile other)
+	default ProfileDelta minus(Profile other)
 	{
 		var maxRank = Math.max(this.maxRank(), other.maxRank());
 		var profileDelta = new int[maxRank+1];
@@ -51,11 +51,20 @@ public interface Profile
 		
 		return new ProfileDelta(profileDelta);
 	}
+
+	default int[] asZeroIndexed() {
+		var zeroIndexed = new int[this.maxRank()];
+		for (int i = 0; i < this.maxRank(); i++) {
+			zeroIndexed[i] = this.numAgentsWithRank(i+1);
+		}
+		return zeroIndexed;
+	}
 	
 	/* Factory methods  */
 	static Profile of(Matching<Agent, Project> matching)
 	{
-		return Profile.of(matching, matching.asList().stream().map(Match::from).collect(Agents.collector));
+		Agents all = matching.asList().stream().map(Match::from).collect(Agents.collector);
+		return Profile.of(matching, all);
 	}
 	
 	static Profile of(Matching<Agent, Project> matching, Agents agentsToProfile)
@@ -63,6 +72,7 @@ public interface Profile
 		return matching.asList().stream()
 				// Only agents that are to be included
 				.filter(match -> agentsToProfile.contains(match.from()))
+				// ignore indifferent agents, they have no rank
 				.filter(match -> !match.from().projectPreference().isCompletelyIndifferent())
 				// A profile is a sorted list of ranks
 				.map(match -> {
@@ -89,42 +99,55 @@ public interface Profile
 		var maxRank = numPerRank.keySet().stream().mapToInt(value -> value).max()
 			.orElse(0); // Profile is empty
 		
-		var binnedProfile = new int[maxRank + 1]; // must be up to including maxRank
-		binnedProfile[0] = 0; // nobody - rank 0 doesn't exist
+		var profile = new int[maxRank + 1]; // must be up to including maxRank
+		profile[0] = 0; // profile is 1-index based
 
 		for (int i = 1; i <= maxRank; i++)
 		{
 			var numStudentsWithRankI = numPerRank.getOrDefault(i, 0L);
-			binnedProfile[i] = numStudentsWithRankI.intValue();
+			profile[i] = numStudentsWithRankI.intValue();
 		}
 		
-		return new Simple(binnedProfile);
-	}
-	
-	static Profile fromProfileArray(int... profileAsArray)
-	{
-		return new Simple(profileAsArray);
+		return ArrayBased.fromOneIndexed(profile);
 	}
 	
 	static Profile empty()
 	{
-		return Profile.fromProfileArray();
+		return ArrayBased.fromZeroIndexed();
 	}
 
-	
 	/* Supporting types */
 	interface ProfileConsumer
 	{
 		void apply(int rank, int count);
 	}
 
+	static Profile fromZeroIndexed(int... zeroIndexed) {
+		return ArrayBased.fromZeroIndexed(zeroIndexed);
+	}
+
+	static Profile fromOneIndexed(int... oneIndexed) {
+		return ArrayBased.fromOneIndexed(oneIndexed);
+	}
 
 	/* Implementations */
-	class Simple implements Profile
+	class ArrayBased implements Profile
 	{
 		protected final int maxRank;
 		protected final int numStudentsInProfile;
 		protected final int[] numStudentsByRank;
+
+		private static ArrayBased fromZeroIndexed(int... zeroIndexed) {
+			int[] oneIndexed = new int[zeroIndexed.length+1];
+			oneIndexed[0] = 0;
+            System.arraycopy(zeroIndexed, 0, oneIndexed, 1, zeroIndexed.length);
+            return new ArrayBased(oneIndexed);
+		}
+
+		private static ArrayBased fromOneIndexed(int... oneIndexed) {
+			Assert.that(oneIndexed.length >= 1).orThrowMessage("1-Indexed must be at least of length 1");
+			return new ArrayBased(oneIndexed);
+		}
 		
 		/**
 		 * Initializes this Array-backed Profile implementation from the given array
@@ -133,7 +156,7 @@ public interface Profile
 		 * Rank 0 is not a valid rank and must be empty or will trigger a bugcheck.
 		 * @param numStudentsByRank
 		 */
-		public Simple(int[] numStudentsByRank)
+		private ArrayBased(int... numStudentsByRank)
 		{
 			Assert.that(!(numStudentsByRank.length > 0) || numStudentsByRank[0] == 0)
 					.orThrowMessage("There cannot be any students with rank 0, bug?");
@@ -147,13 +170,11 @@ public interface Profile
 		public int numAgentsWithRank(int rank)
 		{
 			Assert.that(0 <= rank).orThrowMessage("Rank out of bounds");
-			
 			if (rank >= numStudentsByRank.length) {
 				return 0;
 			}
-			else {
-				return numStudentsByRank[rank];
-			}
+
+			return numStudentsByRank[rank];
 		}
 
 		@Override
@@ -193,9 +214,9 @@ public interface Profile
 		{
 			if (this == o)
 				return true;
-			if (!(o instanceof Simple))
+			if (!(o instanceof ArrayBased))
 				return false;
-			Simple simple = (Simple) o;
+			ArrayBased simple = (ArrayBased) o;
 			return Arrays.equals(numStudentsByRank, simple.numStudentsByRank);
 		}
 		
@@ -206,9 +227,9 @@ public interface Profile
 		}
 	}
 	
-	class ProfileDelta extends Profile.Simple
+	class ProfileDelta extends ArrayBased
 	{
-		public ProfileDelta(int[] numStudentsByRank)
+		private ProfileDelta(int[] numStudentsByRank)
 		{
 			super(numStudentsByRank);
 		}
