@@ -18,7 +18,7 @@ import nl.tudelft.aidm.optimalgroups.metric.matching.MatchingMetrics;
 import nl.tudelft.aidm.optimalgroups.metric.matching.NumberAgentsMatched;
 import nl.tudelft.aidm.optimalgroups.metric.matching.aupcr.AUPCRStudent;
 import nl.tudelft.aidm.optimalgroups.metric.matching.gini.GiniCoefficientStudentRank;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
+import nl.tudelft.aidm.optimalgroups.metric.matching.group.Togetherness;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -265,7 +265,7 @@ public class FairnessVsVanillaQualityExperimentReport
 					var giniPregrouped = new GiniCoefficientStudentRank(matchingPregrouped);
 					var aupcrPregrouped = new AUPCRStudent(matchingPregrouped);
 		
-					var numPreformedGroupsTogether = new NumberProposedGroupsTogether(matching, preformedGroups).asInt();
+					var numPreformedGroupsTogether = Togetherness.from(matching, preformedGroups).numGroups();
 					unorderedList(
 							String.format("Number of preformed groups together: %s / %s ", numPreformedGroupsTogether, preformedGroups.count()),
 						"Gini: " + giniPregrouped.asDouble(),
@@ -280,7 +280,7 @@ public class FairnessVsVanillaQualityExperimentReport
 //					"Gini: " + groupPerspectiveMetrics.giniCoefficient().asDouble(),
 //					"AUPCR: " + groupPerspectiveMetrics.aupcr().asDouble()
 //				);
-				
+	
 	}
 	
 	private void heading(String value, int level)

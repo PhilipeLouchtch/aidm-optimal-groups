@@ -10,7 +10,7 @@ import nl.tudelft.aidm.optimalgroups.dataset.generated.projprefs.ProjectPreferen
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.GeneratedDataExperiment;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.*;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.predef.ProjPrefVariations;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
+import nl.tudelft.aidm.optimalgroups.metric.matching.group.Togetherness;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -309,8 +309,7 @@ public class PregroupingSoftGrpingExperiment extends GeneratedDataExperiment<Pre
 		
 		public int numPregroupsFullyTogether()
 		{
-			var numPreformedGroupsTogether = new NumberProposedGroupsTogether(matching, currentPregrouping());
-			return numPreformedGroupsTogether.asInt();
+			return Togetherness.from(matching, currentPregrouping()).numGroups();
 		}
 		
 		public int numPregroupsMax()

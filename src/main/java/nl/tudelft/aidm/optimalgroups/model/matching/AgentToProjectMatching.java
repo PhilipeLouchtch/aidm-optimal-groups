@@ -44,6 +44,11 @@ public interface AgentToProjectMatching extends Matching<Agent, Project>
 		return (int) this.asList().stream().map(Match::from).distinct().count();
 	}
 	
+	/**
+	 * Returns a new AgentToProjectMatching filtered to contain the given agents
+	 * @param toKeep The agents to keep in the matching
+	 * @return A new filtered instance
+	 */
 	default AgentToProjectMatching filteredBy(Agents toKeep)
 	{
 		if (toKeep.count() == 0) {

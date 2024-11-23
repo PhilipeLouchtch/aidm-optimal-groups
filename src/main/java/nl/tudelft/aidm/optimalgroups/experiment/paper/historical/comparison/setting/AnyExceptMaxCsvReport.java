@@ -7,7 +7,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.objectives.O
 import nl.tudelft.aidm.optimalgroups.dataset.bepsys.CourseEditionFromDb;
 import nl.tudelft.aidm.optimalgroups.dataset.transforms.DatasetContext_AugmentedPreferences_AppendedTied;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberPregroupingStudentsTogether;
+import nl.tudelft.aidm.optimalgroups.metric.matching.group.Togetherness;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.agent.Agents;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
@@ -55,15 +55,18 @@ public class AnyExceptMaxCsvReport
 		
 		// For the experiment, we assume the following pregrouping-type ('except', 'any') to be true
 		// and compare the results of running a mechanism with this model with the results of the mechanisms
-		// if we were to assume so other model. Thus, we can look at the outcomes for pregrouping students
+		// if we were to assume the other model. Thus, we can look at the outcomes for pregrouping students
 		// that would like to work, e.g. in a pair under a model where we actually know there are these
 		// pregroupers and compare that to the outcome of a model where we choose to ignore this information
 		// (strict business rule, or if the 'lesser' model is determined to have a better overal outcome)
+		
+		// This is the ANY model
 		var assumedTruePregroupingModel = PregroupingType.anyCliqueSoftGroupedEpsilon();
 		
 		
 		// against these combinations
 		List<GroupProjectAlgorithm> mechanisms = List.of(
+			// ANY
 			new GroupProjectAlgorithm.Chiarandini_Fairgroups(new OWAObjective(), assumedTruePregroupingModel),
 			new GroupProjectAlgorithm.Chiarandini_MiniMax_OWA(assumedTruePregroupingModel),
 			
@@ -83,22 +86,19 @@ public class AnyExceptMaxCsvReport
 		write(results, file);
 	}
 	
-	public static Result henk(DatasetContext dataset, GroupProjectAlgorithm mechanism)
+	static Result henk(DatasetContext dataset, GroupProjectAlgorithm mechanism)
 	{
 		var pregrouping = PregroupingType.anyCliqueSoftGrouped().instantiateFor(dataset);
 		
 		var pregroupingStudents = pregrouping.groups().asAgents();
 		var soloStudents = dataset.allAgents().without(pregroupingStudents);
 		
-		var sizesMax = Set.of(dataset.groupSizeConstraint().maxSize());
-		var sizesSubmax = Set.of(dataset.groupSizeConstraint().maxSize() - 1);
+		int u = dataset.groupSizeConstraint().maxSize();
+		var sizesMax = Set.of(u);
+		var sizesSubmax = Set.of(u - 1);
+		var sizesSmall = Set.of(IntStream.range(2, u - 1).boxed().toArray(Integer[]::new));
 		
-		var sizesSmall = IntStream.rangeClosed(2, dataset.groupSizeConstraint().maxSize()).boxed().collect(Collectors.toSet());
-		
-		sizesSmall.removeAll(sizesMax);
-		sizesSmall.removeAll(sizesSubmax);
-		
-		var datasetId =  dataset.identifier().replaceAll("^CourseEdition\\[(\\d+)].+$", "CE$1");
+		var datasetId = dataset.identifier().replaceAll("^CourseEdition\\[(\\d+)].+$", "CE$1");
 		System.out.printf("Running dataset %s on mechanism %s...", datasetId, mechanism.name());
 		
 		var matching = mechanism.determineMatching(dataset);
@@ -151,7 +151,7 @@ public class AnyExceptMaxCsvReport
 		}
 	}
 	
-	public static void write(List<Result> results, File file)
+	static void write(List<Result> results, File file)
 	{
 		var headers =
 				List.of("edition", "mechanism", "scenario", "profile_solo_sat",
@@ -167,7 +167,7 @@ public class AnyExceptMaxCsvReport
 			
 			for (Result result : results)
 			{
-				writeUsing(writer,
+				writeRow(writer,
 						   
 				           result.edition,
 				           result.mechanism_name_simple(),
@@ -177,17 +177,17 @@ public class AnyExceptMaxCsvReport
 							
 				           ExperimentSubResult.serializeProfile(result.max.satisfied()),
 				           ExperimentSubResult.serializeProfile(result.max.unsatisfied()),
-				           result.max.together().toString(),
+				           result.max.togetherness().numStudents().toString(),
 				           result.max.count().toString(),
 							
 				           ExperimentSubResult.serializeProfile(result.small.satisfied()),
 				           ExperimentSubResult.serializeProfile(result.small.unsatisfied()),
-				           result.small.together().toString(),
+				           result.small.togetherness().numStudents().toString(),
 				           result.small.count().toString(),
 							
 				           ExperimentSubResult.serializeProfile(result.submax.satisfied()),
 				           ExperimentSubResult.serializeProfile(result.submax.unsatisfied()),
-				           result.submax.together().toString(),
+				           result.submax.togetherness().numStudents().toString(),
 				           result.submax.count().toString()
 				);
 			}
@@ -199,7 +199,7 @@ public class AnyExceptMaxCsvReport
 		
 	}
 	
-	static record PregroupClass(Groups<? extends Group> groups) {};
+	record PregroupClass(Groups<? extends Group> groups) {};
 	
 	static PregroupClass keepOfClass(Pregrouping pregrouping, Set<Integer> sizes)
 	{
@@ -218,9 +218,9 @@ public class AnyExceptMaxCsvReport
 			this.pregroupClass = pregroupClass;
 		}
 		
-		public NumberPregroupingStudentsTogether together()
+		public Togetherness togetherness()
 		{
-			return new NumberPregroupingStudentsTogether(matching, pregroupClass.groups());
+			return Togetherness.from(matching, pregroupClass.groups());
 		}
 		
 		public Integer count()
@@ -250,7 +250,7 @@ public class AnyExceptMaxCsvReport
 		}
 	}
 	
-	public static void writeUsing(Writer writer, String... fields) throws IOException
+	public static void writeRow(Writer writer, String... fields) throws IOException
 	{
 		for (int i = 0; i < fields.length; i++)
 		{

@@ -4,8 +4,7 @@ import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.algorithm.holistic.chiarandini.model.Pregrouping;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.comparison.UnsatisifedPregroupingAgents;
 import nl.tudelft.aidm.optimalgroups.metric.group.NumGroupsPerGroupSizeDist;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberPregroupingStudentsTogether;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
+import nl.tudelft.aidm.optimalgroups.metric.matching.group.Togetherness;
 import nl.tudelft.aidm.optimalgroups.metric.rank.SumOfRanks;
 import nl.tudelft.aidm.optimalgroups.metric.rank.WorstAssignedRank;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
@@ -161,18 +160,19 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 		}
 	}
 	
-	public record TogethernessStats(Pregrouping pregrouping,
-							 NumberProposedGroupsTogether groupsTogether, int numTotalPregroups,
-	                         NumberPregroupingStudentsTogether studentsTogether, int numTotalPregroupingStudents,
+		public record TogethernessStats(Pregrouping pregrouping,
+							 int groupsTogether, int numTotalPregroups,
+	                         int studentsTogether, int numTotalPregroupingStudents,
 	                         NumGroupsPerGroupSizeDist numGroupsTogetherPerSize,
-	                         Profile profileOnlySatisfiedPregroupers
+	                         Profile profileSatisfiedPregroupings
 	) {
 		static TogethernessStats from(GroupToProjectMatching<?> matching, Pregrouping pregrouping)
 		{
 			// - number of pregroup groups together / of max
 			// - number of pregroup students together / of max
-			var groupsTogether = new NumberProposedGroupsTogether(matching, pregrouping.groups());
-			var studentsTogether = new NumberPregroupingStudentsTogether(matching, pregrouping.groups());
+			var togetherness = Togetherness.from(matching, pregrouping.groups());
+			var groupsTogether = togetherness.numGroups();
+			var studentsTogether = togetherness.numStudents();
 			
 			var satisfiedPregroupGroups = pregrouping.groups().ofWhichSatisfiedIn(matching);
 			var numGroupsPerGroupSizeDist = new NumGroupsPerGroupSizeDist(satisfiedPregroupGroups, matching.datasetContext().groupSizeConstraint().maxSize());
@@ -186,41 +186,24 @@ public class AnyVsExceptVsMaxPregroupSingleTableReport
 		public TogethernessStatsWithDelta withDeltasTo(GroupToProjectMatching otherMatching)
 		{
 			var other = TogethernessStats.from(otherMatching, pregrouping);
+			var delta = TogethernessStatsDelta.from(this, other);
 			
-			var delta = new TogethernessStatsDelta(this.groupsTogether.asInt() - other.groupsTogether.asInt(),
-			                                  this.studentsTogether.asInt() - other.studentsTogether.asInt(),
-			                                  profileOnlySatisfiedPregroupers.minus(other.profileOnlySatisfiedPregroupers));
-			
-			return new TogethernessStatsWithDelta(pregrouping,
-			                                      groupsTogether, numTotalPregroups,
-			                                      studentsTogether, numTotalPregroupingStudents,
-			                                      numGroupsTogetherPerSize,
-			                                      profileOnlySatisfiedPregroupers,
-			                                      delta);
+			return new TogethernessStatsWithDelta(this, delta);
 		}
 	}
 	
-	public record TogethernessStatsWithDelta(Pregrouping pregrouping,
-							 NumberProposedGroupsTogether groupsTogether, int numTotalPregroups,
-	                         NumberPregroupingStudentsTogether studentsTogether, int numTotalPregroupingStudents,
-	                         NumGroupsPerGroupSizeDist numGroupsTogetherPerSize,
-	                         Profile profileOnlySatisfiedPregroupers,
-                             TogethernessStatsDelta delta)
-	{
-	}
+	public record TogethernessStatsWithDelta(TogethernessStats stats, TogethernessStatsDelta delta) { }
 	
 	public record TogethernessStatsDelta(int groupsTogetherDelta,
 	                              int studentsTogetherDelta,
 	                              Profile profileDelta)
 	{
-		public int groupsTogether()
+		public static TogethernessStatsDelta from(TogethernessStats us, TogethernessStats other)
 		{
-			return groupsTogetherDelta;
-		}
-		
-		public int studentsTogether()
-		{
-			return studentsTogetherDelta;
+			int grpsTogetherDelta = us.groupsTogether - other.groupsTogether;
+			int studsTogetherDelta = us.studentsTogether - other.studentsTogether;
+			var profileDelta = us.profileSatisfiedPregroupings.minus(other.profileSatisfiedPregroupings);
+			return new TogethernessStatsDelta(grpsTogetherDelta, studsTogetherDelta, profileDelta);
 		}
 	}
 	

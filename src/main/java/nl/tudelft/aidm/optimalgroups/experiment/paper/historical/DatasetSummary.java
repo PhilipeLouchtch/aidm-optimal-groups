@@ -60,9 +60,6 @@ class DatasetSummary
 
 		public Double pressure()
 		{
-			// TODO
-//			var totalCapacity = 1d * datasetContext.allProjects().countAllSlots();
-			
 			// For SDU: count the capacity in students instead of in projects as with TUDelft
 			// because we cannot compute the minReqProjects as easily. The method below is not as precise,
 			// nor would an approach with "correct" minReqProjects, but it should be pretty close.
@@ -92,7 +89,7 @@ class DatasetSummary
 			return pregroupDist;
 		}
 
-		int maxGroupUpperbound()
+		private int maxGroupUpperbound()
 		{
 			return datasetContext.allProjects().asCollection().stream()
 						.map(datasetContext::groupSizeBoundsOf)
@@ -161,7 +158,6 @@ class DatasetSummary
 			var pregroupings = CliqueGroups.from(datasetContext.allAgents());
 			var pregroupProportion = 1d * pregroupings.asAgents().count() / datasetContext.allAgents().count();
 			
-			// TODO: workaround for the SDU datasets because they have a per-project group size bounds
 			var maxAllowedGroupSize = maxGroupUpperbound();
 			
 			// Calc distribution of pregrouping sizes
@@ -229,8 +225,8 @@ class DatasetSummary
 
 // System.out.printf("id %s, gsc: %s, minReq: %s, pressure: %s, pregroup dist: %s\n", courseEdition.id(), courseEdition.gscAsString(), courseEdition.minReqProjects(), courseEdition.pressure(), courseEdition.pregroup_dist());
 
-		    
-		    
+		
+		
 		return;
 	}
 }

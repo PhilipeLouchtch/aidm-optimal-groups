@@ -2,23 +2,22 @@ package nl.tudelft.aidm.optimalgroups.experiment.paper.historical;
 
 import nl.tudelft.aidm.optimalgroups.algorithm.GroupProjectAlgorithm;
 import nl.tudelft.aidm.optimalgroups.dataset.chiarandini.SDUDatasetContext;
+import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model.PregroupingDistribution;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentResultsCollector;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentResultsFile;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult;
 import nl.tudelft.aidm.optimalgroups.experiment.paper.historical.model.HistoricalDataExperimentBase;
-import nl.tudelft.aidm.optimalgroups.metric.matching.group.NumberProposedGroupsTogether;
+import nl.tudelft.aidm.optimalgroups.metric.matching.group.Togetherness;
 import nl.tudelft.aidm.optimalgroups.model.GroupSizeConstraint;
 import nl.tudelft.aidm.optimalgroups.model.Profile;
 import nl.tudelft.aidm.optimalgroups.model.dataset.DatasetContext;
 import nl.tudelft.aidm.optimalgroups.model.group.Groups;
 import nl.tudelft.aidm.optimalgroups.model.matching.AgentToProjectMatching;
 import nl.tudelft.aidm.optimalgroups.model.matching.GroupToProjectMatching;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.WeakHashMap;
-import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
 import static nl.tudelft.aidm.optimalgroups.experiment.paper.synthetic.model.ExperimentSubResult.serializeProfile;
@@ -110,10 +109,10 @@ public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
                 : datasetContext.groupSizeConstraint().maxSize();
 			
 	         // Calc distribution of pregrouping sizes
-	         var pregroupDist = groupSizesDist(pregroupings, maxAllowedGroupSize);
+	         var pregroupDist = PregroupingDistribution.from(pregroupings, maxAllowedGroupSize).ofStudentsAsString();
 			
 			// Calc # pregroupings together
-			var numPregroupingsTogether = new NumberProposedGroupsTogether(matching, pregroupings);
+			var numPregroupingsTogether = Togetherness.from(matching, pregroupings);
 			
 			return List.of(
 					datasetContext.identifier(),
@@ -129,13 +128,13 @@ public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
 					
 					serializeProfile(profileAllStudents()),
 					serializeProfile(profileSingles()),
-					serializeProfile(profilePregrouped()),
-					serializeProfile(profileUnsatpregroup()),
+					serializeProfile(profilePregroupedSat()),
+					serializeProfile(profilePregroupUnsat()),
 					
 					pregroupProportion,
 					pregroupDist,
 					
-					numPregroupingsTogether.asInt(),
+					numPregroupingsTogether.numGroups(),
 					pregroupings.count()
 			);
 		}
@@ -173,42 +172,35 @@ public class HistoricalDatasetExperiment extends HistoricalDataExperimentBase
 			return Profile.of(matchingSubsetOfSoloStudents);
 		}
 		
-		private Profile profilePregrouped()
+		private Profile profilePregroupedSat()
 		{
-			var preformedGroups = currentPregrouping();
-			var agentsPregrouping = preformedGroups.asAgents();
+			var pregroups = currentPregrouping();
 			
-			var matchingPregroupedSatisfied = AgentToProjectMatching.from(matching.filteredBySubsets(preformedGroups))
-			                                                        .filteredBy(agentsPregrouping);
+			var outcomePregroups = matching.filteredBySubsets(pregroups);
+			var satisfiedPregroupingStudents = AgentToProjectMatching.from(outcomePregroups).filteredBy(pregroups.asAgents());
 			
-			var pregroupingStudentsSatisfied = matchingPregroupedSatisfied.agents();
-			
-			return Profile.of(matchingPregroupedSatisfied);
+			return Profile.of(satisfiedPregroupingStudents);
 		}
 		
-		private Profile profileUnsatpregroup()
+		private Profile profilePregroupUnsat()
 		{
-			var preformedGroups = currentPregrouping();
-			var agentsPregrouping = preformedGroups.asAgents();
+			var pregroups = currentPregrouping();
 			
-			var matchingIndividuals = AgentToProjectMatching.from(matching);
-			var matchingPregroupedSatisfied = AgentToProjectMatching.from(matching.filteredBySubsets(preformedGroups))
-			                                                        .filteredBy(agentsPregrouping);
+			var outcomePregroups = matching.filteredBySubsets(pregroups);
+			var satisfiedPregroupingStudents = AgentToProjectMatching.from(outcomePregroups)
+					                                   .filteredBy(pregroups.asAgents())
+					                                   .agents();
 			
-			var pregroupingStudentsSatisfied = matchingPregroupedSatisfied.agents();
-			var pregroupingStudentsUnsatisfied = agentsPregrouping.without(pregroupingStudentsSatisfied);
-			var matchingPregroupedUnsatisfied = matchingIndividuals.filteredBy(pregroupingStudentsUnsatisfied);
+			var outcomeAll = AgentToProjectMatching.from(matching);
 			
-			return Profile.of(matchingPregroupedUnsatisfied);
+			var pregroupingStudents = pregroups.asAgents();
+			var unsatPregroupingStudents = pregroupingStudents.without(satisfiedPregroupingStudents);
+			
+			var outcomeUnsatPregroupingStudents = outcomeAll.filteredBy(unsatPregroupingStudents);
+			
+			return Profile.of(outcomeUnsatPregroupingStudents);
 		}
 	}
 	
-	@NotNull
-	private static String groupSizesDist(Groups<?> pregroupings, int maxAllowedGroupSize)
-	{
-		return IntStream.rangeClosed(2, maxAllowedGroupSize)
-		                .mapToObj(i -> Integer.toString(pregroupings.ofSize(i)
-		                                                            .count() * i))
-		                .collect(joining("|"));
-	}
+
 }
