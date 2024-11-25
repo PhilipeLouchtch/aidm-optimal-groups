@@ -1,14 +1,44 @@
 profile_histo <- function(cell) {
+    # Ensure cell is a single element
+    if (length(cell) != 1) {
+        print(cell)
+        stop("profile_histo expects a single element")
+    }
+    
     if (is.na(cell))
         cell <- ""
     
-    as.double(unlist(scan(text = cell, what = "double", sep = "|", quiet = TRUE)))
+    as.integer(unlist(scan(text = cell, what = "integer", sep = "|", quiet = TRUE)))
 }
 
 rank_profile <- function(cell) {
     profile_histo(cell) %>%
         imap(~ list(rep.int(.y, .x))) %>%
         unlist
+}
+
+sum_profiles <- function(profiles) {
+    # print(...)
+    
+    # Capture all input profiles
+    # profiles <- list(...)
+    
+    # Apply profile_histo to each profil
+    histograms <- lapply(profiles, profile_histo)
+    
+    # Determine the maximum length of the histograms
+    max_length <- max(sapply(histograms, length))
+    
+    # Extend each histogram to the maximum length
+    extended_histograms <- lapply(histograms, function(h) {
+        c(h, rep(0, max_length - length(h)))
+    })
+    
+    # Sum all extended histograms
+    summed_profile <- Reduce(`+`, extended_histograms)
+    
+    # Return the result as a string
+    paste(summed_profile, collapse = "|")
 }
 
 worst_obtained_rank <- function(xa) {
