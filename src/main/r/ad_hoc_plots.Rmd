@@ -22,7 +22,7 @@ color_scale_ce <- function() {
     ggplot2::scale_color_manual(values = mapping, limits = force)
 }
 
-data <- read_csv("C:\\WORK\\thesis\\aidm-optimal-groups\\reports\\anyexcept_tud.csv", show_col_types = FALSE) |> 
+data <- read_report("anyexcept_tud") |> 
     mutate(
         edition = factor(edition, ordered = T,
                          levels = c("CE3","CE4","CE10","CE11","CE14","CE17","CE18","CE23","CE39","CE42","CE45")
@@ -121,7 +121,9 @@ plot_raupcr_for_editions <- function(editions) {
     # plot(p_raupcr)
     return(p_raupcr)
 }
+```
 
+```{r fig.height = 5, fig.width = 10}
 # Editions with all classes of pregroupings -> small, submax and max
 plot_all_classes <- plot_raupcr_for_editions(c("CE4", "CE10", "CE11", "CE18"))
 ggsave(plot = plot_all_classes,

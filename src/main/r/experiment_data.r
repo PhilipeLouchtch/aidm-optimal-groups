@@ -159,6 +159,19 @@ read_experiment <- function(exp_name) {
     return(exp_files)
 }
 
+read_report <- function(exp_name) {
+    
+    root_dir_desktop = "D:\\Code\\Git repositories\\aidm-optimal-groups"
+    root_dir_laptop = "C:\\Users\\Philipe\\Documents\\GitHub\\aidm-optimal-groups"
+    
+    root_dir = root_dir_desktop
+    data_dir = paste(root_dir, "\\reports\\", sep="")
+    
+    exp_file <- paste0(data_dir, exp_name, ".csv")
+    
+    return(read_csv(exp_file, show_col_types = FALSE))
+}
+
 determine_gd <- function(filename) {
     p <- ".*_gd\\[(.+)\\].csv$"
     sub(x = filename, pattern = p, replacement = "\\1")
