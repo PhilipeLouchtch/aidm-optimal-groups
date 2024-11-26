@@ -20,9 +20,9 @@ load_data <- function() {
         )
 }
 
-prepare_data <- function(editions) {
+prepare_data <- function(data, editions) {
     
-    data_longer <- load_data() |>
+    data_longer <- data |>
         
         filter(edition %in% editions) |> 
         
@@ -72,9 +72,9 @@ prepare_data <- function(editions) {
     return(data_longer)
 } 
 
-prepare_data_satunsatcombined <- function(editions) {
+prepare_data_satunsatcombined <- function(data, editions) {
     
-    data_longer <- load_data() |>
+    data_longer <- data |>
         
         filter(edition %in% editions) |> 
         
@@ -100,7 +100,7 @@ prepare_data_satunsatcombined <- function(editions) {
             
             scenario = factor(scenario, ordered = T,
                               levels = c("MAX", "EXCEPT", "ANY"),
-                              labels = c("Max", "Excpt", "Any")
+                              labels = c("Max", "Exc", "Any")
                        ),
             
             satisfaction = factor(satisfaction, ordered = T,
@@ -135,6 +135,8 @@ prepare_data_satunsatcombined <- function(editions) {
 
 ```{r fig.height = 8}
 plot_raupcr_for_editions <- function(editions) {
+    
+    data <- load_data()
 
     color_scale_ce <- function() {   
         # Taken from the 12 color scheme at http://tsitsul.in/blog/coloropt/
@@ -149,7 +151,7 @@ plot_raupcr_for_editions <- function(editions) {
     }
 
     # data_longer <- prepare_data(editions)
-    data_longer <- prepare_data_satunsatcombined(editions)
+    data_longer <- prepare_data_satunsatcombined(data, editions)
 
     p_raupcr <- ggplot(data_longer,
             aes(x = interaction(scenario, mechanism),
@@ -168,14 +170,15 @@ plot_raupcr_for_editions <- function(editions) {
         #     scale = "count"
         # ) +
         
-        geom_beeswarm(
+        
+        geom_point(
             mapping	= aes(color = edition),
             varwidth = TRUE,
             cex = 2,
             method = "center",
             priority = "none"
         ) +
-        
+
         #rows = vars(satisfaction)
         facet_grid(cols = vars(grouping_class)) +
         
@@ -207,11 +210,13 @@ plot(plot_all_classes)
 #        device = "png", width = 300, height = 90, units = "mm", dpi = "print"
 # )
 
-# plot_max_small <- plot_raupcr_for_editions(c("CE23", "CE39", "CE45"))
-# ggsave(plot = plot_max_small,
-#        filename = "plots/thesis/historical_anyexceptmax_raupcr_MAX_SMALL-groupingcombined.png",
-#        device = "png", width = 300, height = 90, units = "mm", dpi = "print"
-# )
+plot_max_small <- plot_raupcr_for_editions(c("CE23", "CE39", "CE45"))
+plot(plot_max_small)
+
+ggsave(plot = plot_max_small,
+       filename = "plots/thesis/historical_anyexceptmax_raupcr_ALL_CLASSES-groupingcombined-other.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
+)
 
 
 # plot_all <- plot_raupcr_for_editions(NULL)
