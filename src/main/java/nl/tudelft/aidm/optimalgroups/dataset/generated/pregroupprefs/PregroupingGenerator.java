@@ -65,8 +65,8 @@ public interface PregroupingGenerator
 	static PregroupingGenerator singlePregroupingSizeOnly(int groupSize, double chance)
 	{
 		return new ChanceBased(
-				new Item(1, 1 - chance),
-				new Item(groupSize, chance)
+				new ChanceBased.Item(1, 1 - chance),
+				new ChanceBased.Item(groupSize, chance)
 		);
 	}
 	
@@ -74,11 +74,11 @@ public interface PregroupingGenerator
 	{
 		// sortof based on CE10
 		return new ChanceBased(
-				new Item(1, 0.3),
-				new Item(2, 0.03),
-				new Item(3, 0.15),
-				new Item(4, 0.27),
-				new Item(5, 0.25)
+				new ChanceBased.Item(1, 0.3),
+				new ChanceBased.Item(2, 0.03),
+				new ChanceBased.Item(3, 0.15),
+				new ChanceBased.Item(4, 0.27),
+				new ChanceBased.Item(5, 0.25)
 		);
 	}
 	
