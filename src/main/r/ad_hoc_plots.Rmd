@@ -72,6 +72,45 @@ prepare_data <- function(data, editions) {
     return(data_longer)
 } 
 
+prepare_data_togetherness <- function(data, editions) {
+    
+    data_longer <- data |>
+        
+        filter(edition %in% editions) |>
+        
+        group_by(edition, mechanism, scenario) |>
+            mutate(
+                togetherness_max = ifelse(max_count==0, NA, max_together / max_count),
+                togetherness_small = ifelse(small_count==0, NA, small_together / small_count),
+                togetherness_submax = ifelse(submax_count==0, NA, submax_together / submax_count)
+            ) |>
+        ungroup() |>
+        
+        pivot_longer(
+            cols = starts_with("togetherness_"),
+            names_pattern = "togetherness_(.+)",
+            names_to = c("grouping_class"),
+            values_to = "togetherness"
+        ) |>
+        
+        select(edition, mechanism, scenario, togetherness, grouping_class) |>
+        
+        mutate(
+            grouping_class = factor(grouping_class, ordered = TRUE,
+                                    levels = c("solo", "max", "small", "submax"),
+                                    labels = c("'Solo' students",
+                                               "'Maximal pregroups' students",
+                                               "'Small pregroups' students",
+                                               "'Submax pregroups' students")
+                             ),
+            
+            scenario = factor(scenario, ordered = T,
+                              levels = c("MAX", "EXCEPT", "ANY"),
+                              labels = c("Max", "Exc", "Any")
+                       ),
+        )
+}
+
 prepare_data_satunsatcombined <- function(data, editions) {
     
     data_longer <- data |>
@@ -86,7 +125,7 @@ prepare_data_satunsatcombined <- function(data, editions) {
         ) |>
         
         mutate(
-            across(contains(c("together", "count")), \(x) (NULL)),
+            # across(contains(c("together", "count")), \(x) (NULL)),
             
             worst_rank = profile |> map(worst_obtained_rank) |> unlist(),
             
@@ -173,10 +212,6 @@ plot_raupcr_for_editions <- function(editions) {
         
         geom_point(
             mapping	= aes(color = edition),
-            varwidth = TRUE,
-            cex = 2,
-            method = "center",
-            priority = "none"
         ) +
 
         #rows = vars(satisfaction)
@@ -199,22 +234,22 @@ plot_raupcr_for_editions <- function(editions) {
 ```{r fig.height = 5, fig.width = 10}
 # Editions with all classes of pregroupings -> small, submax and max
 
-#"CE4", "CE10", "CE11", 
-data_longer <- prepare_data(c("CE4"))
+editions_main <- c("CE4", "CE10", "CE11", "CE18")
+editions_other <- c("CE23", "CE39", "CE45")
 
-plot_all_classes <- plot_raupcr_for_editions(c("CE4", "CE10", "CE11", "CE18"))
-plot(plot_all_classes)
+plot_main_set <- plot_raupcr_for_editions(editions_main)
+plot(plot_main_set)
 
-# ggsave(plot = plot_all_classes,
-#        filename = "plots/thesis/historical_anyexceptmax_raupcr_ALL_CLASSES-groupingcombined.png",
-#        device = "png", width = 300, height = 90, units = "mm", dpi = "print"
-# )
+ggsave(plot = plot_main_set,
+       filename = "plots/thesis/historical_anyexceptmax_main.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
+)
 
-plot_max_small <- plot_raupcr_for_editions(c("CE23", "CE39", "CE45"))
-plot(plot_max_small)
+plot_other_set <- plot_raupcr_for_editions(editions_other)
+plot(plot_other_set)
 
-ggsave(plot = plot_max_small,
-       filename = "plots/thesis/historical_anyexceptmax_raupcr_ALL_CLASSES-groupingcombined-other.png",
+ggsave(plot = plot_other_set,
+       filename = "plots/thesis/historical_anyexceptmax_other.png",
        device = "png", width = 300, height = 90, units = "mm", dpi = "print"
 )
 
@@ -237,109 +272,59 @@ More importantly, need to finish the viz for inclusion in the document. So:
    - the togetherness counts plotted to augment the AUPCR plots.
 
 
-```{r fig.height = 8}
- # togetherness
+```{r fig.height = 4, fig.width = 10}
 
-data_togetherness <- load_data() |>
+plot_togetherness <- function(data, editions) {
     
-    pivot_longer(
-        cols = ends_with("_together") | ends_with("_count"),
-        names_pattern = "(.+)_(.+)",
-        names_to = c("grouping_class", "status"),
-        values_to = "count"
-    ) |>
+    ## get the data
+    data_togetherness <- prepare_data_togetherness(data, editions)
     
-    mutate(
-        status = case_when(
-            status == 'together' ~ 'together',
-            status == 'count' ~ 'max'
-        )
-    ) |> 
-    
-    pivot_wider(
-        names_from = status, values_from = count
-    ) |> 
-    
-    select(edition, mechanism, scenario, grouping_class, together, max) |>
-    
-    mutate(
-        proportion_sat = ifelse(max == 0, NA, together / max),
-        # Don't plot "0 unsatisfied if all are together and handle case max = 0
-        proportion_unsat = ifelse(together == max, NA, 1 - (together / max) ),
-        together = NULL,
-        max = NULL
-    ) |> 
-    
-    pivot_longer(
-        cols = starts_with("proportion"),
-        names_to = "satisfaction",
-        names_prefix = "proportion_",
-        values_to = "proportion"
-    ) |> 
-    
-    mutate(
-        grouping_class = factor(grouping_class, ordered = TRUE,
-                                levels = c("solo", "max", "small", "submax"),
-                                labels = c("'Solo' students",
-                                           "'Maximal pregroups' students",
-                                           "'Small pregroups' students",
-                                           "'Submax pregroups' students")
-                         ),
+    ## plot
+    p_together <- ggplot(data_togetherness,
+           aes(x = interaction(scenario, mechanism),
+                y = togetherness,
+                group = interaction(scenario, mechanism)
+            )
+        ) +
         
-        scenario = factor(scenario, ordered = TRUE,
-                          levels = c("MAX", "EXCEPT", "ANY")
-                   ),
+        ## visual aid
+        geom_boxplot(
+            outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
+            alpha = 0,
+            color = "#00000020"
+        ) +
         
-        satisfaction = factor(satisfaction, ordered = T,
-                              levels = c("sat", "unsat"),
-                              labels = c("together", "not together")
-                       )
-    )
-
-p_together <- ggplot(data_togetherness,
-       aes(x = interaction(mechanism, scenario),
-            y = proportion,
-            group = interaction(scenario, mechanism)
+        ## actual data points
+        geom_point(
+            mapping	= aes(color = edition),
+        ) +
+        
+        facet_grid(cols = vars(grouping_class)) +
+        color_scale_ce() +
+        
+        guides(x = "axis_nested") +
+        
+        labs(x = "Mechanism x Scenario combination",
+             y = "Togetherness",
+             color = "Course edition"
         )
-    ) +
+}
     
-    geom_boxplot(
-        outlier.shape = NA, # hide outliers due to adding dots via geom_jitter
-        alpha = 0,
-        color = "#00000020"
-    ) +
-    
-    # geom_violin(
-    #     scale = "count"
-    # ) +
-    geom_beeswarm(
-        mapping	= aes(color = edition),
-        varwidth = TRUE,
-        cex = 1.1,
-        method = "center",
-        priority = "none",
-        corral = "wrap",
-        corral.width = 0.1,
-        groupOnX = T
-        #position = position_jitterdodge(dodge.width = 0.8, jitter.width = 2)
-    ) +
-    
-    facet_grid(rows = vars(satisfaction), cols = vars(grouping_class)) +
-    color_scale_ce() +
-    
-    guides(x = "axis_nested") +
-    
-    labs(x = "Mechanism x Scenario combination",
-         y = "Proportion students (not) together",
-         color = "Course edition"
-    )
-    
+p_together_main <- plot_togetherness(data, editions_main)
 print(p_together)
 
-# ggsave(plot = p_together,
-#        filename = "plots/thesis/historical_anyexceptmax_together.png",
-#        device = "png", width = 300, height = 160, units = "mm", dpi = "print"
-#)
+ggsave(plot = p_together_main,
+       filename = "plots/thesis/historical_anyexceptmax_together_main.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
+)
+
+p_together_other <- plot_togetherness(data, editions_other)
+print(p_together_other)
+
+ggsave(plot = p_together_other,
+       filename = "plots/thesis/historical_anyexceptmax_together_other.png",
+       device = "png", width = 300, height = 90, units = "mm", dpi = "print"
+)
 
 ```
 
