@@ -123,7 +123,9 @@ transform_hist_data <- function(data) {
         filter(!is.na(rank)) |>
         mutate(
             rank = map(rank, rank_profile),
-            student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied"))
+            student_type = factor(student_type,
+                                  levels = c("all", "solo", "pregrouped", "unsatisfied"),
+                                  labels = c("all", "solo", "pregroup", "unsat"))
         )
 }
 
@@ -175,12 +177,16 @@ plot_historical_ranksboxplot("Max-only", loadHistoricalExperimentData("Historica
 
 ```
 
-```{r fig.height=8, fig.width=15}
+```{r fig.height=5}
 
-plot_historical_bepsys_vs_chia <- function(type, data) {
-
-    plot <- ggplot(transform_hist_data(data) |> unchop(rank),
-                aes(x = student_type, y = rank, group = interaction(mechanism_short, student_type), fill = mechanism_short)
+plot_historical_bepsys_vs_chia <- function(title, data) {
+    data_processed <- transform_hist_data(data) |> unchop(rank)
+    
+    plot <- ggplot(data_processed,
+                aes(x = interaction(student_type, mechanism_short), 
+                    y = rank,
+                    group = interaction(student_type, mechanism_short),
+                    fill = mechanism_short)
             ) +
     
         geom_boxplot() +
@@ -194,16 +200,17 @@ plot_historical_bepsys_vs_chia <- function(type, data) {
             scale_y_continuous(breaks = append(c(1, 3), seq(5,55,5)), minor_breaks = 1:55) #append(c(1, 3), seq(5,55,5))
         )) +
 
-        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        scale_x_discrete(guide = guide_axis_nested(inv = F, angle = 0 )) +
+        
         labs(
-            title = type,
+            title = title,
             y = "Rank",
-            x = "Student grouping outcome",
+            x = "",
             fill = "Mechanism"
         ) +
         # coord_cartesian(ylim = c(0.7, 1)) +
         
-        theme(legend.key.size = unit(5, "mm"), legend.position = "bottom")
+        theme(legend.key.size = unit(5, "mm"), legend.position = "none")
 
     return (plot)
 }
@@ -214,11 +221,17 @@ combined_historical_tu <- bind_rows(list(any = loadHistoricalExperimentData("His
                                          ),
                                     .id = "setting")
 
-plot <- plot_historical_bepsys_vs_chia(
-    "BEPSys vs Chiarandini (OWA) - selected instances - max-size pregrouping only",
+plot_bepsys_chia_max_selected <- plot_historical_bepsys_vs_chia(
+    "",
     combined_historical_tu |>
         filter(id %in% c("CE4", "CE11", "CE10", "CE45") & mechanism_short != "Fair" & setting == "max")
     |> mutate( id = factor(id, c("CE4", "CE11", "CE10", "CE45")) )
+)
+
+print(plot_bepsys_chia_max_selected)
+ggsave(plot = plot_bepsys_chia_max_selected,
+       filename = "plots/thesis/hist_bepsys_vs_chia_max_selected.png",
+       device = "png", width = 300, height = 160, units = "mm", dpi = "print"
 )
 
 save_plot_png(plot, "plots/thesis", "bepsys_vs_chia_quality_eps", 250, 130)

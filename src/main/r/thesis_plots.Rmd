@@ -184,120 +184,212 @@ ggsave(filename,
        device = png, width = 240, height = 140, units = "mm", dpi = 300, pointsize = 12
 )
 
+## Included in Thesis:
+
+plot_slots_quality_withslots <- function () {
+    
+    data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
+        augment_with_nice_projectpref_name() |>
+        filter(trial == 0 & projectpref_short != "unanimous" & num_students == 200) |>
+        augment_with_short_mechanism_name() |>
+        filter(mechanism_short != "Fair")
+    
+    worst <- max(data_slots$worst_rank)
+    data_slots_aug <- data_slots |> mutate(worst_rank_scaled = worst_rank / worst)
+    
+    plot <- ggplot(data_slots_aug, aes(x = interaction(num_slots, mechanism_short),
+                                       y = aupcr,
+                                       group = interaction(num_slots, mechanism_short),
+                                   )
+                   ) +
+        
+                geom_boxplot(aes(color = num_slots)) +
+        
+                geom_point(aes(y = worst_rank_scaled),
+                   shape = 8, size = 2, stroke = 0.2,
+                   position = position_dodge(width = 0.7), color = "black") +
+        
+                scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
+        
+                scale_shape_identity() + 
+        
+                facet_grid(project_pressure ~ projectpref_short, shrink = FALSE) +
+                # ylim(0.5, 1) +
+                # coord_flip() + 
+                #scale_x_discrete(guide = guide_axis(angle = 45)) +
+        
+                guides(x = "axis_nested") +
+        
+                labs(
+                    title = "All",
+                    y = "AUPCR",
+                    x = expression('Mechanism' %*% ' pressure (slots)'),
+                    color = "", fill = ""
+                ) + 
+                theme(legend.position = "none", legend.direction = "horizontal", legend.key.size = unit(5, "mm"))
+}
+
+
+print(plot_slots_quality_withslots())
+ggsave(plot = plot_slots_quality_withslots(),
+       filename = "plots/thesis/synth_slots_quality.png",
+       device = "png", width = 330, height = 206, units = "mm", dpi = "print"
+)
+        
+
 ```
 
 # GSB - runtimes
-```{r}
+```{r fig.height=10}
 
-data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1")
+data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+        filter(num_students != 50) |>
+        augment_with_short_mechanism_name() |>
+        augment_with_nice_projectpref_name()
 
-plot <- ggplot(data_groupsizb %>% filter(num_students != 50),
-               aes(x = factor(num_students),
-                   y = ceiling(duration_ms / 1000),
-                   group = interaction(mechanism, num_students),
-                   color = mechanism_short)
-            ) +
-            geom_boxplot() +
-            facet_grid(gsc_max ~ gsc_min,
-                       labeller = labeller(gsc_max = ~ paste("u:", .),
-                                           gsc_min = ~ paste("l:", .))
-                       ) +
-            scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
-                               labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
-                               ) + 
-            scale_x_discrete() +
-            labs(
-                title = "Group size bounds scaling - runtime",
-                y = "Duration (sec)",
-                x = "# students",
-                color = "Mechanism: "
-            ) +
-            theme(legend.position = "bottom", legend.direction = "horizontal")
+plot_gsb <- function() {
+    filtered_data <- data_groupsizb
+    
+    plot <- ggplot(filtered_data,
+                   aes(x = interaction(mechanism_short, num_students),
+                       y = ceiling(duration_ms / 1000),
+                       group = interaction(mechanism_short, num_students),
+                       color = mechanism_short)
+                ) +
+                geom_boxplot() +
+                facet_grid(gsc_max ~ gsc_min,
+                           labeller = labeller(gsc_max = ~ paste("u:", .),
+                                               gsc_min = ~ paste("l:", .))
+                           ) +
+                scale_y_continuous(trans = "log2", oob = scales::oob_squish_any,
+                                   labels = \(z) scales::label_math(expr = 2^.x)(log2(z))
+                                   ) + 
+                # scale_x_discrete() +
+                guides(x = "axis_nested") +
+                labs(
+                    title = "Group size bounds scaling - runtime",
+                    y = "Duration (sec)",
+                    x = "",
+                    color = "Mechanism: "
+                ) +
+                theme(legend.position = "none", legend.direction = "horizontal")
+}
 
-print(plot)
+print(plot_gsb(600))
 
-ggsave(paste("plots", "thesis", "gsb_runtimes.png", sep = "/"),
-       device = png, width = 300, height = 160, units = "mm", dpi = 300, pointsize = 12
+ggsave(plot = plot_gsb(),
+       filename = "plots/thesis/synth_gsb_runtimes.png",
+       device = png, width = 330, height = 200, units = "mm", dpi = "print", pointsize = 12
 )
 
 ```
 
-# GSB - quality (worst_rank)
-```{r}
+# GSB - quality (worst_rank+aupcr)
+```{r fig.height=8}
 
-data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
-    filter(num_students != 50 & proj_pref_type != "singleton" & trial == 1 & mechanism_short != "Fair")
+data_gsb_q <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+    # exclude not interesting results and keep only trial 1 runs
+    filter(num_students != 50 & proj_pref_type != "singleton" & trial == 1 & mechanism_short != "Fair") |>
+    augment_with_short_mechanism_name() |>
+    augment_with_nice_projectpref_name()
 
-sample <- data_groupsizb |> filter(gsc_min == 5 & gsc_max == 8 & num_students == 600 & mechanism_short == "BEPSys")
 
-breaks_y <- seq(0, 200, by = 50)
-breaks_y[1] <- 1
-
-plot <- ggplot(data_groupsizb,
-               aes(x = factor(num_students),
-                   y = worst_rank,
-                   group = interaction(mechanism, num_students),
-                   color = mechanism_short)
+plot_gsb_q <- function(num_studs) {
+    filtered_data <- data_gsb_q |>
+        filter(num_students == num_studs)
+    
+    # scale worst rank to the main y-axis, which is AUPCR that goes from 0 to 1
+    worst <- max(filtered_data$worst_rank)
+    data_aug <- filtered_data |> mutate(worst_rank_scaled = worst_rank / worst)
+    
+    plot <- ggplot(data_aug,
+               aes(x = interaction(projectpref_short, mechanism_short),
+                   group = interaction(projectpref_short, mechanism_short),
+                   )
             ) +
-            geom_boxplot() +
+        
+        
+            geom_boxplot(aes(y = metric_value, color = mechanism_short), stroke = 0.2) +
+                   
+            geom_boxplot(aes(y = aupcr, color = mechanism_short)) +
+
+            geom_boxplot(aes(y = worst_rank_scaled),
+                         stroke = 0.2,
+                         color = "black",
+                         shape = 8, size = 1, position = position_dodge(width = 0.7)
+            ) +
+            scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
     
             facet_grid(gsc_max ~ gsc_min,
                        labeller = labeller(gsc_max = ~ paste("u:", .),
                                            gsc_min = ~ paste("l:", .))
-                       ) +
-            # scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
-                               # labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
-                               # ) + 
-            scale_x_discrete() +
-            scale_y_continuous(breaks = {
-                breaks_y <- seq(0, 200, by = 50)
-                breaks_y[1] <- 1
-                breaks_y
-            }) +
+            ) +
+        
+            guides(x = guide_axis_nested(angle = 90)) + 
+                
             labs(
-                title = "Group size bounds scaling - worst ranks",
-                y = "Worst rank",
-                x = "# students",
+                title = paste("Group size bounds scaling -", num_studs, "students"),
+                y = "AUPCR",
+                x = "",
                 color = "Mechanism: "
             ) +
-            theme(legend.position = "bottom", legend.direction = "horizontal")
+            theme(legend.position = "none", legend.direction = "horizontal")
+}
 
-print(plot)
+print(plot_gsb_q(200))
 
-ggsave(paste("plots", "thesis", "gsb_worstrank.png", sep = "/"),
-       device = png, width = 300, height = 140, units = "mm", dpi = 300, pointsize = 12
-)
+ggsave(plot = plot_gsb_q(200),
+       filename = paste0("plots/thesis/synth_gsb_s", 200, ".png"),
+       device = "png", width = 330, height = 206, units = "mm", dpi = "print")
+       
+ggsave(plot = plot_gsb_q(600),
+       filename = paste0("plots/thesis/synth_gsb_s", 600, ".png"),
+       device = "png", width = 330, height = 206, units = "mm", dpi = "print")
+```
 
-# sample <- data_groupsizb |> filter(gsc_min == 5 & gsc_max == 8 & num_students == 600 & mechanism_short == "BEPSys")
-
-plot <- ggplot(data_groupsizb,
-               aes(x = factor(num_students),
-                   y = aupcr,
-                   group = interaction(mechanism, num_students),
-                   color = mechanism_short)
+```{r fig.height=8}
+## new idea: more granular, plot both aupcr and worst rank as boxplots
+plot_gsb_q <- function(num_studs) {
+    filtered_data <- data_gsb_q |>
+        filter(num_students == num_studs)
+    
+    # scale worst rank to the main y-axis, which is AUPCR that goes from 0 to 1
+    worst <- max(filtered_data$worst_rank)
+    data_aug <- filtered_data |> mutate(worst_rank_scaled = worst_rank / worst) |>
+        pivot_longer(
+            cols = c("aupcr", "worst_rank_scaled"),
+            names_to = "metric_name",
+            values_to = "metric_value"
+        )
+    
+    plot <- ggplot(data_aug,
+               aes(x = interaction(projectpref_short, mechanism_short, metric_name),
+                   group = interaction(projectpref_short, mechanism_short, metric_name),
+                   )
             ) +
-            geom_boxplot() +
+        
+            geom_boxplot(aes(y = metric_value, color = mechanism_short), stroke = 0.2) +
+        
+    
             facet_grid(gsc_max ~ gsc_min,
                        labeller = labeller(gsc_max = ~ paste("u:", .),
                                            gsc_min = ~ paste("l:", .))
-                       ) +
-            # scale_y_continuous(trans = "log10", oob = scales::oob_squish_any,
-                               # labels = \(z) scales::label_math(expr = 10^.x)(log10(z))
-                               # ) + 
-            scale_x_discrete() +
+            ) +
+        
+            guides(x = guide_axis_nested(angle = 90)) + 
+
+            scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
+                
             labs(
-                title = "Group size bounds scaling - AUPCR",
+                title = paste("Group size bounds scaling -", num_studs, "students"),
                 y = "AUPCR",
-                x = "# students",
+                x = "",
                 color = "Mechanism: "
             ) +
-            theme(legend.position = "bottom", legend.direction = "horizontal")
+            theme(legend.position = "none", legend.direction = "horizontal")
+}
 
-print(plot)
-
-ggsave(paste("plots", "thesis", "gsb_aupcr.png", sep = "/"),
-       device = png, width = 300, height = 140, units = "mm", dpi = 300, pointsize = 12
-)
+print(plot_gsb_q(200))
 
 ```
 

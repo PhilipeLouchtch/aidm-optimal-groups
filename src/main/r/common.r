@@ -7,14 +7,14 @@ mechanism_name_map[["Chiarandini w Fair pregrouping owa - anyClique_softGrp"]] =
 mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrp"]] = "Fair"
 mechanism_name_map[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrpEps"]] = "Fair"
 
-mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrpEps"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrp"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrpEps"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrp"]] = "Chiarandini"
-mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrpEps"]] = "Chiarandini"
+mechanism_name_map[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - anyClique_softGrpEps"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrp"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - maxCliques_softGrpEps"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrp"]] = "Chia"
+mechanism_name_map[["Chiaranini MiniMax-OWA - exceptSubmaxCliques_softGrpEps"]] = "Chia"
 
 mechanism_name_map[["Fair (impr-eps) - owa - anyClique_softGrpEps"]] = "Fair"
 mechanism_name_map[["Fair (impr-eps) - owa - maxCliques_softGrpEps"]] = "Fair"
@@ -30,9 +30,9 @@ mechanism_name_map_short[["Chiarandini w Fair pregrouping IMPR owa - anyClique_s
 mechanism_name_map_short[["Chiarandini w Fair pregrouping IMPR owa - anyClique_softGrpEps"]] = "Fair"
 mechanism_name_map_short[["Fair (impr-eps) - owa - anyClique_softGrpEps"]] = "Fair"
 mechanism_name_map_short[["BepSys (reworked) - Borda"]] = "BEPSys"
-mechanism_name_map_short[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chiarandini"
-mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chiarandini"	
-mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chiarandini"
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - no_grouping"]] = "Chia"
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_softGrp"]] = "Chia"	
+mechanism_name_map_short[["Chiaranini MiniMax-OWA - anyClique_hardGrp"]] = "Chia"
 mechanism_name_map_short[["SDPC-S (project slots)"]] = "SDPC-S"
 
 nice_proj_pref_name_map = new.env()
@@ -47,7 +47,7 @@ augment_with_short_mechanism_name <- function(data) {
     d <- data |> mutate(
         mechanism_short = map(mechanism, ~ mechanism_name_map[[ levels(mechanism)[.] ]] ) |>
             unlist() |>
-            factor(levels = c("BEPSys", "SDPC-S", "Chiarandini", "Fair"))
+            factor(levels = c("BEPSys", "SDPC-S", "Chia", "Fair"))
     )
     
     d
