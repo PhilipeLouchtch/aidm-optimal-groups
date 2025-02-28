@@ -64,7 +64,7 @@ qweqwe <- historical_data_tu |>
                 ) |>
                 mutate(
                     student_type = factor(student_type, levels = c("all", "solo", "pregrouped", "unsatisfied")),
-                    aupcr = pmap(list(num_projects, num_slots, rank), calc_aupcr) |> unlist(),
+                    aupcr = pmap(list(num_projects, rank), calc_aupcr) |> unlist(),
                     sum_ranks_norm = ranks |> map(~ sum(.) / length(.)) |> unlist()
                 ) |>
                 select(

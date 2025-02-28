@@ -66,7 +66,7 @@ prepare_data <- function(data, editions) {
         # calc relative-AUPCR (max-rank is the "worst rank within grouping")
         # if the grouping is empty (then set AUPCR to 1 - this only makes sense for unsat group)
         mutate(
-            r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
+            r_aupcr = map2( worst_rank__grp, profile, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, .y)) ) |> unlist() #
         )
     
     return(data_longer)
@@ -165,7 +165,7 @@ prepare_data_satunsatcombined <- function(data, editions) {
         # calc relative-AUPCR (max-rank is the "worst rank within grouping")
         # if the grouping is empty (then set AUPCR to 1 - this only makes sense for unsat group)
         mutate(
-            r_aupcr = map2( worst_rank__grp, profile_combined, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, 0, .y)) ) |> unlist() # 
+            r_aupcr = map2( worst_rank__grp, profile_combined, ~ ifelse(is.na(.y), NA, calc_aupcr(.x, .y)) ) |> unlist() #
         )
     
     return(data_longer)
@@ -355,8 +355,8 @@ for (scale_factor in scale_factors) {
     
     print(paste("Scale factor: ", scale_factor))
     
-    print(paste("Base:     ", calc_aupcr(worst, 1, profile)))
-    print(paste("Scaled   :", calc_aupcr(worst, 1, scaled_profile_serialized)))
+    print(paste("Base:     ", calc_aupcr(worst,  profile)))
+    print(paste("Scaled   :", calc_aupcr(worst,  scaled_profile_serialized)))
     
     
     sum_base <- sum(profile_parsed)
@@ -368,8 +368,8 @@ for (scale_factor in scale_factors) {
     profile_norm_ser <- paste(profile_parsed / sum_base, collapse = "|")
     
     
-    print(paste("Base-norm:", calc_aupcr(worst, 1, profile_norm_ser)))
-    print(paste("Scaled-nm:", calc_aupcr(worst, 1, scaled_profile_add_norm_ser)))
+    print(paste("Base-norm:", calc_aupcr(worst, profile_norm_ser)))
+    print(paste("Scaled-nm:", calc_aupcr(worst, scaled_profile_add_norm_ser)))
     
 }
 

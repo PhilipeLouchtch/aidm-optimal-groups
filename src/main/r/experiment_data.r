@@ -20,7 +20,7 @@ loadSlotsExperimentData <- function(exp_prefix) {
     map_dfr(exp_files, read_csv, col_types = column_spec) |>
         mutate(
             worst_rank = map(profile_all, worst_obtained_rank) |> unlist(),
-            aupcr = pmap(list(num_projects, num_slots, profile_all), calc_aupcr) |> unlist()
+            aupcr = pmap(list(num_projects, profile_all), calc_aupcr) |> unlist()
         ) |>
         fix_pressure_levels()
 }
@@ -44,7 +44,7 @@ loadSizeExperimentData <- function(exp_prefix) {
     map_dfr(exp_files, read_csv, col_types = column_spec) |>
         mutate(
             worst_rank = map(profile_all, worst_obtained_rank) |> unlist(),
-            aupcr = pmap(list(num_projects, num_slots, profile_all), calc_aupcr) |> unlist()
+            aupcr = pmap(list(num_projects, profile_all), calc_aupcr) |> unlist()
         ) |>
         augment_with_short_mechanism_name()
 }
@@ -71,7 +71,7 @@ loadGroupSizeBoundsExperimentData <- function(exp_prefix) {
     map_dfr(exp_files, read_csv, col_types = column_spec) |>
         mutate(
             worst_rank = map(profile_all, worst_obtained_rank) |> unlist(),
-            aupcr = pmap(list(num_projects, num_slots, profile_all), calc_aupcr) |> unlist()
+            aupcr = pmap(list(num_projects, profile_all), calc_aupcr) |> unlist()
         ) |>
         augment_with_short_mechanism_name() |>
         fix_pressure_levels()
