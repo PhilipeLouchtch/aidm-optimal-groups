@@ -183,9 +183,10 @@ filename = paste("plots", "thesis", "quality_nogroup2.png", sep = "/")
 ggsave(filename,
        device = png, width = 240, height = 140, units = "mm", dpi = 300, pointsize = 12
 )
+```
 
 ## Included in Thesis:
-
+```{r, fig.width=13}
 plot_slots_quality_withslots <- function () {
     
     data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
@@ -232,11 +233,9 @@ plot_slots_quality_withslots <- function () {
 
 print(plot_slots_quality_withslots())
 ggsave(plot = plot_slots_quality_withslots(),
-       filename = "plots/thesis/synth_slots_quality.png",
+       filename = "plots/thesis/synth_slots_quality_upd.png",
        device = "png", width = 330, height = 206, units = "mm", dpi = "print"
 )
-        
-
 ```
 
 # GSB - runtimes

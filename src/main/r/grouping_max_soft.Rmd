@@ -24,6 +24,7 @@ title <- function(mechanism_name, proj_pref_type) {
 
 ```
 
+# These are some trial and error plotting experiments with generated data
 
 # RUNTIMES
 ```{r}
@@ -71,156 +72,6 @@ for (ppt in levels(data_pregroup_soft$proj_pref_type)){
 #     geom_boxplot() 
 #     ylim(0, 100)
 ```
-
-# QUALITY (AUPCR)
-```{r}
-for (ppt in levels(data_pregroup_soft$proj_pref_type)){
-    for (mech in levels(data_pregroup_soft$mechanism)) {
-        
-        pretty_title = title(mech, ppt)
-        
-        data_filtered <- data_pregroup_soft %>%
-            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
-            mutate(
-                aupcr = map2(num_projects, profile_all, calc_aupcr) %>% unlist
-            )
-        
-        
-        plot <- ggplot(data_filtered, aes(x = num_slots, y = aupcr, group = num_slots)) +
-                    geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(num_students ~ project_pressure) +
-                    ylim(0.5, 1) +
-                    labs(
-                        title = title(mech, ppt),
-                        y = "AUPCR",
-                        x = "# slots (per project topic)"
-                    )
-        
-        print(plot)
-        
-        path = paste("plots", "slots_exp", "aupcr", ppt, sep = "/")
-        filename <- paste(path, paste("aupcr_", pretty_title, ".png", sep = ""), sep ="/")
-        ggsave(filename,
-               device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        )
-    }
-}
-
-```
-
-# WORST RANK PLOTS
-```{r}
-# WORST RANK
-for (ppt in levels(data_pregroup_soft$proj_pref_type)){
-    for (mech in levels(data_pregroup_soft$mechanism)) {
-        
-        pretty_title = title(mech, ppt)
-        
-        data_filtered <- data_pregroup_soft %>%
-            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
-            mutate(
-                worst_rank = map(profile_all, worst_obtained_rank) %>% unlist
-            )
-        
-        # y-limit must be shared over all plots within group???
-        
-        plot <- ggplot(data_filtered, aes(x = num_slots, y = worst_rank, group = num_slots)) +
-                    geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(num_students ~ project_pressure) +
-                    # ylim(0.5, 1) + 
-                    labs(
-                        title = title(mech, ppt),
-                        y = "Worst rank",
-                        x = "# slots (per project topic)"
-                    )
-        
-        print(plot)
-        
-        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
-        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
-        # ggsave(filename,
-        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        # )
-    }
-}
-```
-
-# AVG RANK
-```{r}
-for (ppt in levels(data_pregroup_soft$proj_pref_type)){
-    for (mech in levels(data_pregroup_soft$mechanism)) {
-        
-        pretty_title = title(mech, ppt)
-        
-        data_filtered <- data_pregroup_soft %>%
-            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
-            mutate(
-                avg_rank = map(profile_all, avg_rank) %>% unlist
-            )
-        
-        # y-limit must be shared over all plots within group???
-        
-        plot <- ggplot(data_filtered, aes(x = num_slots, y = avg_rank, group = num_slots)) +
-                    geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(num_students ~ project_pressure) +
-                    # ylim(0.5, 1) + 
-                    labs(
-                        title = title(mech, ppt),
-                        y = "AVG rank",
-                        x = "# slots (per project topic)"
-                    )
-        
-        print(plot)
-        
-        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
-        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
-        # ggsave(filename,
-        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        # )
-    }
-}
-```
-
-# AVG RANK (WEIGHTED)
-```{r}
-for (ppt in levels(data_pregroup_soft$proj_pref_type)){
-    for (mech in levels(data_pregroup_soft$mechanism)) {
-        
-        pretty_title = title(mech, ppt)
-        
-        data_filtered <- data_pregroup_soft %>%
-            filter(trial == 0 & mechanism == mech & proj_pref_type == ppt) %>%
-            mutate(
-                avg_rank_w = map(profile_all, avg_weighted_rank) %>% unlist
-            )
-        
-        # y-limit must be shared over all plots within group???
-        
-        plot <- ggplot(data_filtered, aes(x = num_slots, y = avg_rank_w, group = num_slots)) +
-                    geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(num_students ~ project_pressure) +
-                    # ylim(0, 2000) + 
-                    labs(
-                        title = title(mech, ppt),
-                        y = "AVG rank",
-                        x = "# slots (per project topic)"
-                    )
-        
-        print(plot)
-        
-        path = paste("plots", "slots_exp", "worst_rank", ppt, sep = "/")
-        filename <- paste(path, paste("worst_", pretty_title, ".png", sep = ""), sep ="/")
-        # ggsave(filename,
-        #        device = "png", width = 120, height = 120, units = "mm", pointsize = 100
-        # )
-    }
-}
-```
-
 
 # VIOLIN PLOT - Quality comparison between types (Only Chia vs Fair, no 100%)
 ```{r, fig.height = 15}
@@ -293,7 +144,6 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
 ```
 
 # DENSITY PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
-
 ```{r, fig.height = 15}
 # unique(data_all$mechanism)
 for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
@@ -400,8 +250,6 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
         }
     
 }
-
-
 ```
 
 # HISTO PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
