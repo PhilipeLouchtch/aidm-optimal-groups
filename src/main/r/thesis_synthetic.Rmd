@@ -286,64 +286,76 @@ ggsave(plot = plot_gsb(),
 # GSB - quality (worst_rank+aupcr)
 ```{r fig.height=8}
 
-data_gsb_q <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
-    # exclude not interesting results and keep only trial 1 runs
-    filter(num_students != 50 & proj_pref_type != "singleton" & trial == 1 & mechanism_short != "Fair") |>
-    augment_with_short_mechanism_name() |>
-    augment_with_nice_projectpref_name()
 
+plot_gsb_q <- function(num_studs, metric) {
+    metric_pretty <- new.env()
+    metric_pretty[['aupcr']] = 'AUPCR'
+    metric_pretty[['worst_rank']] = 'Worst Rank'
+    
+    data_gsb_q <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+        augment_with_short_mechanism_name() |>
+        augment_with_nice_projectpref_name()
 
-plot_gsb_q <- function(num_studs) {
     filtered_data <- data_gsb_q |>
-        filter(num_students == num_studs)
+        filter(trial == 1 & mechanism_short == "Chia") |>
+        filter(num_students == num_studs) |>
+        filter(proj_pref_type == "realistic" & project_pressure == 'TIGHT')
     
     # scale worst rank to the main y-axis, which is AUPCR that goes from 0 to 1
-    worst <- max(filtered_data$worst_rank)
-    data_aug <- filtered_data |> mutate(worst_rank_scaled = worst_rank / worst)
+    # worst <- max(filtered_data$worst_rank)
+    # data_aug <- filtered_data |> mutate(worst_rank = worst_rank / worst)
+    
+    data_aug <- filtered_data |>
+            pivot_longer(aupcr | worst_rank, names_to = "metric_name", values_to = "metric_value") |>
+            filter(metric_name == metric)
+    
+    # print(data_aug)
     
     plot <- ggplot(data_aug,
-               aes(x = interaction(projectpref_short, mechanism_short),
-                   group = interaction(projectpref_short, mechanism_short),
+                   aes(x = projectpref_short,
+                       group = projectpref_short,
                    )
             ) +
         
-        
-            geom_boxplot(aes(y = metric_value, color = mechanism_short), stroke = 0.2) +
+            geom_boxplot(aes(y = metric_value)) +
                    
-            geom_boxplot(aes(y = aupcr, color = mechanism_short)) +
-
-            geom_boxplot(aes(y = worst_rank_scaled),
-                         stroke = 0.2,
-                         color = "black",
-                         shape = 8, size = 1, position = position_dodge(width = 0.7)
-            ) +
-            scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
+            # geom_boxplot(aes(y = aupcr, color = mechanism_short)) +
+            # 
+            # geom_boxplot(aes(y = worst_rank_scaled),
+            #              stroke = 0.2,
+            #              color = "black",
+            #              shape = 8, size = 0.2, position = position_dodge(width = 0.7)
+            # ) +
+        
+            # scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
     
             facet_grid(gsc_max ~ gsc_min,
                        labeller = labeller(gsc_max = ~ paste("u:", .),
                                            gsc_min = ~ paste("l:", .))
             ) +
         
-            guides(x = guide_axis_nested(angle = 90)) + 
+            # guides(x = guide_axis_nested(angle = 90)) + 
+            # scale_x_discrete(guide = guide_axis(angle = 30)) +
                 
             labs(
-                title = paste("Group size bounds scaling -", num_studs, "students"),
-                y = "AUPCR",
+                title = NULL, #paste("Group size bounds scaling -", num_studs, "students"),
+                y = metric_pretty[[metric]],
                 x = "",
-                color = "Mechanism: "
+                # color = "Mechanism: "
             ) +
+        
             theme(legend.position = "none", legend.direction = "horizontal")
 }
 
-print(plot_gsb_q(200))
+print(plot_gsb_q(200, 'aupcr') + plot_gsb_q(200, 'worst_rank'))
 
-ggsave(plot = plot_gsb_q(200),
-       filename = paste0("plots/thesis/synth_gsb_s", 200, ".png"),
+ggsave(plot = plot_gsb_q(200, 'aupcr') + plot_gsb_q(200, 'worst_rank'),
+       filename = paste0("plots/thesis/synth_gsb_qual_focused", 200, ".png"),
        device = "png", width = 330, height = 206, units = "mm", dpi = "print")
        
-ggsave(plot = plot_gsb_q(600),
-       filename = paste0("plots/thesis/synth_gsb_s", 600, ".png"),
-       device = "png", width = 330, height = 206, units = "mm", dpi = "print")
+# ggsave(plot = plot_gsb_q(600),
+#        filename = paste0("plots/thesis/synth_gsb_qual_", 600, ".png"),
+#        device = "png", width = 330, height = 206, units = "mm", dpi = "print")
 ```
 
 ```{r fig.height=8}
