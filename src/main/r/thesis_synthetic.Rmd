@@ -238,46 +238,51 @@ ggsave(plot = plot_slots_quality_withslots(),
 )
 ```
 
-# GSB - runtimes
+# Group size bounds - runtimes
 ```{r fig.height=10}
 
-data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
-        filter(num_students != 50) |>
-        augment_with_short_mechanism_name() |>
-        augment_with_nice_projectpref_name()
-
-plot_gsb <- function() {
+plot_gsb_runtime <- function (param_num_studs) {
+    data_groupsizb <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+            filter(num_students == param_num_studs) |>
+            augment_with_short_mechanism_name() |>
+            augment_with_nice_projectpref_name()
+    
     filtered_data <- data_groupsizb
     
     plot <- ggplot(filtered_data,
-                   aes(x = interaction(mechanism_short, num_students),
+                   aes(x = mechanism_short,
                        y = ceiling(duration_ms / 1000),
-                       group = interaction(mechanism_short, num_students),
-                       color = mechanism_short)
-                ) +
-                geom_boxplot() +
-                facet_grid(gsc_max ~ gsc_min,
-                           labeller = labeller(gsc_max = ~ paste("u:", .),
-                                               gsc_min = ~ paste("l:", .))
-                           ) +
-                scale_y_continuous(trans = "log2", oob = scales::oob_squish_any,
-                                   labels = \(z) scales::label_math(expr = 2^.x)(log2(z))
-                                   ) + 
-                # scale_x_discrete() +
-                guides(x = "axis_nested") +
+                       group = mechanism_short,
+                       color = mechanism_short
+                   )
+            ) +
+        
+            geom_boxplot() +
+    
+            facet_grid(gsc_max ~ gsc_min,
+                       labeller = labeller(gsc_max = ~ paste("u:", .),
+                                           gsc_min = ~ paste("l:", .))
+            ) +
+            
+            scale_y_continuous(trans = "log2", oob = scales::oob_squish_any,
+                               labels = \(z) scales::label_math(expr = 2^.x)(log2(z))
+            ) + 
+        
+                scale_x_discrete(guide = guide_axis(angle = 30)) +
+        
                 labs(
-                    title = "Group size bounds scaling - runtime",
+                    title = paste(param_num_studs, "students"),
                     y = "Duration (sec)",
-                    x = "",
-                    color = "Mechanism: "
+                    x = expression('Mechanism'),
+                    color = "Mechanism"
                 ) +
                 theme(legend.position = "none", legend.direction = "horizontal")
 }
 
-print(plot_gsb(600))
+print(plot_gsb_runtime(200) + plot_gsb_runtime(600))
 
-ggsave(plot = plot_gsb(),
-       filename = "plots/thesis/synth_gsb_runtimes.png",
+ggsave(plot = plot_gsb_runtime(200) + plot_gsb_runtime(600) + plot_layout(axis_titles = "collect"),
+       filename = "plots/thesis/synth_gsb_runtimes_200600.png",
        device = png, width = 330, height = 200, units = "mm", dpi = "print", pointsize = 12
 )
 
