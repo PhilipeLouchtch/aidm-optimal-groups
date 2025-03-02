@@ -14,61 +14,38 @@ source("common.r")
 source("experiment_data.r")
 ```
 
-
-
-
-# Runtimes - no pregrouping (from slots scaling)
+## Synthetic - size/slots - runtimes
 ```{r, fig.height = 10}
 
-# function (labels, multi_line = TRUE, sep = ": ") 
-# {
-#     value <- label_value(labels, multi_line = multi_line)
-#     variable <- label_variable(labels, multi_line = multi_line)
-#     if (multi_line) {
-#         out <- vector("list", length(value))
-#         for (i in seq_along(out)) {
-#             out[[i]] <- paste(variable[[i]], value[[i]], sep = sep)
-#         }
-#     }
-#     else {
-#         value <- do.call("paste", c(value, sep = ", "))
-#         variable <- do.call("paste", c(variable, sep = ", "))
-#         out <- Map(paste, variable, value, sep = sep)
-#         out <- list(unname(unlist(out)))
-#     }
-#     out
-# }
+plot_size_runtimes <- function() {
+    data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
+            filter(num_students > 50 & trial == 1) |> #project_pressure == "LOOSE" &  & num_slots == 1
+            filter((num_students == 200 & project_pressure == "LOOSE") | num_students == 600) |>
+            augment_with_short_mechanism_name() |>
+            augment_with_nice_projectpref_name()
 
+    plot <- ggplot(data_slots, aes(x = mechanism_short, y = duration_ms / 1000, group = interaction(mechanism_short, num_slots), color = num_slots)) +
+            geom_boxplot() +
 
-data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
-    filter(num_students > 50 & trial == 1) |> #project_pressure == "LOOSE" &  & num_slots == 1
-    filter((num_students == 200 & project_pressure == "LOOSE") | num_students == 600) |>
-    augment_with_short_mechanism_name() |>
-    augment_with_nice_projectpref_name()
+            facet_grid(num_students + project_pressure ~ projectpref_short, labeller = partial(label_value, multi_line = FALSE)) +
+        
+            scale_y_continuous(trans = "log2", oob = scales::oob_squish_any,
+                               labels = \(z) scales::label_math(expr = 2^.x)(log2(z))
+            ) +
 
+            scale_x_discrete(guide = guide_axis(angle = 30)) +
+            labs(
+                title = NULL,
+                y = "Duration (sec)",
+                x = "Mechanism",
+                color = "# slots"
+            )
+}
 
-plot <- ggplot(data_slots, aes(x = mechanism_short, y = duration_ms / 1000, group = interaction(mechanism_short, num_slots), color = num_slots)) +
-        geom_boxplot() + 
+print(plot_size_runtimes())
 
-        facet_grid(num_students + project_pressure ~ projectpref_short, scale = "free_y", labeller = partial(label_value, multi_line = FALSE)) +
-        facetted_pos_scales(y = list(
-            scale_y_continuous(limits = c(0,5)),
-            scale_y_continuous(limits = c(0,15)),
-            scale_y_continuous(limits = c(0,100)),
-            scale_y_continuous(limits = c(0,100))
-        )) +
-
-        scale_x_discrete(guide = guide_axis(angle = 30)) +
-        labs(
-            title = "Runtimes - no pre-grouping",
-            y = "Duration (sec)",
-            x = "Mechanism",
-            color = "# slots"
-        )
-
-print(plot)
-
-ggsave(paste("plots", "thesis", "runtimes_nogroup.png", sep = "/"),
+ggsave(plot = plot_size_runtimes(),
+       filename = paste("plots", "thesis", "size_slots_runtimes.png", sep = "/"),
        device = "png", width = 300, height = 150, units = "mm", dpi = 300, pointsize = 12
 )
 
@@ -120,6 +97,7 @@ plot_slots_quality_withslots <- function () {
 }
 
 print(plot_slots_quality_withslots())
+
 ggsave(plot = plot_slots_quality_withslots(),
        filename = paste("plots", "thesis", "size_slots_quality.png", sep = "/"),
        device = "png", width = 330, height = 206, units = "mm", dpi = "print"
