@@ -7,6 +7,7 @@ output: html_notebook
 library(tidyverse)
 library(dplyr)
 library(ggh4x)
+library(patchwork)
 
 source("metrics.r")
 source("common.r")
@@ -73,11 +74,9 @@ ggsave(paste("plots", "thesis", "runtimes_nogroup.png", sep = "/"),
 
 ```
 
-
-## Included in Thesis:
+## Synthetic - size/slots - quality
 ```{r, fig.width=13}
 plot_slots_quality_withslots <- function () {
-    
     data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
         augment_with_nice_projectpref_name() |>
         filter(trial == 0 & projectpref_short != "unanimous" & num_students == 200) |>
@@ -87,31 +86,32 @@ plot_slots_quality_withslots <- function () {
     worst <- max(data_slots$worst_rank)
     data_slots_aug <- data_slots |> mutate(worst_rank_scaled = worst_rank / worst)
     
-    plot <- ggplot(data_slots_aug, aes(x = interaction(num_slots, mechanism_short),
-                                       y = aupcr,
-                                       group = interaction(num_slots, mechanism_short),
-                                   )
-                   ) +
+    plot <- ggplot(data_slots_aug, 
+                   aes(x = interaction(num_slots, mechanism_short),
+                       y = aupcr,
+                       group = interaction(num_slots, mechanism_short),
+                   )
+            ) +
         
                 geom_boxplot(aes(color = num_slots)) +
         
-                geom_point(aes(y = worst_rank_scaled),
-                   shape = 8, size = 2, stroke = 0.2,
-                   position = position_dodge(width = 0.7), color = "black") +
+                geom_point(
+                    aes(y = worst_rank_scaled),
+                    shape = 8, size = 2, stroke = 0.2,
+                    position = position_dodge(width = 0.7), 
+                    color = "black"
+                ) +
         
                 scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
         
                 scale_shape_identity() + 
         
                 facet_grid(project_pressure ~ projectpref_short, shrink = FALSE) +
-                # ylim(0.5, 1) +
-                # coord_flip() + 
-                #scale_x_discrete(guide = guide_axis(angle = 45)) +
         
                 guides(x = "axis_nested") +
         
                 labs(
-                    title = "All",
+                    title = NULL,
                     y = "AUPCR",
                     x = expression('Mechanism' %*% ' pressure (slots)'),
                     color = "", fill = ""
@@ -119,10 +119,9 @@ plot_slots_quality_withslots <- function () {
                 theme(legend.position = "none", legend.direction = "horizontal", legend.key.size = unit(5, "mm"))
 }
 
-
 print(plot_slots_quality_withslots())
 ggsave(plot = plot_slots_quality_withslots(),
-       filename = "plots/thesis/synth_slots_quality_upd.png",
+       filename = paste("plots", "thesis", "size_slots_quality.png", sep = "/"),
        device = "png", width = 330, height = 206, units = "mm", dpi = "print"
 )
 ```
