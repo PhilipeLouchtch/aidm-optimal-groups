@@ -1,11 +1,7 @@
 ---
-title: "Thesis plots"
+title: "Thesis plots - synthetic experiments"
 output: html_notebook
 ---
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
 ```{r}
 library(tidyverse)
@@ -15,35 +11,9 @@ library(ggh4x)
 source("metrics.r")
 source("common.r")
 source("experiment_data.r")
-
 ```
 
-```{r}
 
-data_size <- loadSizeExperimentData("size_exp_final1") |>
-    augment_with_short_mechanism_name() |>
-    filter(proj_pref_type == "realistic" & trial == 1)
-
-for (m in unique(data_size$mechanism_short)) {
-    print(m)
-    model <- lm(
-        data = data_size |> filter(mechanism_short == m),
-        formula = duration_ms ~ num_students * num_projects
-    )
-    
-    smry <- summary(model)
-    print(smry)
-}
-
-```
-
-The regression analysis on size experiment shows that the number of projects is more influential on the runtime than the number of students.
-See the table below:
-
-BEPSys|SDPC|Chia|Fair
----------------------
-  0.78|  10| 1.5| 3.36  studs
-  0.48|  21| 6.9|26.80  projs
 
 
 # Runtimes - no pregrouping (from slots scaling)
@@ -103,87 +73,6 @@ ggsave(paste("plots", "thesis", "runtimes_nogroup.png", sep = "/"),
 
 ```
 
-
-## Quality - AUPCR, facet by #studs ~ proj_pref -> group per pressure
-TODO: 
-    - Not AUPCR but violin of ranks??
-    - Line-plot worst min rank?
-
-```{r, fig.width=13}
-
-data_slots <- loadSlotsExperimentData("slots_exp_final1") |>
-    augment_with_nice_projectpref_name() |>
-    filter(trial == 0 & num_slots == 1 & projectpref_short != "unanimous") |>
-    augment_with_short_mechanism_name() |>
-    filter(mechanism_short != "Fair")
-
-#num_projects > 50 & project_pressure == "LOOSE" & 
-
-# for (mech in levels(data_slots$mechanism_short)){
-    # for (mech in levels(data_exps_aug$mechanism)) {
-        
-        # data_filtered <- data_slots |>
-            # filter(mechanism_short == mech)#& 
-                   #proj_pref_type == ppt)
-        
-        # plot <- ggplot(data_slots, aes(x = project_pressure, y = aupcr, group = interaction(project_pressure, mechanism_short), color = mechanism_short)) +
-        #             geom_boxplot() +
-        #             # geom_point(aes(x = project_pressure, y = worst_rank, group = interaction(project_pressure, mechanism_short)), data_slots) +
-        #             # geom_point(color = "black") +
-        #             # geom_jitter(position=position_jitter(0.1), color = "black") +
-        #             facet_grid(num_students ~ projectpref_short, shrink = FALSE) +
-        #             ylim(0.5, 1) +
-        #             # coord_flip() + 
-        #             # scale_y_continuous(sex.axis = sec_axis()) +
-        #             scale_x_discrete(guide = guide_axis(angle = 10)) +
-        #             labs(
-        #                 title = "All",
-        #                 y = "AUPCR",
-        #                 x = "project preference type",
-        #                 color = "", fill = ""
-        #             ) + 
-        #             theme(legend.position = "bottom", legend.direction = "horizontal")
-        
-        
-        
-worst <- max(data_slots$worst_rank)
-data_slots_aug <- data_slots |> mutate(worst_rank_scaled = worst_rank / worst)
-
-plot <- ggplot(data_slots_aug, aes(x = project_pressure,
-                                   y = aupcr,
-                                   group = interaction(mechanism_short, project_pressure),
-                               )
-               ) +
-    
-            geom_boxplot(aes(color = mechanism_short)) +
-    
-            geom_point(aes(y = worst_rank_scaled,
-                           shape = 8),
-                       position = position_dodge(width = 0.7)
-                       ) +
-            scale_shape_identity() + 
-    
-            facet_grid(num_students ~ projectpref_short, shrink = FALSE) +
-            # ylim(0.5, 1) +
-            # coord_flip() + 
-            scale_y_continuous(sec.axis = sec_axis(name = "Worst rank", ~ . * worst)) +
-            #scale_x_discrete(guide = guide_axis(angle = 45)) +
-            labs(
-                title = "All",
-                y = "AUPCR",
-                x = expression(paste('Project capacity pressur', e %*% m, "echanism", sep ="")),
-                color = "", fill = ""
-            ) + 
-            theme(legend.position = "bottom", legend.direction = "horizontal", legend.key.size = unit(5, "mm"))
-
-print(plot)
-        
-        
-filename = paste("plots", "thesis", "quality_nogroup2.png", sep = "/")
-ggsave(filename,
-       device = png, width = 240, height = 140, units = "mm", dpi = 300, pointsize = 12
-)
-```
 
 ## Included in Thesis:
 ```{r, fig.width=13}
