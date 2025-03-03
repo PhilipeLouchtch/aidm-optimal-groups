@@ -232,7 +232,9 @@ ggsave(plot = plot_gsb_q(200, 'aupcr') + plot_gsb_q(200, 'worst_rank'),
 ```{r fig.height=8}
 ## new idea: more granular, plot both aupcr and worst rank as boxplots
 plot_gsb_q <- function(num_studs) {
-    filtered_data <- data_gsb_q |>
+    filtered_data <- loadGroupSizeBoundsExperimentData("gsc_exp_final1") |>
+        augment_with_short_mechanism_name() |>
+        augment_with_nice_projectpref_name() |>
         filter(num_students == num_studs)
     
     # scale worst rank to the main y-axis, which is AUPCR that goes from 0 to 1
