@@ -5,6 +5,7 @@ output: html_notebook
 ```{r include=FALSE}
 library(tidyverse)
 library(dplyr)
+library(ggh4x)
 # library(ggridges)
 
 source("metrics.r")
@@ -26,46 +27,66 @@ title <- function(mechanism_name, proj_pref_type) {
 
 # These are some trial and error plotting experiments with generated data
 
-# Boxplots of runtimes
-```{r}
-for (ppt in levels(data_pregroup_soft$proj_pref_type)){
-    # for (mech in levels(data_pregroup_soft$mechanism)) {
-        
-        data_pregroup_soft_f <- data_pregroup_soft %>%
-            filter(proj_pref_type == ppt) %>%
-            mutate(
-                mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
-            )
-        
-        # pretty_title = title(mech, ppt)
-        
-        plot <- ggplot(data_pregroup_soft_f, aes(x = mechanism_short, y = duration_ms / 1000, group = mechanism_short)) +
-                    geom_boxplot() +
-                    # geom_jitter(position=position_jitter(0.2)) +
-                    facet_grid(num_students ~ project_pressure) +
-                    # ylim(0, 90) + 
-                    # scale_y_log10() +
-                    scale_y_continuous(
-                        trans='log10',
-                        oob = scales::oob_squish_infinite,
-                        breaks = scales::trans_breaks('log10', function(x) 10^x),
-                        labels = scales::trans_format('log10', scales::math_format(10^.x))
-                    ) +
-                    labs(
-                        title = ppt,
-                        y = "Duration (sec)",
-                        x = "Mechanism"
-                    )
-        
-        print(plot)
-        
-        path = paste("plots", exp_name, "runtimes", sep = "/")
-        filename <- paste(path, paste("runtimes_", ppt, ".png", sep = ""), sep ="/")
-        # ggsave(filename,
-        #        device = "png", width = 200, height = 120, units = "mm", pointsize = 100
-        # )
-    # }
-}
+# RUNTIMES
+```{r, warning=FALSE}
+data_pregroup_soft_f <- data_pregroup_soft %>%
+    filter(trial == 0) %>%
+    # filter(proj_pref_type == ppt) %>%
+    mutate(
+        mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist,
+        proj_pref_type = factor(proj_pref_type, ordered = T,
+                            levels = c("linear_perturbed_4", "realistic", "random"),
+                            labels = c("linear", "real", "rnd")
+        )
+    )
+
+plot <- ggplot(data_pregroup_soft_f,
+               aes(x = interaction(proj_pref_type, mechanism_short),
+                   y = duration_ms / 1000,
+                   fill = mechanism_short
+               )
+       ) +
+   
+     geom_boxplot(outlier.shape = NA) +
+        scale_color_discrete() +
+    
+     geom_point(aes(shape = project_pressure, color = project_pressure), alpha = 0.9, size = 1, position = position_dodge(width = 0.5)) +
+        scale_color_discrete(name = "project pressure", type = c("#E69F00", "#0072B2", "#D55E00")) +
+    
+#    "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00"
+
+    # facet_grid(num_students ~ project_pressure) +
+    facet_wrap(vars(num_students)) + 
+    
+    # ylim(0, 90) + 
+    # scale_y_log10() +
+    
+    scale_y_continuous(
+        trans='log10',
+        oob = scales::oob_squish_infinite,
+        breaks = scales::trans_breaks('log10', function(x) 10^x),
+        labels = scales::trans_format('log10', scales::math_format(10^.x))
+    ) +
+            
+    guides(x = "axis_nested") +
+    
+    labs(
+        y = "Duration (sec, log10)",
+        x = "Mechanism x Project pref. distribution combination",
+        fill = "mechanism",
+        shape = "project pressure"
+    ) +
+    
+    theme(legend.position = "bottom")
+
+
+print(plot)
+
+path = paste("plots", "thesis", sep = "/")
+filename <- paste(path, paste0("synth_group_maxsoft_runtimes", ".png"), sep ="/")
+ggsave(filename,
+       device = "png", width = 230, height = 80, units = "mm", dpi = 300, pointsize = 12
+)
 
 
 # ggplot(data_all, aes(x = mechanism, y = duration_ms / 1000, group = mechanism)) +
@@ -103,6 +124,7 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
                     profile_singles = NULL,
                     profile_preg = map(profile_pregrouped, rank_profile),
                     profile_pregrouped = NULL,
+                    
                     profile_unsat = map(profile_unsatpregroup, rank_profile),
                     profile_unsatpregroup = NULL,
                     profile_all = map(profile_all, rank_profile)
@@ -144,19 +166,27 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
 ```
 
 # DENSITY PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
-```{r, fig.height = 15}
-# unique(data_all$mechanism)
-for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
-    ppt <- "realistic"
+```{r, fig.height = 10}
+
+    # for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
+    studs <- 200
+
     # for (ppt in levels(data_all$proj_pref_type)) {
-        for (pressure in levels(data_pregroup_soft$project_pressure)) {
+    ppt <- "realistic"
+    
+    # for (pressure in levels(data_pregroup_soft$project_pressure)) {
+    for (pressure in c("TIGHT", "MID")) {
+            
         # for (b in seq(0.5, 1, by = 0.1)) {
      
-            pretty_title = paste(paste(studs, "@", spe=""), ppt, pressure, sep = " - ")
+            pretty_title = paste0("students: ", studs,
+                                  ", project pref dist: ", ppt,
+                                  ", project pressure: ", switch(pressure, "TIGHT" = "tight (1.0)", "MID" = "mid (1.5)"))
             
             data_filtered <- data_pregroup_soft %>%
                 filter(
                     trial == 0 &
+                    gd == "MAX_ONLY" & # Only the MAX-SIZE pregroupings
                     project_pressure == pressure &
                         proj_pref_type == ppt &
                         num_students == studs &
@@ -166,8 +196,6 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
                 mutate(
                         mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist
                     )
-            
-            map(data_filtered$profile_unsatpregroup, rank_profile)
             
             zzz <- data_filtered %>%
                 mutate(
@@ -192,12 +220,19 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
             xxx <- zzz %>% unchop(rank)
             xxx$student_type <- factor(xxx$student_type, levels = c( "solo", "preg", "unsat")) #"all",
             
-            # y-limit must be shared over all plots within group???
-            
             fair_subset <- subset(xxx, mechanism_short == 'Fair')
             chia_subset <- subset(xxx, mechanism_short == 'Chiarandini')
             
-            #xxx, aes(x = rank, y = after_stat(count), group = student_type) #, color = student_type)) +
+            
+            # Make the numbers proportional, so that we can see per facet, per mechanism, per rank the proportion of students
+            proportions <- function (data) {
+                data |>
+                    group_by(pregroup_type, pregroup_proj_pref_type, student_type, rank) |>
+                    summarize(n_type = n()) |> ungroup() |>
+                    add_count(pregroup_type, pregroup_proj_pref_type, wt = n_type) |>
+                    mutate(prop = n_type / n)
+            }
+            
             plot <- ggplot() + 
                 # geom_density(
                 #     outline.type = "both", bw = 0.5,
@@ -206,13 +241,17 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
                 #     aes(x = rank, y = after_stat(density),
                 #         fill = student_type)
                 #     ) +
-                geom_histogram(
-                    data = fair_subset,
+                
+                # Fair mechanism: above the 0
+                geom_col(
+                    data = fair_subset |> proportions(),
+                    
                     boundary = -0.5,
                     binwidth = 1,
                         ## there are 12 cells (facets), we want y to be the proportion/percent
-                        aes(x = rank, y = after_stat(count / nrow(fair_subset) * 12), fill = student_type)
+                        aes(x = rank, y = prop, fill = student_type)
                     ) +
+                
                 # geom_density(
                 #     outline.type = "both", bw = 0.5,
                 #     data = chia_subset,
@@ -220,36 +259,58 @@ for (studs in levels(ordered(unique(data_pregroup_soft$num_students)))) {
                 #     aes(x = rank, y = -after_stat(density),
                 #         fill = student_type)
                 #     ) +
-                geom_histogram(
-                    data = chia_subset,
+                
+                # Chia mechanism: below the 0
+                geom_col(
+                    data = chia_subset |> proportions(),
+                    
                     boundary = -0.5,
                     binwidth = 1,
-                        aes(x = rank, y = -after_stat(count / nrow(chia_subset) * 12), fill = student_type)
+                        aes(x = rank, y = -prop, fill = student_type)
                     ) +
-                # geom_jitter(position=position_jitter(0.2)) +
-                facet_grid(pregroup_type ~ pregroup_proj_pref_type) +
+                
+                geom_hline(yintercept = 0, linewidth = 0.1, alpha = 0.4) +
+                
+                facet_grid(pregroup_type ~ pregroup_proj_pref_type, shrink = T) +
+                
                 labs(
-                    title = pretty_title,
-                    y = "students (proportional)",
-                    x = "rank"
+                    subtitle = pretty_title,
+                    y = "students (percent)",
+                    x = "rank",
+                    fill = "student type"
                 ) +
+                
                 # scale_x_continuous(trans = "log2", limits = c(1, max(xxx$rank))) +
-                scale_y_continuous(trans = "log") +
-                scale_x_continuous() +
-                theme(legend.key.size = unit(5, "mm"))
+                # scale_y_continuous(trans = "log") +
+                
+                scale_x_continuous(breaks = \(...) {
+                    # ensure the x-axis starts at 1, not 0 as no such rank exists
+                    # hacky: wrap the break_extended and fix it's output
+                    res <- scales::breaks_extended(n = 10, Q = c(1, 5))(...)
+                    res[1] <- 1
+                    res
+                }) +
+                
+                scale_y_continuous(breaks = scales::breaks_extended(n = 7, Q = c(0.05, 0.1)),
+                                   minor_breaks = scales::breaks_width(0.1),
+                                   labels = scales::label_percent()
+                ) +
+                
+                scale_fill_manual(drop = FALSE, values = c("#0fb783", "#FBAE04", "#AE04FB") ) +
+                
+                theme(
+                    legend.position = "bottom"
+                    # legend.key.size = unit(5, "mm")
+                )
                     
-                        
-            
             print(plot)
-        
-            # path = paste("plots", exp_name, "quality", sep = "/")
-            # filename <- paste(path, paste("density_", paste(studs, ppt, pressure, sep = "_"), ".png", sep = ""), sep ="/")
-            # ggsave(filename,
-            #        device = "png", width = 400, height = 250, units = "mm", pointsize = 100
-            # )
-        }
-    
-}
+            
+            path = paste("plots", "thesis", sep = "/")
+            filename <- paste(path, paste0("synth_group_maxsoft_quality_200_", pressure, ".png"), sep ="/")
+            ggsave(filename,
+                   device = "png", width = 230, height = 200, units = "mm", dpi = 300, pointsize = 12
+            )
+    }
 ```
 
 # Thesis: HISTO PLOT, upper/lower - Quality comparison between types (Only Chia vs Fair, no 100%)
