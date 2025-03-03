@@ -93,6 +93,70 @@ ggsave(filename,
 #     ylim(0, 100)
 ```
 
+# Thesis (mentioned, not included): runtimes, deep-dive tight pressure results of Fair, 600, rnd
+```{r, fig.height=4, fig.width=11, warning=FALSE}
+data_pregroup_soft_f <- data_pregroup_soft %>%
+    filter(trial == 0) |>
+    mutate(
+        mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist,
+        proj_pref_type = factor(proj_pref_type, ordered = T,
+                            levels = c("linear_perturbed_4", "realistic", "random"),
+                            labels = c("m unan", "3-peaked", "rnd")
+        )
+    ) |>
+    filter(gd == 'MAX_ONLY') |>
+    filter(mechanism_short == 'Fair' & num_students == 600 & proj_pref_type == 'rnd')
+
+print(data_pregroup_soft_f)
+
+plot <- ggplot(data_pregroup_soft_f,
+               aes(x = interaction(proj_pref_type, mechanism_short),
+                   y = duration_ms / 1000,
+                   fill = mechanism_short
+               )
+       ) +
+   
+     geom_boxplot(outlier.shape = NA) +
+        scale_color_discrete() +
+    
+     geom_point(aes(shape = project_pressure, color = project_pressure), alpha = 0.9, size = 1, position = position_dodge(width = 0.5)) +
+        scale_color_discrete(name = "project pressure", type = c("#E69F00", "#0072B2", "#D55E00")) +
+    
+#    "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00"
+
+    # facet_grid(num_students ~ project_pressure) +
+    facet_wrap(vars(pregroup_type, ), nrow=1) + 
+    
+    # ylim(0, 90) + 
+    # scale_y_log10() +
+    
+    scale_y_continuous(
+        trans='log10',
+        oob = scales::oob_squish_infinite,
+        breaks = scales::trans_breaks('log10', function(x) 10^x),
+        labels = scales::trans_format('log10', scales::math_format(10^.x))
+    ) +
+    
+    guides(x = guide_axis_nested(angle = 0)) + 
+    
+    labs(
+        y = "Duration (sec, log10)",
+        x = "Mechanism x Project pref. distribution combination",
+        fill = "mechanism",
+        shape = "project pressure"
+    ) +
+    
+    theme(legend.position = "bottom")
+
+
+print(plot)
+
+path = paste("plots", "thesis", sep = "/")
+# filename <- paste(path, paste0("synth_group_maxsoft_runtimes_chia_fair", ".png"), sep ="/")
+# ggsave(filename,
+#        device = "png", width = 260, height = 90, units = "mm", dpi = 300, pointsize = 12
+# )
+```
 
 # Thesis:  Quality 
 Histogram like mirrored plot. Only Chia vs Fair, no 100% pregrouping case
