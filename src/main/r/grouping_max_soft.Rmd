@@ -38,7 +38,7 @@ data_pregroup_soft_f <- data_pregroup_soft %>%
                             labels = c("m unan", "3-peaked", "rnd")
         )
     ) |>
-    filter(mechanism_short != 'BEPSys') |>
+    filter(mechanism_short != 'BEPSys' & gd == 'MAX_ONLY')
 
 plot <- ggplot(data_pregroup_soft_f,
                aes(x = interaction(proj_pref_type, mechanism_short),
