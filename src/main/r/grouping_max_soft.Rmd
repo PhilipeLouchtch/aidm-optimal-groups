@@ -28,17 +28,17 @@ title <- function(mechanism_name, proj_pref_type) {
 This file includes visualizations of the synthetic instances with pregrouping.
 
 # Thesis: runtimes
-```{r, warning=FALSE}
+```{r, fig.height=4, fig.width=11, warning=FALSE}
 data_pregroup_soft_f <- data_pregroup_soft %>%
-    filter(trial == 0) %>%
-    # filter(proj_pref_type == ppt) %>%
+    filter(trial == 0) |>
     mutate(
         mechanism_short = map(mechanism, ~ mechanism_name_map_short[[levels(mechanism)[.]]]) %>% unlist,
         proj_pref_type = factor(proj_pref_type, ordered = T,
                             levels = c("linear_perturbed_4", "realistic", "random"),
-                            labels = c("linear", "real", "rnd")
+                            labels = c("m unan", "3-peaked", "rnd")
         )
-    )
+    ) |>
+    filter(mechanism_short != 'BEPSys') |>
 
 plot <- ggplot(data_pregroup_soft_f,
                aes(x = interaction(proj_pref_type, mechanism_short),
@@ -67,8 +67,8 @@ plot <- ggplot(data_pregroup_soft_f,
         breaks = scales::trans_breaks('log10', function(x) 10^x),
         labels = scales::trans_format('log10', scales::math_format(10^.x))
     ) +
-            
-    guides(x = "axis_nested") +
+    
+    guides(x = guide_axis_nested(angle = 0)) + 
     
     labs(
         y = "Duration (sec, log10)",
@@ -83,11 +83,10 @@ plot <- ggplot(data_pregroup_soft_f,
 print(plot)
 
 path = paste("plots", "thesis", sep = "/")
-filename <- paste(path, paste0("synth_group_maxsoft_runtimes", ".png"), sep ="/")
+filename <- paste(path, paste0("synth_group_maxsoft_runtimes_chia_fair", ".png"), sep ="/")
 ggsave(filename,
-       device = "png", width = 230, height = 80, units = "mm", dpi = 300, pointsize = 12
+       device = "png", width = 260, height = 90, units = "mm", dpi = 300, pointsize = 12
 )
-
 
 # ggplot(data_all, aes(x = mechanism, y = duration_ms / 1000, group = mechanism)) +
 #     geom_boxplot() 
