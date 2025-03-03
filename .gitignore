@@ -23,4 +23,4 @@ src/main/r/plots
 src/main/r/.Rhistory
 src/main/r/*.html
 src/main/r/*.RData
-
+src/main/r/*.knit.md
